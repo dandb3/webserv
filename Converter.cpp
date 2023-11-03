@@ -1,18 +1,8 @@
-#include "Converter.hpp"
 #include <unistd.h>
+#include "Form.hpp"
+#include "Converter.hpp"
+#include "convert.hpp"
 
-/* ---------------- exceptions ---------------- */
-const char* Converter::EInput::what() const throw()
-{
-    return "input error";
-}
-
-const char* Converter::EParse::what() const throw()
-{
-    return "parse error";
-}
-
-/* ---------------- Converter ---------------- */
 char Converter::_iBuf[BUFSIZE + 1];
 
 Converter::Converter()
@@ -36,6 +26,16 @@ Converter& Converter::operator=(const Converter& conv)
 
 Converter::~Converter()
 {}
+
+void Converter::_convert()
+{
+    RequestForm request;
+    ResponseForm response;
+
+    parse(this->_inMsg, request);
+    makeResponse(request, response);
+    makeMessage(response, this->_outMsg);
+}
 
 bool Converter::eof() const
 {

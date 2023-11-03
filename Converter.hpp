@@ -1,27 +1,12 @@
 #ifndef CONVERTER_HPP
 # define CONVERTER_HPP
 
-# include <exception>
 # include <string>
+# include "Exception.hpp"
 # define BUFSIZE 1024
 
 class Converter
 {
-private:
-	class EInput : std::exception
-	{
-	public:
-		const char* what() const throw();
-
-	};
-
-	class EParse : std::exception
-	{
-	public:
-		const char* what() const throw();
-
-	};
-
 private:
 	static char _iBuf[BUFSIZE + 1];
 
@@ -29,7 +14,7 @@ private:
 	std::string _outMsg;
 	bool _eof;
 
-	void _makeResponse();
+	void _convert();
 
 public:
 	Converter();
