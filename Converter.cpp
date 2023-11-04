@@ -48,13 +48,13 @@ void Converter::add(int readfd)
 
     readlen = read(readfd, this->_iBuf, BUFSIZE);
     if (readlen == -1)
-        throw Converter::EInput();
+        throw EInput();
     else if (readlen > 0) {
         this->_iBuf[readlen] = '\0';
         this->_inMsg.append(this->_iBuf);
     }
     if (readlen < BUFSIZE) {
-        this->_makeResponse();
+        this->_convert();
         this->_eof = true;
     }
 }
