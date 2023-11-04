@@ -1,5 +1,6 @@
 #include <unistd.h>
-#include "Form.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 #include "Converter.hpp"
 #include "convert.hpp"
 
@@ -29,8 +30,8 @@ Converter::~Converter()
 
 void Converter::_convert()
 {
-    RequestForm request;
-    ResponseForm response;
+    Request request;
+    Response response;
 
     parse(this->_inMsg, request);
     makeResponse(request, response);

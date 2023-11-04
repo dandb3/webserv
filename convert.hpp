@@ -2,10 +2,11 @@
 # define CONVERT_HPP
 
 # include <string>
-# include "Form.hpp"
+# include "Request.hpp"
+# include "Response.hpp"
 
-void parse(const std::string& inMsg, RequestForm& request);
-void makeResponse(const RequestForm& request, ResponseForm& response);
-void makeMessage(const ResponseForm& response, std::string& outMsg);
+void parse(const std::string& inMsg, Request& request);
+void makeResponse(const Request& request, Response& response);
+void makeMessage(const Response& response, std::string& outMsg);
 
 #endif

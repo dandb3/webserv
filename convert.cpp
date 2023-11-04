@@ -1,6 +1,6 @@
 #include "convert.hpp"
 
-void parse(const std::string& inMsg, RequestForm& request)
+void parse(const std::string& inMsg, Request& request)
 {
     std::string stLine, hdrField, msgBody;
     request.insertStart();
@@ -8,8 +8,8 @@ void parse(const std::string& inMsg, RequestForm& request)
     request.insertBody();
 }
 
-void makeResponse(const RequestForm& request, ResponseForm& response)
+void makeResponse(const Request& request, Response& response)
 {}
 
-void makeMessage(const ResponseForm& response, std::string& outMsg)
+void makeMessage(const Response& response, std::string& outMsg)
 {}
