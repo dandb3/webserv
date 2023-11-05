@@ -5,8 +5,6 @@
 
 extern bool is_origin_form(const std::string& str);
 extern bool is_absolute_form(const std::string& str);
-extern bool is_authority_form(const std::string& str);
-extern bool is_asterisk_form(const std::string& str);
 
 /* ---------------- static functions ---------------- */
 
