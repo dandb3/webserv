@@ -3,43 +3,48 @@
 #include "Request.hpp"
 #include "Exception.hpp"
 
+extern bool is_origin_form(const std::string& str);
+extern bool is_absolute_form(const std::string& str);
+extern bool is_authority_form(const std::string& str);
+extern bool is_asterisk_form(const std::string& str);
+
 /* ---------------- static functions ---------------- */
 
 static
-std::string extractVal(const std::string& line, size_t sep)
+std::string extract_val(const std::string& line, size_t sep)
 {
-    size_t valStart = sep, valEnd;
+    size_t val_start = sep, val_end;
 
-    ++valStart;
-    while (isWS(line[valStart]))
-        ++valStart;
-    valEnd = line.size() - 1;
-    while (isWS(line[valEnd]))
-        --valEnd;
-    return line.substr(valStart, valEnd + 1);
+    ++val_start;
+    while (is_WS(line[val_start]))
+        ++val_start;
+    val_end = line.size() - 1;
+    while (is_WS(line[val_end]))
+        --val_end;
+    return line.substr(val_start, val_end + 1);
 }
 
 static
-void checkKey(const std::string& key)
+void check_key(const std::string& key)
 {
     if (key.empty())
         throw EParse();
     for (size_t i = 0; i < key.size(); ++i)
-        if (!isTCHAR(key[i]))
+        if (!is_tchar(key[i]))
             throw EParse();
 }
 
 static
-void checkVal(const std::string& val)
+void check_val(const std::string& val)
 {
     size_t cur = 0;
 
     while (cur < val.size()) {
-        if (!isVCHAR(val[cur]))
+        if (!is_VCHAR(val[cur]))
             throw EParse();
         ++cur;
-        if (cur + 1 < val.size() && isWS(val[cur]) \
-            && isVCHAR(val[cur + 1]))
+        if (is_size_fit(val, cur, 2) && is_WS(val[cur]) \
+            && is_VCHAR(val[cur + 1]))
             cur += 2;
     }
 }
@@ -60,7 +65,7 @@ void Request::_insertMethod(const std::string& method)
 
 void Request::_insertUri(const std::string& uri)
 {
-
+    
 }
 
 void Request::_insertProtocol(const std::string& protocol)
@@ -101,9 +106,9 @@ void Request::_insertHeader(const std::string& header)
         if ((sep = line.find(':')) == std::string::npos)
             throw EParse();
         key = line.substr(0, sep);
-        val = extractVal(line, sep);
-        checkKey(key);
-        checkVal(val);
+        val = extract_val(line, sep);
+        check_key(key);
+        check_val(val);
         this->_hdrField[key].push_back(val);
         lineStart = lineEnd;
     }
