@@ -2,7 +2,6 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Converter.hpp"
-#include "convert.hpp"
 
 char Converter::_iBuf[BUFSIZE + 1];
 

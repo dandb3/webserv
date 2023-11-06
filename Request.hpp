@@ -22,13 +22,13 @@ private:
     std::map<std::string, std::vector<std::string> > _hdrField;
     std::string _msgBody;
 
-	void _insertMethod(const std::string& method);
-	void _insertUri(const std::string& uri);
-	void _insertProtocol(const std::string& protocol);
+	void _insert_method(const std::string& method);
+	void _insert_uri(const std::string& uri);
+	void _insert_protocol(const std::string& protocol);
 
-    void _insertStart(const std::string& start);
-    void _insertHeader(const std::string& header);
-    void _insertBody(const std::string& body);
+    void _insert_start(const std::string& start);
+    void _insert_header(const std::string& header);
+    void _insert_body(const std::string& body);
 
 public:
     void parse(const std::string& inMsg);

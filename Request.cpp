@@ -49,7 +49,7 @@ void check_val(const std::string& val)
 
 /* ---------------- class Request ---------------- */
 
-void Request::_insertMethod(const std::string& method)
+void Request::_insert_method(const std::string& method)
 {
     if (method == "GET")
         this->_method = GET;
@@ -61,12 +61,12 @@ void Request::_insertMethod(const std::string& method)
         throw EParse();
 }
 
-void Request::_insertUri(const std::string& uri)
+void Request::_insert_uri(const std::string& uri)
 {
     
 }
 
-void Request::_insertProtocol(const std::string& protocol)
+void Request::_insert_protocol(const std::string& protocol)
 {
     size_t pos;
 
@@ -80,7 +80,7 @@ void Request::_insertProtocol(const std::string& protocol)
         throw EParse();
 }
 
-void Request::_insertStart(const std::string& start)
+void Request::_insert_start(const std::string& start)
 {
     size_t first, second;
 
@@ -88,13 +88,12 @@ void Request::_insertStart(const std::string& start)
         throw EParse();
     if ((second = start.find(SP, first + 1)) == std::string::npos)
         throw EParse();
-    this->_insertMethod(start.substr(0, first));
-    this->_insertUri(start.substr(first + 1, second));
-    this->_insertProtocol(start.substr(second + 1));
+    this->_insert_method(start.substr(0, first));
+    this->_insert_uri(start.substr(first + 1, second));
+    this->_insert_protocol(start.substr(second + 1));
 }
 
-
-void Request::_insertHeader(const std::string& header)
+void Request::_insert_header(const std::string& header)
 {
     std::string line, key, val;
     size_t lineStart = 0, lineEnd, sep;
@@ -112,7 +111,7 @@ void Request::_insertHeader(const std::string& header)
     }
 }
 
-void Request::_insertBody(const std::string& body)
+void Request::_insert_body(const std::string& body)
 {
     this->_msgBody = body;
 }
@@ -125,7 +124,7 @@ void Request::parse(const std::string& inMsg)
         throw EParse();
     if ((second = inMsg.find(CRLF CRLF, first)) == std::string::npos)
         throw EParse();
-    this->_insertStart(inMsg.substr(0, first));
-    this->_insertHeader(inMsg.substr(first + 2, second + 2));
-    this->_insertBody(inMsg.substr(second + 4));
+    this->_insert_start(inMsg.substr(0, first));
+    this->_insert_header(inMsg.substr(first + 2, second + 2));
+    this->_insert_body(inMsg.substr(second + 4));
 }

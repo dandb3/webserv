@@ -111,6 +111,14 @@ bool is_segment(const std::string& str)
 }
 
 static inline
+bool is_segment_nz(const std::string& str)
+{
+	if (str.empty())
+		return false;
+	return is_segment(str);
+}
+
+static inline
 bool is_dec_octet(const std::string& str)
 {
 	if (str.size() == 1 && isdigit(str[0]))

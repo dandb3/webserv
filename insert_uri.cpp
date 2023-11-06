@@ -4,66 +4,6 @@
 /* ---------------- static functions ---------------- */
 
 static
-bool is_absolute_path(const std::string& str)
-{
-    size_t seg_start = 1, seg_end;
-
-    if (str.empty() || !is_same(str[0], '/'))
-        return false;
-    do {
-        seg_end = str.find('/', seg_start);
-        if (!is_segment(str.substr(seg_start, seg_end)))
-            return false;
-        seg_start = seg_end + 1;
-    } while (seg_end != std::string::npos);
-    return true;
-}
-
-static
-bool is_query(const std::string& str)
-{
-    size_t pos = 0;
-
-    while (pos < str.size()) {
-        if (is_same(str[pos], '/') || is_same(str[pos], '?'))
-            ++pos;
-        else if (!is_pchar(str, pos))
-            return false;
-    }
-    return true;
-}
-
-static
-bool is_userinfo(const std::string& str)
-{
-	size_t pos = 0;
-
-	while (pos < str.size()) {
-		if (is_unreserved(str[pos]) || is_sub_delims(str[pos]) \
-			|| is_same(str[pos], ':'))
-			++pos;
-		else if (is_pct_encoded(str, pos))
-			pos += 3;
-		else
-			return false;
-	}
-	return true;
-}
-
-static
-bool is_port(const std::string& str)
-{
-    size_t pos = 0;
-
-    while (pos < str.size()) {
-        if (!isdigit(str[pos]))
-            return false;
-        ++pos;
-    }
-    return true;
-}
-
-static
 bool is_reg_name(const std::string& str)
 {
     size_t pos = 0;
@@ -206,6 +146,36 @@ bool is_host(const std::string& str)
 }
 
 static
+bool is_userinfo(const std::string& str)
+{
+	size_t pos = 0;
+
+	while (pos < str.size()) {
+		if (is_unreserved(str[pos]) || is_sub_delims(str[pos]) \
+			|| is_same(str[pos], ':'))
+			++pos;
+		else if (is_pct_encoded(str, pos))
+			pos += 3;
+		else
+			return false;
+	}
+	return true;
+}
+
+static
+bool is_port(const std::string& str)
+{
+    size_t pos = 0;
+
+    while (pos < str.size()) {
+        if (!isdigit(str[pos]))
+            return false;
+        ++pos;
+    }
+    return true;
+}
+
+static
 bool is_authority(const std::string& str)
 {
     size_t sep1, sep2;
@@ -255,7 +225,7 @@ bool is_scheme(const std::string& str)
 }
 
 static
-bool is_hier_part(const std::string& str)
+bool is_authority_path_abempty(const std::string& str)
 {
     size_t sep;
 
@@ -265,6 +235,68 @@ bool is_hier_part(const std::string& str)
     if ((sep = str.find('/', 2)) == std::string::npos)
         return is_authority(str.substr(2));
     return (is_authority(str.substr(2, sep)) && is_path_abempty(str.substr(sep + 1)));
+}
+
+static
+bool is_path_rootless(const std::string& str)
+{
+    size_t sep;
+
+    sep = str.find('/');
+    return (is_segment_nz(str.substr(0, sep)) && is_path_abempty(str.substr(sep)));
+}
+
+static
+bool is_path_absolute(const std::string& str)
+{
+    if (str.empty() || !is_same(str[0], '/'))
+        return false;
+    if (str.size() == 1)
+        return true;
+    return is_path_rootless(str.substr(1));
+}
+
+static
+bool is_path_empty(const std::string& str)
+{
+    return str.empty();
+}
+
+static
+bool is_hier_part(const std::string& str)
+{
+    return (is_authority_path_abempty(str) || is_path_absolute(str) \
+        || is_path_rootless(str) || is_path_empty(str));
+}
+
+static
+bool is_absolute_path(const std::string& str)
+{
+    size_t seg_start = 1, seg_end;
+
+    if (str.empty() || !is_same(str[0], '/'))
+        return false;
+    do {
+        seg_end = str.find('/', seg_start);
+        if (!is_segment(str.substr(seg_start, seg_end)))
+            return false;
+        seg_start = seg_end + 1;
+    } while (seg_end != std::string::npos);
+    return true;
+}
+
+static
+bool is_query(const std::string& str)
+{
+    size_t pos = 0;
+
+    while (pos < str.size()) {
+        if (is_same(str[pos], '/') || is_same(str[pos], '?'))
+            ++pos;
+        else if (!is_pchar(str, pos))
+            return false;
+    }
+    return true;
 }
 
 static
