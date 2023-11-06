@@ -10,7 +10,7 @@ private:
     int _statcode;
     std::string _msg;
     std::string _protocol;
-    std::map<std::string, std::vector<std::string> > _hdrField;
+    std::map<std::string, std::vector<std::string> > _header_field;
     std::string _msgBody;
 
 };

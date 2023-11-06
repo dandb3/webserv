@@ -8,10 +8,10 @@
 class Converter
 {
 private:
-	static char _iBuf[BUFSIZE + 1];
+	static char _input_buf[BUFSIZE + 1];
 
-	std::string _inMsg;
-	std::string _outMsg;
+	std::string _in_msg;
+	std::string _out_msg;
 	bool _eof;
 
 	void _convert();

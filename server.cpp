@@ -11,15 +11,15 @@
 #include <map>
 #include "Converter.hpp"
 
-void addEvent(std::vector<struct kevent>& v, int ident, int filter, int flags);
+void add_event(std::vector<struct kevent>& v, int ident, int filter, int flags);
 void err(const char *msg);
 
 void operate()
 {
-    int sockfd, newSockfd, kq, n;
+    int sockfd, new_sockfd, kq, n;
     int nevents;
-	socklen_t peerLen = sizeof(struct sockaddr_in);
-	struct sockaddr_in addr, peerAddr;
+	socklen_t peer_len = sizeof(struct sockaddr_in);
+	struct sockaddr_in addr, peer_addr;
     std::vector<struct kevent> changelist(1);
 	struct kevent eventlist[10];
 	struct timespec timeout =
@@ -29,7 +29,7 @@ void operate()
 	};
     std::map<int, Converter> m;
 
-    memset(&peerAddr, 0, sizeof(peerAddr));
+    memset(&peer_addr, 0, sizeof(peer_addr));
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(10000);
@@ -49,16 +49,16 @@ void operate()
         changelist.clear();
         for (int i = 0; i < nevents; ++i) {
             if (eventlist[i].ident == sockfd) {
-                newSockfd = accept(sockfd, reinterpret_cast<sockaddr*>(&peerAddr), &peerLen);
-                addEvent(changelist, newSockfd, EVFILT_READ, EV_ADD);
-                m[newSockfd];
+                new_sockfd = accept(sockfd, reinterpret_cast<sockaddr*>(&peer_addr), &peer_len);
+                add_event(changelist, new_sockfd, EVFILT_READ, EV_ADD);
+                m[new_sockfd];
             }
             else if (eventlist[i].filter == EVFILT_READ) {
                 Converter& target = m[eventlist[i].ident];
                 target.add(eventlist[i].ident);
                 if (target.eof()) {
-                    addEvent(changelist, eventlist[i].ident, EVFILT_WRITE, EV_ADD);
-                    addEvent(changelist, eventlist[i].ident, EVFILT_READ, EV_DELETE);
+                    add_event(changelist, eventlist[i].ident, EVFILT_WRITE, EV_ADD);
+                    add_event(changelist, eventlist[i].ident, EVFILT_READ, EV_DELETE);
                 }
             }
             else if (eventlist[i].filter == EVFILT_WRITE) {
@@ -74,11 +74,11 @@ void operate()
     }
 }
 
-void addEvent(std::vector<struct kevent>& v, int ident, int filter, int flags)
+void add_event(std::vector<struct kevent>& v, int ident, int filter, int flags)
 {
-    struct kevent newEvent;
-    EV_SET(&newEvent, ident, filter, flags, 0, 0, 0);
-    v.push_back(newEvent);
+    struct kevent new_event;
+    EV_SET(&new_event, ident, filter, flags, 0, 0, 0);
+    v.push_back(new_event);
 }
 
 void err(const char *msg)

@@ -3,7 +3,7 @@
 #include "Response.hpp"
 #include "Converter.hpp"
 
-char Converter::_iBuf[BUFSIZE + 1];
+char Converter::_input_buf[BUFSIZE + 1];
 
 Converter::Converter()
 : _eof(false)
@@ -18,8 +18,8 @@ Converter& Converter::operator=(const Converter& conv)
     if (this == &conv)
         return *this;
 
-    this->_inMsg = conv._inMsg;
-    this->_outMsg = conv._outMsg;
+    this->_in_msg = conv._in_msg;
+    this->_out_msg = conv._out_msg;
     this->_eof = conv._eof;
     return *this;
 }
@@ -32,9 +32,9 @@ void Converter::_convert()
     Request request;
     Response response;
 
-    parse(this->_inMsg, request);
+    parse(this->_in_msg, request);
     makeResponse(request, response);
-    makeMessage(response, this->_outMsg);
+    makeMessage(response, this->_out_msg);
 }
 
 bool Converter::eof() const
@@ -46,12 +46,12 @@ void Converter::add(int readfd)
 {
     ssize_t readlen;
 
-    readlen = read(readfd, this->_iBuf, BUFSIZE);
+    readlen = read(readfd, this->_input_buf, BUFSIZE);
     if (readlen == -1)
         throw EInput();
     else if (readlen > 0) {
-        this->_iBuf[readlen] = '\0';
-        this->_inMsg.append(this->_iBuf);
+        this->_input_buf[readlen] = '\0';
+        this->_in_msg.append(this->_input_buf);
     }
     if (readlen < BUFSIZE) {
         this->_convert();
@@ -61,5 +61,5 @@ void Converter::add(int readfd)
 
 void Converter::response(int writefd) const
 {
-    write(writefd, this->_outMsg.c_str(), this->_outMsg.size());
+    write(writefd, this->_out_msg.c_str(), this->_out_msg.size());
 }

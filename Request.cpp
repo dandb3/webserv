@@ -106,7 +106,7 @@ void Request::_insert_header(const std::string& header)
         val = extract_val(line, sep);
         check_key(key);
         check_val(val);
-        this->_hdrField[key].push_back(val);
+        this->_header_field[key].push_back(val);
         lineStart = lineEnd;
     }
 }
