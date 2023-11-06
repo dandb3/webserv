@@ -1,0 +1,2 @@
+GET http://www.naver.com/ HTTP/1.1
+
