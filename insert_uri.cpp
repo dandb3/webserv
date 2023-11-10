@@ -327,3 +327,13 @@ bool is_absolute_form(const std::string& str)
 {
     return is_absolute_URI(str);
 }
+
+bool is_authority_form(const std::string& str)
+{
+    return is_authority(str);
+}
+
+bool is_asterisk_form(const std::string& str)
+{
+    return (str == "*");
+}

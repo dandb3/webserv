@@ -11,7 +11,7 @@ private:
     std::string _msg;
     std::string _protocol;
     std::map<std::string, std::vector<std::string> > _header_field;
-    std::string _msgBody;
+    std::string _msg_body;
 
 };
 

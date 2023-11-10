@@ -5,6 +5,8 @@
 
 extern bool is_origin_form(const std::string& str);
 extern bool is_absolute_form(const std::string& str);
+extern bool is_authority_form(const std::string& str);
+extern bool is_asterisk_form(const std::string& str);
 
 /* ---------------- static functions ---------------- */
 
@@ -63,7 +65,9 @@ void Request::_insert_method(const std::string& method)
 
 void Request::_insert_uri(const std::string& uri)
 {
-    
+    if (!is_origin_form(uri) && !is_absolute_form(uri) \
+        && !is_authority_form(uri) && !is_asterisk_form(uri))
+        throw EParse();
 }
 
 void Request::_insert_protocol(const std::string& protocol)
@@ -113,7 +117,7 @@ void Request::_insert_header(const std::string& header)
 
 void Request::_insert_body(const std::string& body)
 {
-    this->_msgBody = body;
+    this->_msg_body = body;
 }
 
 void Request::parse(const std::string& inMsg)

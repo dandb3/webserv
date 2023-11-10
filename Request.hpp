@@ -12,15 +12,19 @@ private:
 	enum method
 	{
 		GET,
+        HEAD,
 		POST,
 		DELETE
 	};
 
-    int _method;				// only GET, POST, DELETE are allowed
-    std::string _uri;
+    int _method;				// only GET, HEAD, POST, DELETE are allowed
+    std::string _scheme;
+    std::string _authority;
+    std::string _path;
+    std::string _query;
     std::string _protocol;		// x.x form
     std::map<std::string, std::vector<std::string> > _header_field;
-    std::string _msgBody;
+    std::string _msg_body;
 
 	void _insert_method(const std::string& method);
 	void _insert_uri(const std::string& uri);
