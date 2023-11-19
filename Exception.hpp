@@ -3,14 +3,21 @@
 
 # include <exception>
 
-class EInput : std::exception
+class Err_syscall : std::exception
+{
+public:
+	const char* what() const throw();
+
+};
+
+class Err_input : std::exception
 {
 public:
     const char* what() const throw();
 
 };
 
-class EParse : std::exception
+class Err_parse : std::exception
 {
 public:
     const char* what() const throw();

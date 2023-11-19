@@ -34,13 +34,13 @@ void operate()
     addr.sin_family = AF_INET;
     addr.sin_port = htons(10000);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    EV_SET(&changelist[0], sockfd, EVFILT_READ, EV_ADD, 0, 0, 0);
     if ((sockfd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
         err("socket failed");
     if (bind(sockfd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1)
         err("bind failed");
     if (listen(sockfd, 100) == -1)
         err("listen failed");
+    EV_SET(&changelist[0], sockfd, EVFILT_READ, EV_ADD, 0, 0, 0);
 
     if ((kq = kqueue()) == -1)
         err("kqueue failed");
