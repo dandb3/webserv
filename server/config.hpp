@@ -49,7 +49,13 @@ private:
     std::vector<server> _servers;
 
 public:
+    inline const std::vector<server>& get_servers() const;
 
 };
+
+inline const std::vector<server>& config::get_servers() const
+{
+    return this->_servers;
+}
 
 #endif

@@ -11,16 +11,16 @@ void operate()
             case event_handler::SERVER_LISTEN:
                 handler.listen();
                 break;
-            case event_handler::HTTP_REQUEST:
+            case event_handler::SERV_HTTP_REQ:
                 handler.http_request();
                 break;
-            case event_handler::HTTP_RESPONSE:
+            case event_handler::SERV_HTTP_RES:
                 handler.http_response();
                 break;
-            case event_handler::CGI_REQUEST:
+            case event_handler::SERV_CGI_REQ:
                 handler.cgi_request();
                 break;
-            case event_handler::CGI_RESPONSE:
+            case event_handler::SERV_CGI_RES:
                 handler.cgi_response();
                 break;
             case event_handler::SERVER_ERROR:

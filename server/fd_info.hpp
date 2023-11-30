@@ -31,6 +31,7 @@ private:
     u_short _port;
 
 public:
+    fd_info();
     fd_info(const std::string& ip, u_short port, int type, http* http);
 
     inline int get_type() const;

@@ -7,6 +7,7 @@
 class server_manager
 {
 private:
+    config _conf;
     event_handler _handler;
     std::vector<fd_info> fd_infos;
 
@@ -20,11 +21,12 @@ private:
 public:
     enum
     {
-        SOCK_LISTEN,
-        HTTP_REQUEST,
-        HTTP_RESPONSE,
-        CGI_REQUEST,
-        CGI_RESPONSE,
+        SERV_LISTEN,
+        SERV_HTTP_REQ,
+        SERV_HTTP_RES,
+        SERV_CGI_REQ,
+        SERV_CGI_RES,
+        SERV_DEFAULT,
         SERV_ERROR
     }
 
