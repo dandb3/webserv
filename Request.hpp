@@ -22,7 +22,7 @@ private:
     std::string _authority;
     std::string _path;
     std::string _query;
-    std::string _protocol;		// x.x form
+    std::pair<int, int> _protocol;		// x.x form
     std::map<std::string, std::vector<std::string> > _header_field;
     std::string _msg_body;
 

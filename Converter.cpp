@@ -48,7 +48,7 @@ void Converter::add(int readfd)
 
     readlen = read(readfd, this->_input_buf, BUFSIZE);
     if (readlen == -1)
-        throw Err_input();
+        throw err_input();
     else if (readlen > 0) {
         this->_input_buf[readlen] = '\0';
         this->_in_msg.append(this->_input_buf);

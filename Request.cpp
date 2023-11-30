@@ -28,10 +28,10 @@ static
 void check_key(const std::string& key)
 {
     if (key.empty())
-        throw Err_parse();
+        throw err_parse();
     for (size_t i = 0; i < key.size(); ++i)
         if (!is_tchar(key[i]))
-            throw Err_parse();
+            throw err_parse();
 }
 
 static
@@ -41,7 +41,7 @@ void check_val(const std::string& val)
 
     while (cur < val.size()) {
         if (!is_VCHAR(val[cur]))
-            throw Err_parse();
+            throw err_parse();
         ++cur;
         if (is_size_fit(val, cur, 2) && is_WS(val[cur]) \
             && is_VCHAR(val[cur + 1]))
@@ -60,14 +60,14 @@ void Request::_insert_method(const std::string& method)
     else if (method == "DELETE")
         this->_method = DELETE;
     else
-        throw Err_parse();
+        throw err_parse();
 }
 
 void Request::_insert_uri(const std::string& uri)
 {
     if (!is_origin_form(uri) && !is_absolute_form(uri) \
         && !is_authority_form(uri) && !is_asterisk_form(uri))
-        throw Err_parse();
+        throw err_parse();
 }
 
 void Request::_insert_protocol(const std::string& protocol)
@@ -75,13 +75,13 @@ void Request::_insert_protocol(const std::string& protocol)
     size_t pos;
 
     if ((pos = protocol.find('/')) == std::string::npos)
-        throw Err_parse();
+        throw err_parse();
     if (protocol.substr(0, pos) != HTTP_NAME)
-        throw Err_parse();
+        throw err_parse();
     this->_protocol = protocol.substr(pos + 1);
     if (this->_protocol.size() != 3 || !isdigit(this->_protocol[0]) \
         || this->_protocol[1] != '.' || !isdigit(this->_protocol[2]))
-        throw Err_parse();
+        throw err_parse();
 }
 
 void Request::_insert_start(const std::string& start)
@@ -89,9 +89,9 @@ void Request::_insert_start(const std::string& start)
     size_t first, second;
 
     if ((first = start.find(SP)) == std::string::npos)
-        throw Err_parse();
+        throw err_parse();
     if ((second = start.find(SP, first + 1)) == std::string::npos)
-        throw Err_parse();
+        throw err_parse();
     this->_insert_method(start.substr(0, first));
     this->_insert_uri(start.substr(first + 1, second));
     this->_insert_protocol(start.substr(second + 1));
@@ -105,7 +105,7 @@ void Request::_insert_header(const std::string& header)
     while ((lineEnd = header.find(CRLF, lineStart)) != std::string::npos) {
         line = header.substr(lineStart, lineEnd);
         if ((sep = line.find(':')) == std::string::npos)
-            throw Err_parse();
+            throw err_parse();
         key = line.substr(0, sep);
         val = extract_val(line, sep);
         check_key(key);
@@ -125,9 +125,9 @@ void Request::parse(const std::string& inMsg)
     size_t first, second;
 
     if ((first = inMsg.find(CRLF)) == std::string::npos)
-        throw Err_parse();
+        throw err_parse();
     if ((second = inMsg.find(CRLF CRLF, first)) == std::string::npos)
-        throw Err_parse();
+        throw err_parse();
     this->_insert_start(inMsg.substr(0, first));
     this->_insert_header(inMsg.substr(first + 2, second + 2));
     this->_insert_body(inMsg.substr(second + 4));
