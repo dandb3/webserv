@@ -8,8 +8,8 @@ class server_manager
 {
 private:
     config _conf;
+    std::vector<fd_info> _fd_infov;
     event_handler _handler;
-    std::vector<fd_info> fd_infos;
 
     void sock_listen();
     void http_request();
@@ -29,6 +29,8 @@ public:
         SERV_DEFAULT,
         SERV_ERROR
     };
+
+	server_manager(const char* path);
 
     void serv_start();
 

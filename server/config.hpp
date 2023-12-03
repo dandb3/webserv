@@ -50,6 +50,8 @@ private:
     std::vector<server> _servers;
 
 public:
+	config(const char* path);
+
     inline const std::vector<server>& get_servers() const;
 
 };

@@ -1,17 +1,11 @@
 #include "event_handler.hpp"
 #include "Exception.hpp"
 
-event_handler::event_handler(const std::vector<fd_info>& fd_infov)
+event_handler::event_handler()
 : _getv(GETV_SIZE)
 {
-    struct kevent new_event;
-
     if ((_kq = kqueue()) == -1)
         throw err_syscall();
-    for (size_t fd = 3; fd < fd_infov.size(); ++fd) {
-        EV_SET(&new_event, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-        _setv.push_back(new_event);
-    }
 }
 
 void event_handler::event_catch()

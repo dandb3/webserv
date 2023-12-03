@@ -4,7 +4,6 @@
 # include <vector>
 # include <time.h>
 # include <sys/event.h>
-# include "config.hpp"
 # include "fd_info.hpp"
 
 # define GETV_SIZE 100
@@ -19,7 +18,7 @@ private:
     int _kq;
 
 public:
-    event_handler(const std::vector<fd_info>& fd_infov);
+    event_handler();
 
     void event_catch();
     void event_update(uintptr_t fd, short filter, u_short flags);

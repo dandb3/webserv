@@ -1,11 +1,12 @@
+#include <set>
 #include "server_manager.hpp"
 
 server_manager::server_manager(const char* path)
-: _conf(path), _handler(_conf), fd_infos(3)
+: _conf(path), _fd_infov(3), _handler()
 {
-    const std::vector<server>& servers = _conf.get_servers();
+    std::set<std::pair<std::string, unsigned short> > unavail_sock;
 
-    for (size_t i = 0; i < servers.size(); ++i) {
-        
+    for (size_t i = 0; i < _conf.get_servers().size(); ++i) {
+        _conf.get_servers()[i]
     }
 }
