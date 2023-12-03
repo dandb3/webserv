@@ -28,7 +28,7 @@ public:
         SERV_CGI_RES,
         SERV_DEFAULT,
         SERV_ERROR
-    }
+    };
 
     void serv_start();
 

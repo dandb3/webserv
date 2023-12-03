@@ -25,10 +25,11 @@ public:
 class fd_info
 {
 private:
-    http* _http;
+	const config& _conf;
     std::string _ip;
-    int _type;
     u_short _port;
+    http* _http;
+    int _type;
 
 public:
     fd_info();
@@ -42,17 +43,17 @@ public:
 
 inline int fd_info::get_type() const
 {
-    return this->_type;
+    return _type;
 }
 
 inline std::string fd_info::get_ip() const
 {
-    return this->_ip;
+    return _ip;
 }
 
 inline u_short fd_info::get_port() const
 {
-    return this->_port;
+    return _port;
 }
 
 #endif

@@ -11,6 +11,7 @@ struct cgi
 
 struct location
 {
+    std::vector<struct location> _locations;
     std::string error_page;
     std::string index;
     std::string root;
@@ -35,12 +36,12 @@ public:
 
 inline const std::string& server::get_ip() const
 {
-    return this->_ip;
+    return _ip;
 }
 
 inline u_short server::get_port() const
 {
-    return this->_port;
+    return _port;
 }
 
 class config
@@ -55,7 +56,7 @@ public:
 
 inline const std::vector<server>& config::get_servers() const
 {
-    return this->_servers;
+    return _servers;
 }
 
 #endif

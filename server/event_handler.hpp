@@ -5,6 +5,7 @@
 # include <time.h>
 # include <sys/event.h>
 # include "config.hpp"
+# include "fd_info.hpp"
 
 # define GETV_SIZE 100
 
@@ -30,12 +31,12 @@ public:
 
 inline int event_handler::get_nevents() const
 {
-    return this->_nevents;
+    return _nevents;
 }
 
 inline bool event_handler::event_err(int idx) const
 {
-    return (this->_getv.at(idx).flags & EV_ERROR);
+    return (_getv.at(idx).flags & EV_ERROR);
 }
 
 #endif
