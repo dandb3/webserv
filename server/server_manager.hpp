@@ -4,6 +4,8 @@
 # include <vector>
 # include "event_handler.hpp"
 
+# define INADDR_ANY_STR "0.0.0.0"
+
 class server_manager
 {
 private:
