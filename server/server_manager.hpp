@@ -8,7 +8,7 @@ class server_manager
 {
 private:
     config _conf;
-    std::vector<fd_info> _fd_infov;
+    std::vector<fd_info*> _fd_infov;
     event_handler _handler;
 
     void _add_elt(int fd, int type, http* http);
@@ -20,17 +20,6 @@ private:
     void _serv_error();
 
 public:
-    enum
-    {
-        SERV_LISTEN,
-        SERV_HTTP_REQ,
-        SERV_HTTP_RES,
-        SERV_CGI_REQ,
-        SERV_CGI_RES,
-        SERV_DEFAULT,
-        SERV_ERROR
-    };
-
 	server_manager(const char* path);
 
     void serv_start();

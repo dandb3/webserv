@@ -2,7 +2,7 @@
 #include "Exception.hpp"
 
 event_handler::event_handler()
-: _getv(GETV_SIZE)
+: _getv(GETV_SIZE), _typev(3, SERV_DEFAULT)
 {
     if ((_kq = kqueue()) == -1)
         throw err_syscall();
