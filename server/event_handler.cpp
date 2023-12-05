@@ -6,6 +6,8 @@ event_handler::event_handler()
 {
     if ((_kq = kqueue()) == -1)
         throw err_syscall();
+    _timeout.tv_nsec = 0;
+    _timeout.tv_sec = 0;
 }
 
 void event_handler::event_catch()

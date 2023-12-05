@@ -4,8 +4,6 @@
 # include <vector>
 # include "event_handler.hpp"
 
-# define INADDR_ANY_STR "0.0.0.0"
-
 class server_manager
 {
 private:
@@ -13,12 +11,13 @@ private:
     std::vector<fd_info> _fd_infov;
     event_handler _handler;
 
-    void sock_listen();
-    void http_request();
-    void http_response();
-    void cgi_request();
-    void cgi_response();
-    void serv_error();
+    void _add_elt(int fd, int type, http* http);
+    void _sock_listen();
+    void _http_request();
+    void _http_response();
+    void _cgi_request();
+    void _cgi_response();
+    void _serv_error();
 
 public:
     enum

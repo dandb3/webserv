@@ -7,7 +7,4 @@ fd_info::fd_info()
 
 fd_info::fd_info(int type, http* http)
 : _type(type), _http(http)
-{
-    if (_http == NULL)
-        _http = new http();
-}
+{}

@@ -25,16 +25,16 @@ class server
 private:
     std::vector<struct location> _locations;
     std::string _server_name;
-    std::string _ip;
+    uint32_t _ip;
     u_short _port;
 
 public:
-    inline const std::string& get_ip() const;
+    inline uint32_t get_ip() const;
     inline u_short get_port() const;
 
 };
 
-inline const std::string& server::get_ip() const
+inline uint32_t server::get_ip() const
 {
     return _ip;
 }
