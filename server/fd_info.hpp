@@ -6,7 +6,7 @@
 
 # define BUF_SIZE 1023
 
-class http
+class fd_info
 {
 private:
     static char _input_buf[BUF_SIZE + 1];
@@ -21,24 +21,5 @@ private:
 public:
 
 };
-
-class fd_info
-{
-private:
-    http* _http;
-    int _type;
-
-public:
-    fd_info();
-    fd_info(int type, http* http);
-
-    inline int get_type() const;
-
-};
-
-inline int fd_info::get_type() const
-{
-    return _type;
-}
 
 #endif

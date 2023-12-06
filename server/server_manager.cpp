@@ -6,7 +6,7 @@
 #include "Exception.hpp"
 
 server_manager::server_manager(const char* path)
-: _conf(path), _fd_infov(3, NULL), _handler()
+: _conf(path)
 {
     const std::vector<server>& serverv = _conf.get_servers();
     std::set<std::pair<uint32_t, unsigned short> > occupied;
@@ -25,24 +25,16 @@ server_manager::server_manager(const char* path)
     memset(&sock_addr, 0, sizeof(struct sockaddr_in));
     sock_addr.sin_family = AF_INET;
     for (it = occupied.begin(); it != occupied.end(); ++it) {
-        sock_addr.sin_addr.s_addr = htonl((*it).first);
-        sock_addr.sin_port = htons((*it).second);
+        sock_addr.sin_addr.s_addr = htonl(it->first);
+        sock_addr.sin_port = htons(it->second);
         if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
             throw err_syscall();
         if (bind(sockfd, reinterpret_cast<struct sockaddr*>(&sockaddr), sizeof(struct sockaddr_in)) == -1)
             throw err_syscall();
         _handler.add_type(sockfd, SERV_LISTEN);
         _handler.event_update(sockfd, EVFILT_READ, EV_ADD);
-        _add_elt(sockfd, NULL);
+        _fd_info_m.insert(std::make_pair(sockfd, NULL));
     }
-}
-
-void server_manager::_add_elt(int fd, int http* http)
-{
-    if (_fd_infov.size() > fd)
-        _fd_infov[fd] = fd_info(http);
-    else
-        _fd_infov.push_back(fd_info(http));
 }
 
 void server_manager::serv_start()
@@ -50,18 +42,24 @@ void server_manager::serv_start()
     while (true) {
         _handler.event_catch();
         for (int i = 0; i < _handler.get_nevents(); ++i) {
-            switch (_type(i)) {
+            switch (_handler.event_type(i)) {
             case SERV_LISTEN:
+                _sock_listen();
                 break;
             case SERV_HTTP_REQ:
+                _http_request();
                 break;
             case SERV_HTTP_RES:
+                _http_response();
                 break;
             case SERV_CGI_REQ:
+                _cgi_request();
                 break;
             case SERV_CGI_RES:
+                _cgi_response();
                 break;
             case SERV_ERROR:
+                _serv_error();
                 break;
             }
         }

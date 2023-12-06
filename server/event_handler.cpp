@@ -2,7 +2,7 @@
 #include "Exception.hpp"
 
 event_handler::event_handler()
-: _getv(GETV_SIZE), _typev(3, SERV_DEFAULT)
+: _get_v(GETV_SIZE)
 {
     if ((_kq = kqueue()) == -1)
         throw err_syscall();
@@ -12,10 +12,10 @@ event_handler::event_handler()
 
 void event_handler::event_catch()
 {
-    _nevents = kevent(_kq, (_setv.size() ? &_setv[0] : NULL),
-        _setv.size(), (_getv.size() ? &_getv[0] : NULL),
-        _getv.size(), &_timeout);
-    _setv.clear();
+    _nevents = kevent(_kq, (_set_v.size() ? &_set_v[0] : NULL),
+        _set_v.size(), (_get_v.size() ? &_get_v[0] : NULL),
+        _get_v.size(), &_timeout);
+    _set_v.clear();
 }
 
 void event_handler::event_update(uintptr_t fd, short filter, u_short flags)
@@ -23,5 +23,15 @@ void event_handler::event_update(uintptr_t fd, short filter, u_short flags)
     struct kevent new_event;
 
     EV_SET(&new_event, fd, filter, flags, 0, 0, NULL);
-    _setv.push_back(new_event);
+    _set_v.push_back(new_event);
+}
+
+char event_handler::event_type(int idx) const
+{
+    const struct kevent& kev = _get_v.at(idx);
+
+    if (kev.flags & EV_ERROR)
+        return SERV_ERROR;
+    else
+        return _type_m.at(kev.ident);
 }
