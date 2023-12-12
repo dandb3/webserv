@@ -14,10 +14,10 @@ private:
     event_handler _handler;
 
     void _sock_listen();
-    void _http_request();
-    void _http_response();
-    void _cgi_request();
-    void _cgi_response();
+    void _serv_http_request();
+    void _serv_http_response();
+    void _serv_cgi_request();
+    void _serv_cgi_response();
     void _serv_error();
 
 public:

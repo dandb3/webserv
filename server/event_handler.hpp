@@ -38,7 +38,10 @@ public:
     void event_update(uintptr_t fd, short filter, u_short flags);
 
     inline int get_nevents() const;
-    inline char event_type(int idx) const;
+    inline char ev_type(int idx) const;
+    inline uintptr_t ev_ident(int idx) const;
+    inline u_short ev_flags(int idx) const;
+    inline intptr_t ev_data(int idx) const;
     inline void add_type(int sockfd, char type);
     inline void rm_type(int sockfd);
 
@@ -47,6 +50,29 @@ public:
 inline int event_handler::get_nevents() const
 {
     return _nevents;
+}
+
+inline char event_handler::ev_type(int idx) const
+{
+    if (_get_v.at(idx).flags & EV_ERROR)
+        return SERV_ERROR;
+    else
+        return _type_m.at(_get_v.at(idx).ident);
+}
+
+inline uintptr_t event_handler::ev_ident(int idx) const
+{
+    return _get_v.at(idx).ident;
+}
+
+inline u_short event_handler::ev_flags(int idx) const
+{
+    return _get_v.at(idx).flags;
+}
+
+inline intptr_t event_handler::ev_data(int idx) const
+{
+    return _get_v.at(idx).data;
 }
 
 inline void event_handler::add_type(int sockfd, char type)

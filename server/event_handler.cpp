@@ -25,13 +25,3 @@ void event_handler::event_update(uintptr_t fd, short filter, u_short flags)
     EV_SET(&new_event, fd, filter, flags, 0, 0, NULL);
     _set_v.push_back(new_event);
 }
-
-char event_handler::event_type(int idx) const
-{
-    const struct kevent& kev = _get_v.at(idx);
-
-    if (kev.flags & EV_ERROR)
-        return SERV_ERROR;
-    else
-        return _type_m.at(kev.ident);
-}

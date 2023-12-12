@@ -37,29 +37,34 @@ server_manager::server_manager(const char* path)
     }
 }
 
+void server_manager::_sock_listen(int idx)
+{
+    
+}
+
 void server_manager::serv_start()
 {
     while (true) {
         _handler.event_catch();
         for (int i = 0; i < _handler.get_nevents(); ++i) {
-            switch (_handler.event_type(i)) {
+            switch (_handler.ev_type(i)) {
             case SERV_LISTEN:
-                _sock_listen();
+                _sock_listen(i);
                 break;
             case SERV_HTTP_REQ:
-                _http_request();
+                _serv_http_request(i);
                 break;
             case SERV_HTTP_RES:
-                _http_response();
+                _serv_http_response(i);
                 break;
             case SERV_CGI_REQ:
-                _cgi_request();
+                _serv_cgi_request(i);
                 break;
             case SERV_CGI_RES:
-                _cgi_response();
+                _serv_cgi_response(i);
                 break;
             case SERV_ERROR:
-                _serv_error();
+                _serv_error(i);
                 break;
             }
         }
