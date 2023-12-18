@@ -36,55 +36,38 @@ server_manager::server_manager(const char* path)
     }
 }
 
-void server_manager::_event_catch()
-{
-    _nevents = kevent(_kq, (_set_v.size() ? &_set_v[0] : NULL),
-        _set_v.size(), (_get_v.size() ? &_get_v[0] : NULL),
-        _get_v.size(), &_timeout);
-    if (_nevents == -1)
-        throw err_syscall();
-    _set_v.clear();
-}
-
-void server_manager::_event_update(uintptr_t fd, short filter, u_short flags)
-{
-    struct kevent new_event;
-
-    EV_SET(&new_event, fd, filter, flags, 0, 0, NULL);
-    _set_v.push_back(new_event);
-}
-
 void server_manager::_serv_listen(struct kevent& kev)
 {
     int new_sockfd;
 
     new_sockfd = accept(kev.ident, NULL, NULL);
-    _fd_info_m[new_sockfd] = fd_info(fd_info::SERV_HTTP_REQ, new info(new_sockfd));
-    _event_update(new_sockfd, EVFILT_READ, EV_ADD);
-}
-
-void server_manager::_serv_http_request(struct kevent& kev)
-{
-    
+    _handler.ev_update(new_sockfd, EVFILT_READ, EV_ADD);
 }
 
 void server_manager::operate()
 {
     while (true) {
-        _event_catch();
-        for (int i = 0; i < _nevents; ++i) {
-            switch(_event_type(_get_v[i].ident)) {
-            case fd_info::SERV_LISTEN:
+        _handler.ev_catch();
+        const std::vector<struct kevent>& eventlist = _handler.get_eventlist();
+        for (int i = 0; i < _handler.get_nevents(); ++i) {
+            switch (_checker.get_type(eventlist[i])) {
+            case type_checker::SERV_LISTEN:
+                _serv_listen(eventlist[i]);
                 break;
-            case fd_info::SERV_HTTP_REQ:
+            case type_checker::SERV_HTTP_REQ:
+                _serv_http_request(eventlist[i]);
                 break;
-            case fd_info::SERV_HTTP_RES:
+            case type_checker::SERV_HTTP_RES:
+                _serv_http_response(eventlist[i]);
                 break;
-            case fd_info::SERV_CGI_REQ:
+            case type_checker::SERV_CGI_REQ:
+                _serv_cgi_request(eventlist[i]);
                 break;
-            case fd_info::SERV_CGI_RES:
+            case type_checker::SERV_CGI_RES:
+                _serv_cgi_response(eventlist[i]);
                 break;
-            case fd_info::SERV_ERROR:
+            case type_checker::SERV_ERROR:
+                _serv_error(eventlist[i]);
                 break;
             }
         }
