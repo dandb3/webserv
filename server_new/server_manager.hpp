@@ -18,12 +18,12 @@ private:
     type_checker _checker;
     event_handler _handler;
 
-    void _serv_listen(struct kevent& kev);
-    void _serv_http_request(struct kevent& kev);
-    void _serv_http_response(struct kevent& kev);
-    void _serv_cgi_request(struct kevent& kev);
-    void _serv_cgi_response(struct kevent& kev);
-    void _serv_error(struct kevent& kev);
+    void _serv_listen(const struct kevent& kev);
+    void _serv_http_request(const struct kevent& kev);
+    void _serv_http_response(const struct kevent& kev);
+    void _serv_cgi_request(const struct kevent& kev);
+    void _serv_cgi_response(const struct kevent& kev);
+    void _serv_error(const struct kevent& kev);
 
 public:
     server_manager(const char* path);

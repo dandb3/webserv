@@ -36,12 +36,18 @@ server_manager::server_manager(const char* path)
     }
 }
 
-void server_manager::_serv_listen(struct kevent& kev)
+void server_manager::_serv_listen(const struct kevent& kev)
 {
     int new_sockfd;
 
     new_sockfd = accept(kev.ident, NULL, NULL);
     _handler.ev_update(new_sockfd, EVFILT_READ, EV_ADD);
+    _checker.insert_type(new_sockfd, type_checker::SERV_HTTP_REQ);
+}
+
+void server_manager::_serv_http_request(const struct kevent& kev)
+{
+    
 }
 
 void server_manager::operate()
