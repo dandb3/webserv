@@ -3,6 +3,6 @@
 
 # define FAILURE -1
 
-# define 
+# include "Exception.hpp"
 
 #endif

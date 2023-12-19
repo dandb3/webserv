@@ -1,6 +1,5 @@
 #include "webserv.hpp"
 #include "event_handler.hpp"
-#include "Exception.hpp"
 
 event_handler::event_handler()
 : _eventlist(EVENTLIST_SIZE)
