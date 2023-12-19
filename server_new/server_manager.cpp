@@ -42,7 +42,7 @@ void server_manager::_serv_listen(const struct kevent& kev)
 
     new_sockfd = accept(kev.ident, NULL, NULL);
     _handler.ev_update(new_sockfd, EVFILT_READ, EV_ADD);
-    _checker.insert_type(new_sockfd, type_checker::SERV_HTTP_REQ);
+    _type_m.insert(std::make_pair(new_sockfd, SERV_HTTP_REQ));
 }
 
 void server_manager::_serv_http_request(const struct kevent& kev)
@@ -56,23 +56,23 @@ void server_manager::operate()
         _handler.ev_catch();
         const std::vector<struct kevent>& eventlist = _handler.get_eventlist();
         for (int i = 0; i < _handler.get_nevents(); ++i) {
-            switch (_checker.get_type(eventlist[i])) {
-            case type_checker::SERV_LISTEN:
+            switch (_get_type(eventlist[i])) {
+            case SERV_LISTEN:
                 _serv_listen(eventlist[i]);
                 break;
-            case type_checker::SERV_HTTP_REQ:
+            case SERV_HTTP_REQ:
                 _serv_http_request(eventlist[i]);
                 break;
-            case type_checker::SERV_HTTP_RES:
+            case SERV_HTTP_RES:
                 _serv_http_response(eventlist[i]);
                 break;
-            case type_checker::SERV_CGI_REQ:
+            case SERV_CGI_REQ:
                 _serv_cgi_request(eventlist[i]);
                 break;
-            case type_checker::SERV_CGI_RES:
+            case SERV_CGI_RES:
                 _serv_cgi_response(eventlist[i]);
                 break;
-            case type_checker::SERV_ERROR:
+            case SERV_ERROR:
                 _serv_error(eventlist[i]);
                 break;
             }
