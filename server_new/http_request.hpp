@@ -18,20 +18,25 @@ private:
         {
             INPUT_REQUEST_LINE,
             INPUT_HEADER_FIELD,
+            INPUT_PARSE,
             INPUT_MESSAGE_BODY,
+            INPUT_FINISH,
         };
 
         static char _buf[BUF_SIZE + 1];
         int _fd;
         std::string _remain;
         size_t body_size;
-        char _mode;
+        char _status;
 
         std::vector<std::string> _http_request_v;
 
         void _read_request_line();
         void _read_header_field();
         void _read_message_body();
+
+        void _read_default_body();
+        void _read_chunked_body();
 
     public:
         parser(int fd);
