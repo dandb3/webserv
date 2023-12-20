@@ -16,19 +16,22 @@ private:
     private:
         enum
         {
-            INPUT_LINE = 0,
-            INPUT_BODY,
+            INPUT_REQUEST_LINE,
+            INPUT_HEADER_FIELD,
+            INPUT_MESSAGE_BODY,
         };
 
         static char _buf[BUF_SIZE + 1];
         int _fd;
         std::string _remain;
-        bool _mode;
+        size_t body_size;
+        char _mode;
 
-        std::vector<std::string> _http_request_line_v;
+        std::vector<std::string> _http_request_v;
 
-        void _read_line();
-        void _read_body();
+        void _read_request_line();
+        void _read_header_field();
+        void _read_message_body();
 
     public:
         parser(int fd);
