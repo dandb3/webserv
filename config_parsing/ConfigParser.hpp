@@ -1,24 +1,33 @@
 #ifndef CONFIGPARSER_HPP
 #define CONFIGPARSER_HPP
 
-#define WHITESPACE " \t\n\r\f\v"
 #include "utils/FileReader.hpp"
+#include "ServerConfig.hpp"
+#include "LocationConfig.hpp"
 #include "Config.hpp"
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
 
+class Config;
+
+#define WHITESPACE " \t\n\r\f\v"
+#define DELIMITER " \t\n\r\f\v;"
+
 class ConfigParser
 {
 private:
-public:
-    ConfigParser();
-    ConfigParser(const ConfigParser &ref);
-    ~ConfigParser();
+    static std::string getWord(std::string const &file_content, size_t &i, std::string const &delimiter);
 
-    ConfigParser &operator=(const ConfigParser &ref);
-    void parseConfig(std::string const &config_path, Config &config);
+    static void parseServer(std::string const &file_content, size_t &i, Config &config);
+
+    static void parseLocation(std::string const &file_content, size_t &i, ServerConfig &server_config);
+
+    static void parseTypes(std::string const &file_path, Config &config);
+
+public:
+    static void parse(std::string const &config_path, Config &config);
 };
 
 #endif

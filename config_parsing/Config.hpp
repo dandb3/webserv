@@ -2,9 +2,16 @@
 #define CONFIG_HPP
 
 #include <map>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <fstream>
 #include "ServerConfig.hpp"
+#include "ConfigParser.hpp"
 
-typedef std::map<std::string, std::vector<std::string>> t_directives;
+// class ConfigParser;
+
+typedef std::map<std::string, std::vector<std::string>> t_directives; // map<simple directive>
 
 // singleton
 class Config
@@ -25,7 +32,7 @@ private:
 
     Config &operator=(const Config &ref); // x
 
-    static Config _instance;
+    // static Config _instance;
 
 public:
     // void parseConfig(std::string const &config_path);
@@ -37,6 +44,7 @@ public:
     std::vector<std::string> &getVariable(std::string &key);
 
     std::vector<ServerConfig> &getServerConfig();
+
     t_directives &getMimeTypes();
 
     // setter
@@ -44,6 +52,7 @@ public:
     void setVariable(std::string &key, std::vector<std::string> &value);
 
     void setServerConfig(std::vector<ServerConfig> &server_v);
+    void setServer(ServerConfig &server);
     void setMimeTypes(t_directives &mime_types);
 };
 

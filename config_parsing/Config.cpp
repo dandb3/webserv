@@ -6,11 +6,17 @@ std::string Config::DEFAUT_PATH = "./config/default.conf";
 
 Config::Config() {
     // parseConfig(DEFAUT_PATH);
+    std::cout << "default_path: " << DEFAUT_PATH << std::endl;
+    ConfigParser::parse(DEFAUT_PATH, *this);
+    std::cout << "parse finish" << std::endl;
 }
 
 
 Config::Config(std::string const& config_path) {
     // parseConfig(config_path);
+    std::cout << "config_path: " << config_path << std::endl;
+    ConfigParser::parse(config_path, *this);
+    std::cout << "parse finish" << std::endl;
 }
 
 Config::~Config() {
@@ -18,19 +24,19 @@ Config::~Config() {
 
 // 구현 x
 Config::Config(Config const& ref) {}
-Config& Config::operator=(Config const& ref) {}
+Config& Config::operator=(Config const& ref) {
+    return *this;
+}
 
 // getInstace
 Config& Config::getInstance() {
-    if (&Config::_instance == NULL)
-        Config::_instance = Config();
-    return Config::_instance;
+    static Config _instance(DEFAUT_PATH);
+    return _instance;
 }
 
 Config& Config::getInstance(std::string const& config_path) {
-    if (&Config::_instance == NULL)
-        Config::_instance = Config(config_path);
-    return Config::_instance;
+    static Config _instance(config_path);
+    return _instance;
 }
 
 // getter
@@ -61,6 +67,11 @@ void Config::setVariable(std::string& key, std::vector<std::string>& value) {
 
 void Config::setServerConfig(std::vector<ServerConfig>& server_v) {
     this->_server_v = server_v;
+}
+
+void Config::setServer(ServerConfig& server) {
+    // 똑같은 서버가 있는지 확인 과정 필요
+    this->_server_v.push_back(server);
 }
 
 void Config::setMimeTypes(t_directives& mime_types) {
