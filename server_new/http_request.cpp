@@ -1,28 +1,29 @@
 #include <unistd.h>
 #include "http_request.hpp"
 
-http_request::parser::parser(int fd, std::string& r, std::multimap<std::string, std::string>& h, std::string& m)
-: _fd(fd), _status(INPUT_REQUEST_LINE), _request_line(r), _header_fields(h), _message_body(m)
+http_request::http_request(int fd)
+: _fd(fd), _status(INPUT_REQUEST_LINE)
 {}
 
-void http_request::parser::_input_request_line()
+void http_request::_input_request_line()
 {
     size_t start, end;
 
     start = 0;
     if ((end = _remain.find(CRLF, start)) != std::string::npos) {
-        _http_request_v.push_back(_remain.substr(start, end));
+        _line_v.push_back(_remain.substr(start, end));
         _remain = _remain.substr(end + 2);
         _status = PARSE_REQUEST_LINE;
     }
 }
 
-void http_request::parser::_parse_request_line()
+void http_request::_parse_request_line()
 {
+    _line_v.clear();
     _status = INPUT_HEADER_FIELD;
 }
 
-void http_request::parser::_input_header_field()
+void http_request::_input_header_field()
 {
     size_t start, end;
     bool crlf_found = false;
@@ -30,10 +31,10 @@ void http_request::parser::_input_header_field()
     start = 0;
     while ((end = _remain.find(CRLF, start)) != std::string::npos) {
         crlf_found = true;
-        _http_request_v.push_back(_remain.substr(start, end));
+        _line_v.push_back(_remain.substr(start, end));
         start = end + 2;
         // if CRLF CRLF comes:
-        if (_http_request_v.rbegin()->empty()) {
+        if (_line_v.rbegin()->empty()) {
             _status = PARSE_HEADER_FIELD;
             break;
         }
@@ -42,17 +43,18 @@ void http_request::parser::_input_header_field()
         _remain = _remain.substr(end + 2);
 }
 
-void http_request::parser::_parse_header_field()
+void http_request::_parse_header_field()
 {
+    _line_v.clear();
     _status = INPUT_MESSAGE_BODY;
 }
 
-void http_request::parser::_input_message_body()
+void http_request::_input_message_body()
 {
 
 }
 
-void http_request::parser::input_parse()
+void http_request::read_input()
 {
     ssize_t size;
 
