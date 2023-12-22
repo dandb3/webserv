@@ -32,7 +32,6 @@ void ConfigParser::parse(std::string const& config_path, Config& config) {
     std::string file_content = FileReader::read_file(config_path); // 실패 시 throw
     std::cout << "finish read config file" << std::endl;
     size_t i = 0;
-    // std::string delimiter = strcat(WHITESPACE, ";");
     std::string key = getWord(file_content, i, DELIMITER);
     while (i != std::string::npos && i < file_content.size()) {
         if (key == "server") {
@@ -57,10 +56,11 @@ void ConfigParser::parse(std::string const& config_path, Config& config) {
 
 void ConfigParser::parseServer(std::string const& file_content, size_t& i, Config& config) {
     ServerConfig server_config;
-    // std::string delimiter = strcat(WHITESPACE, "{");
     if (getWord(file_content, i, DELIMITER) != "{")
         throw std::runtime_error("config 파일 파싱 중 에러 발생");
     std::string key = getWord(file_content, i, DELIMITER);
+    if (i == std::string::npos)
+        throw std::runtime_error("config 파일 파싱 중 에러 발생");
     while (key != "}") {
         if (key == "location") {
             parseLocation(file_content, i, server_config);
@@ -69,6 +69,8 @@ void ConfigParser::parseServer(std::string const& file_content, size_t& i, Confi
             std::vector<std::string> value;
             while (file_content[i] != ';') {
                 std::string word = getWord(file_content, i, DELIMITER);
+                if (i == std::string::npos)
+                    throw std::runtime_error("config 파일 파싱 중 에러 발생");
                 value.push_back(word);
             }
             server_config.setVariable(key, value);
@@ -93,6 +95,8 @@ void ConfigParser::parseLocation(std::string const& file_content, size_t& i, Ser
     }
     location_config.setPath(argv);
     std::string key = getWord(file_content, i, DELIMITER);
+    if (i == std::string::npos)
+        throw std::runtime_error("config 파일 파싱 중 에러 발생");
     while (key != "}") {
         if (key == "location") {
             parseLocation(file_content, i, server_config);
@@ -101,6 +105,8 @@ void ConfigParser::parseLocation(std::string const& file_content, size_t& i, Ser
             std::vector<std::string> value;
             while (file_content[i] != ';') {
                 std::string word = getWord(file_content, i, DELIMITER);
+                if (i == std::string::npos)
+                    throw std::runtime_error("config 파일 파싱 중 에러 발생");
                 value.push_back(word);
             }
             location_config.setVariable(key, value);
@@ -121,6 +127,8 @@ void ConfigParser::parseTypes(std::string const& file_path, Config& config) {
         std::vector<std::string> value;
         while (file_content[i] != ';') {
             std::string word = getWord(file_content, i, DELIMITER);
+            if (i == std::string::npos)
+                throw std::runtime_error("config 파일 파싱 중 에러 발생");
             value.push_back(word);
         }
         mime_types[key] = value;

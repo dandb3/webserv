@@ -2,12 +2,12 @@
 
 #include "Config.hpp"
 
-std::string Config::DEFAUT_PATH = "./config/default.conf";
+std::string Config::DEFAULT_PATH = "./config/default.conf";
 
 Config::Config() {
-    // parseConfig(DEFAUT_PATH);
-    std::cout << "default_path: " << DEFAUT_PATH << std::endl;
-    ConfigParser::parse(DEFAUT_PATH, *this);
+    // parseConfig(DEFAULT_PATH);
+    std::cout << "default_path: " << DEFAULT_PATH << std::endl;
+    ConfigParser::parse(DEFAULT_PATH, *this);
     std::cout << "parse finish" << std::endl;
 }
 
@@ -30,7 +30,7 @@ Config& Config::operator=(Config const& ref) {
 
 // getInstace
 Config& Config::getInstance() {
-    static Config _instance(DEFAUT_PATH);
+    static Config _instance(DEFAULT_PATH);
     return _instance;
 }
 

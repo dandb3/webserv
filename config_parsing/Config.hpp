@@ -22,7 +22,7 @@ private:
     std::vector<ServerConfig> _server_v;
     t_directives _mime_types; // 나중에 어떻게 사용하는지 보고 자료구조 변경할 듯
 
-    static std::string DEFAUT_PATH;
+    static std::string DEFAULT_PATH;
 
     /* private functions */
     Config();
