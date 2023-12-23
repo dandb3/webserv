@@ -70,6 +70,8 @@
 		"random": "cpp",
 		"fstream": "cpp",
 		"cinttypes": "cpp",
-		"iostream": "cpp"
+		"iostream": "cpp",
+		"iomanip": "cpp",
+		"stack": "cpp"
 	}
 }
