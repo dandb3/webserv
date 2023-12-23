@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <algorithm>
 #include "http_request.hpp"
 
 http_request::http_request(int fd)
@@ -40,7 +41,7 @@ void http_request::_input_header_field()
         }
     }
     if (crlf_found)
-        _remain = _remain.substr(end + 2);
+        _remain = _remain.substr(start);
 }
 
 void http_request::_parse_header_field()
@@ -54,17 +55,20 @@ void http_request::_input_message_body()
 
 }
 
-void http_request::read_input()
+void http_request::read_input(intptr_t size, bool eof)
 {
-    ssize_t size;
+    ssize_t read_len;
 
-    size = read(_fd, _buf, BUF_SIZE);
-    if (size == FAILURE)
-        throw err_syscall();
-    else if (size == 0) {
-        
+    while (size > 0) {
+        read_len = read(_fd, _buf, std::min(size, static_cast<intptr_t>(BUF_SIZE)));
+        // 길이만큼 받아야 한다.. 구현중.
     }
-    _buf[size] = '\0';
+    if (read_len == FAILURE)
+        throw err_syscall();
+    else if (read_len == 0) { // kevent.flags 의 EV_EOF와 kevent.data를 이용할 것인가?? 고려해야 함.
+        // Not implemented,,
+    }
+    _buf[read_len] = '\0';
     _remain.append(_buf);
 
     if (_status == INPUT_REQUEST_LINE)

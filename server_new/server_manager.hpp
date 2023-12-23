@@ -7,6 +7,9 @@
 # include <sys/event.h>
 # include "event_handler.hpp"
 # include "http_request.hpp"
+# include "http_response.hpp"
+# include "cgi_request.hpp"
+# include "cgi_response.hpp"
 # include "webserv.hpp"
 
 # define GETV_SIZE 10
@@ -14,23 +17,33 @@
 class server_manager
 {
 private:
-    enum
+    enum socket_type
     {
-        SERV_LISTEN,
-        SERV_HTTP_REQ,
-        SERV_HTTP_RES,
-        SERV_CGI_REQ,
-        SERV_CGI_RES,
-        SERV_ERROR,
+		SOCKET_LISTEN,
+		SOCKET_HTTP,
+		SOCKET_CGI,
     };
+
+	enum event_type
+	{
+		EVENT_LISTEN,
+		EVENT_HTTP_REQ,
+		EVENT_HTTP_RES,
+		EVENT_CGI_REQ,
+		EVENT_CGI_RES,
+		EVENT_ERROR,
+	};
 
     config _conf;
     std::map<int, char> _type_m;
     std::map<int, http_request> _http_request_m;
+	std::map<int, http_response> _http_response_m;
+	std::map<int, cgi_request> _cgi_request_m;
+	std::map<int, cgi_response> _cgi_response_m;
     event_handler _handler;
 
 //  get type corresponding to fd value
-    inline int _get_type(const struct kevent& kev);
+    int _get_type(const struct kevent& kev);
 
 //  main functions of this class
     void _serv_listen(const struct kevent& kev);
@@ -46,13 +59,5 @@ public:
     void operate();
 
 };
-
-inline int server_manager::_get_type(const struct kevent& kev)
-{
-    if (kev.flags & EV_ERROR)
-        return SERV_ERROR;
-    else
-        return _type_m[kev.ident];
-}
 
 #endif

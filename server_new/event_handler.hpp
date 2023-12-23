@@ -19,20 +19,20 @@ private:
 public:
     event_handler();
 
-    inline int get_nevents();
-    inline const std::vector<struct kevent>& get_eventlist();
+    inline int get_nevents() const;
+    inline const std::vector<struct kevent>& get_eventlist() const;
 
     void ev_catch();
     void ev_update(int ident, short filter, u_short flags);
 
 };
 
-inline int event_handler::get_nevents()
+inline int event_handler::get_nevents() const
 {
     return _nevents;
 }
 
-inline const std::vector<struct kevent>& event_handler::get_eventlist()
+inline const std::vector<struct kevent>& event_handler::get_eventlist() const
 {
     return _eventlist;
 }

@@ -36,13 +36,37 @@ server_manager::server_manager(const char* path)
     }
 }
 
+int server_manager::_get_type(const struct kevent& kev)
+{
+    if (kev.flags & EV_ERROR)
+        return EVENT_ERROR;
+	switch (_type_m[kev.ident]) {
+	case SOCKET_LISTEN:
+		return EVENT_LISTEN;
+	case SOCKET_HTTP:
+		if (kev.flags & EVFILT_READ)
+			return EVENT_HTTP_REQ;
+		else if (kev.flags & EVFILT_WRITE)
+			return EVENT_HTTP_RES;
+		else
+			return EVENT_ERROR;
+	case SOCKET_CGI:
+		if (kev.flags & EVFILT_READ)
+			return EVENT_CGI_REQ;
+		else if (kev.flags & EVFILT_WRITE)
+			return EVENT_CGI_RES;
+		else
+			return EVENT_ERROR;
+	}
+}
+
 void server_manager::_serv_listen(const struct kevent& kev)
 {
     int new_sockfd;
 
     new_sockfd = accept(kev.ident, NULL, NULL);
     _handler.ev_update(new_sockfd, EVFILT_READ, EV_ADD);
-    _type_m.insert(std::make_pair(new_sockfd, SERV_HTTP_REQ));
+    _type_m.insert(std::make_pair(new_sockfd, SOCKET_HTTP));
     _http_request_m.insert(std::make_pair(new_sockfd, http_request(new_sockfd)));
 }
 
@@ -58,22 +82,22 @@ void server_manager::operate()
         const std::vector<struct kevent>& eventlist = _handler.get_eventlist();
         for (int i = 0; i < _handler.get_nevents(); ++i) {
             switch (_get_type(eventlist[i])) {
-            case SERV_LISTEN:
+            case EVENT_LISTEN:
                 _serv_listen(eventlist[i]);
                 break;
-            case SERV_HTTP_REQ:
+            case EVENT_HTTP_REQ:
                 _serv_http_request(eventlist[i]);
                 break;
-            case SERV_HTTP_RES:
+            case EVENT_HTTP_RES:
                 _serv_http_response(eventlist[i]);
                 break;
-            case SERV_CGI_REQ:
+            case EVENT_CGI_REQ:
                 _serv_cgi_request(eventlist[i]);
                 break;
-            case SERV_CGI_RES:
+            case EVENT_CGI_RES:
                 _serv_cgi_response(eventlist[i]);
                 break;
-            case SERV_ERROR:
+            case EVENT_ERROR:
                 _serv_error(eventlist[i]);
                 break;
             }

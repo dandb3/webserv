@@ -14,8 +14,8 @@ private:
     enum
     {
         INPUT_REQUEST_LINE,
-        INPUT_HEADER_FIELD,
         PARSE_REQUEST_LINE,
+        INPUT_HEADER_FIELD,
         PARSE_HEADER_FIELD,
         INPUT_MESSAGE_BODY,
         INPUT_FINISH,
@@ -45,25 +45,25 @@ private:
 public:
     http_request(int fd);
 
-    void read_input();
+    void read_input(intptr_t size, bool eof);
 
-    inline const std::string& get_request_line();
-    inline const std::multimap<std::string, std::string>& get_header_fields();
-    inline const std::string& get_message_body();
+    inline const std::string& get_request_line() const;
+    inline const std::multimap<std::string, std::string>& get_header_fields() const;
+    inline const std::string& get_message_body() const;
 
 };
 
-inline const std::string& http_request::get_request_line()
+inline const std::string& http_request::get_request_line() const
 {
     return _request_line;
 }
 
-inline const std::multimap<std::string, std::string>& http_request::get_header_fields()
+inline const std::multimap<std::string, std::string>& http_request::get_header_fields() const
 {
     return _header_fields;
 }
 
-inline const std::string& http_request::get_message_body()
+inline const std::string& http_request::get_message_body() const
 {
     return _message_body;
 }
