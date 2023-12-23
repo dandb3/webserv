@@ -43,11 +43,12 @@ void server_manager::_serv_listen(const struct kevent& kev)
     new_sockfd = accept(kev.ident, NULL, NULL);
     _handler.ev_update(new_sockfd, EVFILT_READ, EV_ADD);
     _type_m.insert(std::make_pair(new_sockfd, SERV_HTTP_REQ));
+    _http_request_m.insert(std::make_pair(new_sockfd, http_request(new_sockfd)));
 }
 
 void server_manager::_serv_http_request(const struct kevent& kev)
 {
-    
+    _http_request_m[kev.ident].read_input();
 }
 
 void server_manager::operate()

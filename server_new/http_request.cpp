@@ -66,7 +66,7 @@ void http_request::read_input()
     }
     _buf[size] = '\0';
     _remain.append(_buf);
-    
+
     if (_status == INPUT_REQUEST_LINE)
         _input_request_line();
     if (_status == PARSE_REQUEST_LINE)
