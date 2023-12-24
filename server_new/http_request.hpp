@@ -19,7 +19,8 @@ private:
         std::pair<short, short> _version;
 
     public:
-        enum method {
+        enum method
+        {
             GET,
             HEAD,
             POST,
@@ -74,7 +75,7 @@ public:
 
     void read_input();
 
-    inline const std::string &get_request_line();
+    inline const http_request::request_line &get_request_line();
     inline const std::multimap<std::string, std::string> &get_header_fields();
     inline const std::string &get_message_body();
 };

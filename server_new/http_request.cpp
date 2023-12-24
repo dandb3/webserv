@@ -60,7 +60,6 @@ bool http_request::_parse_request_line()
     return SUCCESS;
 }
 
-
 void http_request::_input_header_field()
 {
     size_t start, end;
@@ -98,6 +97,20 @@ bool http_request::_parse_header_field()
 }
 
 void http_request::_input_message_body()
+{
+    _message_body = _remain;
+    if (_header_fields.find("Content-Length") != _header_fields.end())
+        _input_default_body();
+    else
+        _input_chunked_body();
+}
+
+void http_request::_input_default_body()
+{
+
+}
+
+void http_request::_input_chunked_body()
 {
 
 }
