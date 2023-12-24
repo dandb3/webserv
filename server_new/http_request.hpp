@@ -14,37 +14,32 @@ private:
     class request_line
     {
     private:
-        enum method
-        {
+        short _method;
+        std::string _uri;
+        std::pair<short, short> _version;
+
+    public:
+        enum method {
             GET,
             HEAD,
             POST,
             DELETE
         };
 
-        short _method;
-        std::string _uri;
-        std::string _version;
+        request_line(short method, std::string uri, std::pair<short, short> version);
+        request_line &operator=(const request_line &ref);
 
-    public:
-        bool parse(std::string line);
+        void http_request::request_line::set_method(short method);
+        void http_request::request_line::set_uri(std::string _uri);
+        void http_request::request_line::set_version(std::pair<short, short> version);
 
         int get_method() const;
         std::string get_uri() const;
-        std::string get_version() const;
+        std::pair<short, short> get_version() const;
     };
 
-    class Header
+    enum
     {
-    private:
-        std::multimap<std::string, std::string> elements;
-
-    public:
-        bool parse();
-        std::string get_element(std::string);
-    }
-
-    enum {
         INPUT_REQUEST_LINE,
         INPUT_HEADER_FIELD,
         PARSE_REQUEST_LINE,
@@ -63,11 +58,11 @@ private:
     std::multimap<std::string, std::string> _header_fields;
     std::string _message_body;
 
-    void _input_request_line();
-    void _parse_request_line();
+    bool _input_request_line();
+    bool _parse_request_line();
 
     void _input_header_field();
-    void _parse_header_field();
+    bool _parse_header_field();
 
     void _input_message_body();
 
@@ -84,7 +79,7 @@ public:
     inline const std::string &get_message_body();
 };
 
-inline const std::string &http_request::get_request_line()
+inline const http_request::request_line &http_request::get_request_line()
 {
     return _request_line;
 }

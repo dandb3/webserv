@@ -2,6 +2,7 @@
 #define WEBSERV_HPP
 
 #define FAILURE -1
+#define SUCCESS 0
 
 #define CRLF "\r\n"
 

@@ -1,43 +1,29 @@
 #include <sstream>
 #include "http_request.hpp"
 
-bool http_request::request_line::parse(std::string line)
+request_line::request_line(short method, std::string uri, std::pair<short, short> version) : _method(method), _uri(uri), _version(version) {}
+
+request_line &request_line::operator=(const request_line &ref)
 {
-    std::istringstream iss(line);
-    std::vector<std::string> tokens;
+    _method = ref.get_method();
+    _uri = ref.get_uri();
+    _version = ref.get_version();
+    return *this;
+}
 
-    std::string token;
-    while (iss >> token) {
-        tokens.push_back(token);
-    }
+void http_request::request_line::set_method(short method)
+{
+    _method = method;
+}
 
-    if (tokens.size() != 3)
-        return false;
+void http_request::request_line::set_uri(std::string _uri)
+{
+    _uri = uri;
+}
 
-    // decide method
-    token = tokens[0];
-    if (token == "GET")
-        _method = GET;
-    else if (token == "HEAD")
-        _method = HEAD;
-    else if (token == "POST")
-        _method = POST;
-    else if (token == "DELETE")
-        _method = DELETE;
-    else
-        return false;
-
-    // decide uri
-    _uri = tokens[1];
-
-    // decide HTTP version
-    token = tokens[2];
-    if (token.substr(0, 5) != "HTTP/")
-        return false;
-
-    _version = token.substr(5, 3);
-
-    return true;
+void http_request::request_line::set_version(std::pair<short, short> version)
+{
+    _version = version;
 }
 
 int http_request::request_line::get_method() const
