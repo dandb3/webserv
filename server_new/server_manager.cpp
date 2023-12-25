@@ -2,15 +2,21 @@
 #include <string.h>
 #include <netinet/in.h>
 #include "server_manager.hpp"
+#include "net_config.hpp"
 
-server_manager::server_manager(const char* path)
-: _conf(path), _get_v(GETV_SIZE)
+server_manager::server_manager()
+: _conf(Config::getInstance())
 {
+    const std::vector<ServerConfig>& server_v = _conf.getServerConfig();
+    std::set<std::pair<uint32_t, unsigned short> > sockets;
+
+    for (size_t i = 0; i < server_v.size(); ++i) {
+
+    }
+
     const std::vector<server>& server_v = _conf.get_servers();
     std::set<std::pair<uint32_t, unsigned short> > occupied;
 
-    if ((_kq = kqueue()) == -1)
-        throw err_syscall();
     for (size_t i = 0; i < server_v.size(); ++i)
         if (server_v[i].get_ip() == INADDR_ANY)
             occupied.insert(std::make_pair(INADDR_ANY, server_v[i].get_port()));
@@ -74,11 +80,33 @@ void server_manager::_serv_http_request(const struct kevent& kev)
 {
     const http_request& hreq = _http_request_m[kev.ident];
 
-    hreq.read_input();
-    if (hreq.parsed()) {
+    hreq.recv_request(kev.data);
+    hreq.parse_request();
 
+    // Keep-Alive: change if -> while
+    if (hreq.parsed()) {
+        net_config nconf(hreq, _conf);
+        /**
+         * select server and location (by listen, Host, uri)
+         * if (cgi_request) -> make_cgi_request();
+         * else if (http_response) -> make_http_response();
+        */
         hreq.reset_parsed();
     }
+}
+
+void server_manager::_serv_http_response(struct kevent& kev)
+{
+    const http_response& hres = _http_response_m[kev.ident];
+
+    hres.send_response(static_cast<size_t>(kev.data));
+    if (!hres.send_all())
+        return;
+
+    _handler.ev_update(kev.ident, EVFILT_WRITE, EV_DELETE);
+    http_request& hreq = _http_request_m[kev.ident];
+
+    // start parsing next http_request
 }
 
 void server_manager::operate()

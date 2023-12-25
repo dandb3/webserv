@@ -8,14 +8,22 @@
 class http_response
 {
 private:
-	// response_line;
-	// header_field;
-	// message_body;
+	int _fd;
+	std::string _response;
+	size_t _pos;
 
 public:
-	http_response(const http_request& hreq);
-	http_response(const cgi_response& cres);
+	http_response(int fd, const http_request& hreq);
+	http_response(int fd, const cgi_response& cres);
+
+	inline bool send_all() const;
+	void send_response(size_t size);
 
 };
+
+inline bool http_response::send_all() const
+{
+	return (_response.size() == _pos);
+}
 
 #endif

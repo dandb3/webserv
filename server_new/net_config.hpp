@@ -7,7 +7,7 @@ private:
 
 
 public:
-    net_config(const ServerConfig& sconf, const LocationConfig& lconf);
+    
 
 };
 

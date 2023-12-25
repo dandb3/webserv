@@ -8,11 +8,10 @@ http_request::http_request(int fd)
 
 void http_request::_input_request_line()
 {
-    size_t start, end;
+    size_t end;
 
-    start = 0;
-    if ((end = _remain.find(CRLF, start)) != std::string::npos) {
-        _line_v.push_back(_remain.substr(start, end));
+    if ((end = _remain.find(CRLF, 0)) != std::string::npos) {
+        _line_v.push_back(_remain.substr(0, end));
         _remain = _remain.substr(end + 2);
         _status = PARSE_REQUEST_LINE;
     }
@@ -56,22 +55,21 @@ void http_request::_input_message_body()
     _status = INPUT_REQUEST_LINE;
 }
 
-void http_request::read_input(intptr_t size, bool eof)
+void http_request::recv_request(intptr_t size)
 {
     ssize_t read_len;
 
     while (size > 0) {
-        read_len = read(_fd, _buf, std::min(size, static_cast<intptr_t>(BUF_SIZE)));
-        // 길이만큼 받아야 한다.. 구현중.
+        if ((read_len = read(_fd, _buf, std::min(size, static_cast<intptr_t>(BUF_SIZE)))) == FAILURE)
+            throw err_syscall();
+        size -= read_len;
+        _buf[read_len] = '\0';
+        _remain.append(_buf);
     }
-    if (read_len == FAILURE)
-        throw err_syscall();
-    else if (read_len == 0) { // kevent.flags 의 EV_EOF와 kevent.data를 이용할 것인가?? 고려해야 함.
-        // Not implemented,,
-    }
-    _buf[read_len] = '\0';
-    _remain.append(_buf);
+}
 
+void http_request::parse_request()
+{
     if (_status == INPUT_REQUEST_LINE)
         _input_request_line();
     if (_status == PARSE_REQUEST_LINE)

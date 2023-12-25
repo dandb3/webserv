@@ -9,7 +9,7 @@ private:
 	std::string _response_msg;
 
 public:
-	void read_input();
+	void recv_request();
 
 	inline const std::string& get_response_msg() const;
 

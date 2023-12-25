@@ -18,6 +18,7 @@ private:
         INPUT_HEADER_FIELD,
         PARSE_HEADER_FIELD,
         INPUT_MESSAGE_BODY,
+        PARSE_FINISHED,
     };
 
     static char _buf[BUF_SIZE + 1];
@@ -40,14 +41,16 @@ private:
     void _parse_header_field();
 
     void _input_message_body();
-
+/*
     void _input_default_body();
     void _input_chunked_body();
+*/
 
 public:
     http_request(int fd);
 
-    void read_input(intptr_t size, bool eof);
+    void recv_request(intptr_t size);
+    void parse_request();
 
     inline bool parsed() const;
     inline void reset_parsed();

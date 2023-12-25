@@ -5,6 +5,7 @@
 # include <vector>
 # include <sys/socket.h>
 # include <sys/event.h>
+# include "Config.hpp"
 # include "event_handler.hpp"
 # include "http_request.hpp"
 # include "http_response.hpp"
@@ -34,7 +35,7 @@ private:
 		EVENT_ERROR,
 	};
 
-    Config _conf;
+    const Config& _conf;
     std::map<int, char> _type_m;
     std::map<int, http_request> _http_request_m;
 	std::map<int, http_response> _http_response_m;
@@ -54,7 +55,7 @@ private:
     void _serv_error(const struct kevent& kev);
 
 public:
-    server_manager(const char* path);
+    server_manager();
 
     void operate();
 
