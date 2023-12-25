@@ -72,7 +72,13 @@ void server_manager::_serv_listen(const struct kevent& kev)
 
 void server_manager::_serv_http_request(const struct kevent& kev)
 {
-    _http_request_m[kev.ident].read_input();
+    const http_request& hreq = _http_request_m[kev.ident];
+
+    hreq.read_input();
+    if (hreq.parsed()) {
+
+        hreq.reset_parsed();
+    }
 }
 
 void server_manager::operate()

@@ -18,18 +18,20 @@ private:
         INPUT_HEADER_FIELD,
         PARSE_HEADER_FIELD,
         INPUT_MESSAGE_BODY,
-        INPUT_FINISH,
     };
 
     static char _buf[BUF_SIZE + 1];
     int _fd;
     std::string _remain;
     char _status;
+    bool _parsed;
 
     std::vector<std::string> _line_v;
+/*  --- editing by sunwoo --- */
     std::string _request_line;
     std::multimap<std::string, std::string> _header_fields;
     std::string _message_body;
+/* -------------------------- */
 
     void _input_request_line();
     void _parse_request_line();
@@ -47,11 +49,24 @@ public:
 
     void read_input(intptr_t size, bool eof);
 
+    inline bool parsed() const;
+    inline void reset_parsed();
+
     inline const std::string& get_request_line() const;
     inline const std::multimap<std::string, std::string>& get_header_fields() const;
     inline const std::string& get_message_body() const;
 
 };
+
+inline bool http_request::parsed() const
+{
+    return _parsed;
+}
+
+inline void http_request::reset_parsed()
+{
+    _parsed = false;
+}
 
 inline const std::string& http_request::get_request_line() const
 {

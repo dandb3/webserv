@@ -34,7 +34,7 @@ private:
 		EVENT_ERROR,
 	};
 
-    config _conf;
+    Config _conf;
     std::map<int, char> _type_m;
     std::map<int, http_request> _http_request_m;
 	std::map<int, http_response> _http_response_m;

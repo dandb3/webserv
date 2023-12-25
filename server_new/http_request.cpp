@@ -3,7 +3,7 @@
 #include "http_request.hpp"
 
 http_request::http_request(int fd)
-: _fd(fd), _status(INPUT_REQUEST_LINE)
+: _fd(fd), _status(INPUT_REQUEST_LINE), _parsed(false)
 {}
 
 void http_request::_input_request_line()
@@ -52,7 +52,8 @@ void http_request::_parse_header_field()
 
 void http_request::_input_message_body()
 {
-
+    _parsed = true;
+    _status = INPUT_REQUEST_LINE;
 }
 
 void http_request::read_input(intptr_t size, bool eof)
