@@ -5,6 +5,7 @@
 #define SUCCESS 0
 
 #define CRLF "\r\n"
+#define WHITESPACE " \t\n\r\f\v"
 
 #include "Exception.hpp"
 
