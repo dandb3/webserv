@@ -3,7 +3,7 @@
 #include "http_response.hpp"
 
 http_response::http_response(int fd)
-: _fd(fd), _pos(0)
+: _fd(fd), _status(RES_IDLE), _pos(0)
 {}
 
 void http_response::send_response(size_t size)
@@ -14,4 +14,8 @@ void http_response::send_response(size_t size)
     if (write(_fd, _response.c_str() + _pos, write_len) == FAILURE)
         throw err_syscall();
     _pos += write_len;
+    if (_pos == size) {
+        _status = RES_FINISH;
+        _pos = 0;
+    }
 }

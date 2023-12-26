@@ -1,4 +1,5 @@
 #include <set>
+#include <queue>
 #include <string.h>
 #include <netinet/in.h>
 #include "server_manager.hpp"
@@ -100,13 +101,10 @@ void server_manager::_serv_http_response(struct kevent& kev)
     const http_response& hres = _http_response_m[kev.ident];
 
     hres.send_response(static_cast<size_t>(kev.data));
-    if (!hres.send_all())
-        return;
-
-    _handler.ev_update(kev.ident, EVFILT_WRITE, EV_DELETE);
-    http_request& hreq = _http_request_m[kev.ident];
-
-    // start parsing next http_request
+    if (hres.get_status() == http_response::RES_FINISH) {
+        hres.set_status(http_response::RES_IDLE);
+        _handler.ev_update(kev.ident, EVFILT_WRITE, EV_DELETE);
+    }
 }
 
 void server_manager::operate()
@@ -136,5 +134,6 @@ void server_manager::operate()
                 break;
             }
         }
+        //  request_queue 관련 동작 구현해야 함.
     }
 }

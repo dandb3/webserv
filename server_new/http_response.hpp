@@ -7,23 +7,40 @@
 
 class http_response
 {
+public:
+	enum
+	{
+		RES_IDLE,
+		RES_PROCESSING,
+		RES_READY,
+		RES_FINISH,
+	};
+
 private:
 	int _fd;
 	std::string _response;
 	size_t _pos;
+	char _status;
 
 public:
 	http_response(int fd, const http_request& hreq);
 	http_response(int fd, const cgi_response& cres);
 
-	inline bool send_all() const;
+	inline int get_status() const;
+	inline void set_status(int status);
+
 	void send_response(size_t size);
 
 };
 
-inline bool http_response::send_all() const
+inline int http_response::get_status() const
 {
-	return (_response.size() == _pos);
+	return _status;
+}
+
+inline void http_response::set_status(int status)
+{
+	_status = static_cast<char>(status);
 }
 
 #endif
