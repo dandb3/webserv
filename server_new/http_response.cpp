@@ -4,7 +4,9 @@
 
 http_response::http_response(int fd)
 : _fd(fd), _status(RES_IDLE), _pos(0)
-{}
+{
+    
+}
 
 void http_response::send_response(size_t size)
 {

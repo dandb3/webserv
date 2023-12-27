@@ -60,10 +60,16 @@ void http_request_parser::_input_message_body()
     _status = INPUT_REQUEST_LINE;
 }
 
+void http_request_parser::_push_err_request()
+{
+    _request_q.push(http_request(_request_line, _header_field, _message_body));
+    _status = INPUT_CLOSED;
+}
+
 void http_request_parser::_push_request()
 {
     _request_q.push(http_request(_request_line, _header_field, _message_body));
-    _status = PARSE_FINISHED;
+    _status = INPUT_READY;
     // 만약 Connection: closed라면 -> _status = INPUT_CLOSED;
 }
 
@@ -80,7 +86,7 @@ void http_request_parser::recv_request(size_t size)
     }
 }
 
-void http_request_parser::parse_request()
+void http_request_parser::parse_request(bool eof)
 {
     do {
         // 사실 여기서 status 값으로 PARSE_* 애들은 빼도 될 것 같음.
@@ -97,6 +103,8 @@ void http_request_parser::parse_request()
             _parse_header_field();
         if (_status == INPUT_MESSAGE_BODY)
             _input_message_body();
+        if (_status != PARSE_FINISHED && eof)
+            _push_err_request();
         if (_status == PARSE_FINISHED)
             _push_request();
     } while (_status == INPUT_READY);

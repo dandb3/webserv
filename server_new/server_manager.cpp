@@ -80,12 +80,14 @@ void server_manager::_serv_listen(const struct kevent& kev)
 void server_manager::_serv_http_request(const struct kevent& kev)
 {
     http_request_parser& hreq = _http_request_m[kev.ident];
+    http_response& hres = _http_response_m[kev.ident];
 
     hreq.recv_request(static_cast<size_t>(kev.data));
-    hreq.parse_request();
+    hreq.parse_request(kev.flags & EV_EOF);
     if (hreq.closed())
         _handler.ev_update(kev.ident, EVFILT_READ, EV_DELETE);
     // http_response가 ready 상태라면 queue에서 하나 값을 빼와서 동작시킨다.
+
 }
 
 void server_manager::_serv_http_response(struct kevent& kev)

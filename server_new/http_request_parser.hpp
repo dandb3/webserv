@@ -27,9 +27,9 @@ private:
 
     static char _buf[BUF_SIZE + 1];
     int _fd;
-    std::string _remain;
     char _status;
 
+    std::string _remain;
     std::vector<std::string> _line_v;
     std::queue<http_request> _request_q;
 
@@ -44,12 +44,13 @@ private:
     void _input_message_body();
 
     void _push_request();
+    void _push_err_request();
 
 public:
     http_request_parser(int fd);
 
     void recv_request(size_t size);
-    void parse_request();
+    void parse_request(bool eof);
 
     inline bool closed() const;
 
