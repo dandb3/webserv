@@ -31,7 +31,7 @@ private:
 
     std::string _remain;
     std::vector<std::string> _line_v;
-    std::queue<http_request> _request_q;
+    std::queue<http_request> _http_request_q;
 
     void _input_start();
 
@@ -52,9 +52,15 @@ public:
     void recv_request(size_t size);
     void parse_request(bool eof);
 
+    inline std::queue<http_request>& get_queue();
     inline bool closed() const;
 
 };
+
+inline std::queue<http_request>& http_request_parser::get_queue()
+{
+    return _http_request_q;
+}
 
 inline bool http_request_parser::closed() const
 {

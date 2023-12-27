@@ -44,6 +44,9 @@ private:
 	std::map<int, cgi_response> _cgi_response_m;
     event_handler _handler;
 
+//  만들어진 http_request를 cgi_request 혹은 http_response로 만들어주는 함수.
+    void _handle_http_request(const http_request& hreq, http_response& hres);
+
 //  get type corresponding to fd value
     int _get_type(const struct kevent& kev);
 

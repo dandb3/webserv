@@ -67,6 +67,16 @@ int server_manager::_get_type(const struct kevent& kev)
 	}
 }
 
+void server_manager::_handle_http_request(const http_request& hreq, http_response& hres)
+{
+    /**
+     * cgi_request를 만들어야 하는지, http_response를 만들어야 하는지 구분
+     * 대충 make_cgi_request(), make_http_response()로 함수를 나눈다.
+     * 그 후에 동작.
+     * 아직 구현중임..
+    */
+}
+
 void server_manager::_serv_listen(const struct kevent& kev)
 {
     int new_sockfd;
@@ -79,15 +89,21 @@ void server_manager::_serv_listen(const struct kevent& kev)
 
 void server_manager::_serv_http_request(const struct kevent& kev)
 {
-    http_request_parser& hreq = _http_request_m[kev.ident];
+    http_request_parser& hreq_parser = _http_request_m[kev.ident];
     http_response& hres = _http_response_m[kev.ident];
 
-    hreq.recv_request(static_cast<size_t>(kev.data));
-    hreq.parse_request(kev.flags & EV_EOF);
-    if (hreq.closed())
+    hreq_parser.recv_request(static_cast<size_t>(kev.data));
+    hreq_parser.parse_request(kev.flags & EV_EOF);
+    if (hreq_parser.closed())
         _handler.ev_update(kev.ident, EVFILT_READ, EV_DELETE);
-    // http_response가 ready 상태라면 queue에서 하나 값을 빼와서 동작시킨다.
 
+    // http_response가 ready 상태라면 queue에서 하나 값을 빼와서 동작시킨다.
+    std::queue<http_request>& hreq_queue = hreq_parser.get_queue();
+    if (!hreq_queue.empty() && hres.get_status() == http_response::RES_IDLE) {
+        hres.set_status(http_response::RES_PROCESSING);
+        _handle_http_request(hreq_queue.front(), hres);
+        hreq_queue.pop();
+    }
 }
 
 void server_manager::_serv_http_response(struct kevent& kev)
@@ -95,9 +111,15 @@ void server_manager::_serv_http_response(struct kevent& kev)
     const http_response& hres = _http_response_m[kev.ident];
 
     hres.send_response(static_cast<size_t>(kev.data));
-    if (hres.get_status() == http_response::RES_FINISH) {
-        hres.set_status(http_response::RES_IDLE);
+    if (hres.get_status() == http_response::RES_IDLE) {
         _handler.ev_update(kev.ident, EVFILT_WRITE, EV_DELETE);
+        
+        std::queue<http_request>& hreq_queue = _http_request_m[kev.ident].get_queue();
+        if (!hreq_queue.empty()) {
+            hres.set_status(http_response::RES_PROCESSING);
+            _handle_http_request(hreq_queue.front(), hres);
+            hreq_queue.pop();
+        }
     }
 }
 

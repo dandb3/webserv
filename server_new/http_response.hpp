@@ -13,7 +13,6 @@ public:
 		RES_IDLE,
 		RES_PROCESSING,
 		RES_READY,
-		RES_FINISH,
 	};
 
 private:

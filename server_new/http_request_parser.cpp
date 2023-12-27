@@ -62,13 +62,13 @@ void http_request_parser::_input_message_body()
 
 void http_request_parser::_push_err_request()
 {
-    _request_q.push(http_request(_request_line, _header_field, _message_body));
+    _http_request_q.push(http_request(_request_line, _header_field, _message_body));
     _status = INPUT_CLOSED;
 }
 
 void http_request_parser::_push_request()
 {
-    _request_q.push(http_request(_request_line, _header_field, _message_body));
+    _http_request_q.push(http_request(_request_line, _header_field, _message_body));
     _status = INPUT_READY;
     // 만약 Connection: closed라면 -> _status = INPUT_CLOSED;
 }

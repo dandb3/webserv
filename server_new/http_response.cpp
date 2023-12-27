@@ -17,7 +17,7 @@ void http_response::send_response(size_t size)
         throw err_syscall();
     _pos += write_len;
     if (_pos == size) {
-        _status = RES_FINISH;
+        _status = RES_IDLE;
         _pos = 0;
     }
 }
