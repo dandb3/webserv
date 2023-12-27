@@ -7,6 +7,7 @@
 # include <sys/event.h>
 # include "Config.hpp"
 # include "event_handler.hpp"
+# include "http_request_parser.hpp"
 # include "http_request.hpp"
 # include "http_response.hpp"
 # include "cgi_request.hpp"
@@ -37,7 +38,7 @@ private:
 
     const Config& _conf;
     std::map<int, char> _type_m;
-    std::map<int, http_request> _http_request_m;
+    std::map<int, http_request_parser> _http_request_m;
 	std::map<int, http_response> _http_response_m;
 	std::map<int, cgi_request> _cgi_request_m;
 	std::map<int, cgi_response> _cgi_response_m;

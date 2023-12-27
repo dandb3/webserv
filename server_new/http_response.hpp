@@ -23,7 +23,7 @@ private:
 	char _status;
 
 public:
-	http_response(int fd, const http_request& hreq);
+	http_response(int fd, const http_request_parser& hreq);
 	http_response(int fd, const cgi_response& cres);
 
 	inline int get_status() const;

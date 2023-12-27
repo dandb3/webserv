@@ -74,26 +74,18 @@ void server_manager::_serv_listen(const struct kevent& kev)
     new_sockfd = accept(kev.ident, NULL, NULL);
     _handler.ev_update(new_sockfd, EVFILT_READ, EV_ADD);
     _type_m.insert(std::make_pair(new_sockfd, SOCKET_HTTP));
-    _http_request_m.insert(std::make_pair(new_sockfd, http_request(new_sockfd)));
+    _http_request_m.insert(std::make_pair(new_sockfd, http_request_parser(new_sockfd)));
 }
 
 void server_manager::_serv_http_request(const struct kevent& kev)
 {
-    const http_request& hreq = _http_request_m[kev.ident];
+    http_request_parser& hreq = _http_request_m[kev.ident];
 
-    hreq.recv_request(kev.data);
+    hreq.recv_request(static_cast<size_t>(kev.data));
     hreq.parse_request();
-
-    // Keep-Alive: change if -> while
-    if (hreq.parsed()) {
-        net_config nconf(hreq, _conf);
-        /**
-         * select server and location (by listen, Host, uri)
-         * if (cgi_request) -> make_cgi_request();
-         * else if (http_response) -> make_http_response();
-        */
-        hreq.reset_parsed();
-    }
+    if (hreq.closed())
+        _handler.ev_update(kev.ident, EVFILT_READ, EV_DELETE);
+    // http_response가 ready 상태라면 queue에서 하나 값을 빼와서 동작시킨다.
 }
 
 void server_manager::_serv_http_response(struct kevent& kev)
@@ -134,6 +126,5 @@ void server_manager::operate()
                 break;
             }
         }
-        //  request_queue 관련 동작 구현해야 함.
     }
 }

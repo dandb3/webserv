@@ -12,7 +12,7 @@ private:
 	// extension-meta-variables
 
 public:
-	cgi_request(const http_request& hreq);
+	cgi_request(const http_request_parser& hreq);
 
 	// getter of meta-variables
 
