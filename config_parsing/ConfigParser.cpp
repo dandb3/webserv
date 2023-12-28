@@ -39,12 +39,16 @@ void ConfigParser::parse(std::string const& config_path, Config& config) {
         }
         else if (key == "include") { // include mime.types;
             std::string file_path = getWord(file_content, i, DELIMITER);
+            if (i == std::string::npos)
+                throw std::runtime_error("config 파일 파싱 중 에러 발생");
             parseTypes(file_path, config);
         }
         else {
             std::vector<std::string> value;
             while (file_content[i] != ';') {
                 std::string word = getWord(file_content, i, DELIMITER);
+                if (i == std::string::npos)
+                    throw std::runtime_error("config 파일 파싱 중 에러 발생");
                 value.push_back(word);
             }
             config.setVariable(key, value);
