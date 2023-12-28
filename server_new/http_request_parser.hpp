@@ -25,7 +25,7 @@ private:
         INPUT_CLOSED,
     };
 
-    static char _buf[BUF_SIZE + 1];
+    static char _buf[BUF_SIZE];
     int _fd;
     char _status;
 

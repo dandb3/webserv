@@ -81,8 +81,7 @@ void http_request_parser::recv_request(size_t size)
         if ((read_len = read(_fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
             throw err_syscall();
         size -= read_len;
-        _buf[read_len] = '\0';
-        _remain.append(_buf);
+        _remain.append(_buf, static_cast<size_t>(read_len));
     }
 }
 
