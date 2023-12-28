@@ -15,7 +15,7 @@ private:
     {
     private:
         short _method;
-        std::string _uri;
+        std::string _request_target;
         std::pair<short, short> _version;
 
     public:
@@ -31,11 +31,11 @@ private:
         request_line &operator=(const request_line &ref);
 
         void http_request::request_line::set_method(short method);
-        void http_request::request_line::set_uri(std::string _uri);
+        void http_request::request_line::set_request_target(std::string _request_target);
         void http_request::request_line::set_version(std::pair<short, short> version);
 
         int get_method() const;
-        std::string get_uri() const;
+        std::string get_request_target() const;
         std::pair<short, short> get_version() const;
     };
 
