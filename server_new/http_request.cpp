@@ -111,14 +111,34 @@ bool http_request::_parse_header_field()
 
 /*
 Case of the messsage body
-1. 
+1. content-length O, transfer-encoding X -> message body 그대로
+2. content-length X, transfer-encoding X -> request message가 payload body를 가지고 있지 않고, method가 body에 의미를 두지 않은 경우
+3. content-length X, transfer-encoding: chunked
+4. content-length X, transfer-encoding: gzip
+5. content-length O, transfer-encoding O -> sender MUST NOT
+6. content-length가 여러개 있거나 list형태로 오는 경우
 */
 void http_request::_input_message_body()
 {
-    if (_header_fields.find("Content-Length") != _header_fields.end())
-        _message_body += _remain;
-    else
+    std::multimap<std::string, std::string>::iterator iter = _header_fields.find("Content-Length");
+    if (iter != _header_fields.end()) {
+        int count = _header_fields.count("Content-Length");
+        if (count == 1) {
+            _message_body += _remain;
+        }
+        else {
+            int length = iter->second;
+            for (iter++; iter != _header_fields.end() && iter->first == "Content-Length"; iter++) {
+                if (length != iter->second)
+                    // 오류 발생
+            }
+            
+        }
+    }
+    else {
+        
         _input_chunked_body();
+    }
 
     _status = INPUT_MESSAGE_BODY;
 }
