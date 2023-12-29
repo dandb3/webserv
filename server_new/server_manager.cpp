@@ -51,16 +51,16 @@ int server_manager::_get_type(const struct kevent& kev)
 	case SOCKET_LISTEN:
 		return EVENT_LISTEN;
 	case SOCKET_HTTP:
-		if (kev.flags & EVFILT_READ)
+		if (kev.filter & EVFILT_READ)
 			return EVENT_HTTP_REQ;
-		else if (kev.flags & EVFILT_WRITE)
+		else if (kev.filter & EVFILT_WRITE)
 			return EVENT_HTTP_RES;
 		else
 			return EVENT_ERROR;
 	case SOCKET_CGI:
-		if (kev.flags & EVFILT_READ)
+		if (kev.filter & EVFILT_READ)
 			return EVENT_CGI_REQ;
-		else if (kev.flags & EVFILT_WRITE)
+		else if (kev.filter & EVFILT_WRITE)
 			return EVENT_CGI_RES;
 		else
 			return EVENT_ERROR;
