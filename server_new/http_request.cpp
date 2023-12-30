@@ -45,7 +45,7 @@ bool http_request::_parse_request_line()
         _request_line.set_method(POST);
     else if (token == "DELETE")
         _request_line.set_method(DELETE);
-    else
+    else // 처리하지 않을 header
         return FAILURE;
 
     // set uri
@@ -94,7 +94,7 @@ bool http_request::_parse_header_field()
     size_t pos;
 
     for (int i = 0; i < _line_v.size(); i++) {
-        if ((pos = _line_v[i].find(':', 0)) == std::string::npos)
+        if ((pos = _line_v[i].find(':')) == std::string::npos)
             return FAILURE; // maybe a obs-fold -> 400 ERROR
         if (whitespace.find(_line_v[i][pos - 1]) != std::string::npos)
             return FAILURE; // 400 ERROR
@@ -120,37 +120,64 @@ Case of the messsage body
 */
 void http_request::_input_message_body()
 {
-    std::multimap<std::string, std::string>::iterator iter = _header_fields.find("Content-Length");
-    if (iter != _header_fields.end()) {
-        int count = _header_fields.count("Content-Length");
-        if (count == 1) {
-            _message_body += _remain;
-        }
-        else {
-            int length = iter->second;
-            for (iter++; iter != _header_fields.end() && iter->first == "Content-Length"; iter++) {
-                if (length != iter->second)
-                    // 오류 발생
-            }
-            
-        }
-    }
-    else {
-        
+    int count = _header_fields.count("Content-Length");
+    if (count > 0)
+        _input_default_body(count)
+    else
         _input_chunked_body();
-    }
-
-    _status = INPUT_MESSAGE_BODY;
 }
 
-void http_request::_input_default_body()
+void http_request::_input_default_body(int count)
 {
-    cout << "HI\n";
+    std::string length_string;
+    long long length;
+
+    if (_header_fields.count("Transfer-Encoding") > 0) // sender MUST NOT
+        return;
+    if (count == 1)
+        length_string = _header_fields["Content-Length"];
+    else {
+        std::multimap<std::string, std::string>::iterator iter;
+        string length_string;
+        length_string = std::strtol(iter->second);
+        for (iter++; iter != _header_fields.end() && iter->first == "Content-Length"; iter++) {
+            if (length_string != iter->second)
+                return;
+        }
+    }
+    if (length_string.find(',') != std::string::npos) // content-length가 x, y 형태로 들어온 경우
+        return;
+    length = std::strtol(length_string);
+
+    _message_body += _remain.substr(0, length);
+    _status = INPUT_FINISH;
 }
 
 void http_request::_input_chunked_body()
 {
+    enum {
+        LENGTH = 0,
+        STRING
+    };
 
+    size_t start, end;
+    long long length;
+    bool mode = LENGTH;
+
+    start = 0;
+    _line_v.clear();
+    while ((end = _remain.find(CRLF, start)) != std::string::npos) {
+        if (mode == LENGTH) {
+            length = strtol(_remain.substr(start, end));
+            mode = STRING;
+        }
+        else {
+            _message_body += _remain.substr(start, length);
+            mode = LENGTH;
+        }
+        start += 2;
+    }
+    _status = INPUT_FINISH;
 }
 
 void http_request::read_input()

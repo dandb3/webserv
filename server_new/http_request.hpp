@@ -67,7 +67,7 @@ private:
 
     void _input_message_body();
 
-    void _input_default_body();
+    void _input_default_body(int count);
     void _input_chunked_body();
 
 public:
