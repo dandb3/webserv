@@ -2,7 +2,8 @@
 
 int main() {
     std::cout << "======================" << std::endl;
-    Config& config = Config::getInstance("config_parsing/test.txt");
+    Config& config2 = Config::getInstance("test.txt");
+    Config& config = Config::getInstance();
     std::cout << "======================" << std::endl;
     for (auto it = config.getHttpInfo().begin(); it != config.getHttpInfo().end(); it++) {
         std::cout << it->first << ": ";
