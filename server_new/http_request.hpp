@@ -67,8 +67,8 @@ private:
 
     void _input_message_body();
 
-    void _input_default_body(int count);
-    void _input_chunked_body();
+    void _input_default_body(int content_length_count, int transfer_encoding_count);
+    void _input_chunked_body(int transfer_encoding_count);
 
 public:
     http_request(int fd);

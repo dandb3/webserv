@@ -120,24 +120,26 @@ Case of the messsage body
 */
 void http_request::_input_message_body()
 {
-    int count = _header_fields.count("Content-Length");
-    if (count > 0)
-        _input_default_body(count)
+    int content_length_count = _header_fields.count("Content-Length");
+    int transfer_encoding_count = _header_fields.count("Transfer-Encoding");
+
+    if (content_length_count > 0)
+        _input_default_body(content_length_count, transfer_encoding_count);
     else
-        _input_chunked_body();
+        _input_chunked_body(transfer_encoding_count);
 }
 
-void http_request::_input_default_body(int count)
+void http_request::_input_default_body(int content_length_count, int transfer_encoding_count)
 {
     std::string length_string;
     long long length;
 
-    if (_header_fields.count("Transfer-Encoding") > 0) // sender MUST NOT
+    if (transfer_encoding_count > 0) // sender MUST NOT
         return;
-    if (count == 1)
+    if (content_length_count == 1)
         length_string = _header_fields["Content-Length"];
     else {
-        std::multimap<std::string, std::string>::iterator iter;
+        std::multimap<std::string, std::string>::iterator iter = _header_fields.find("Content-Length");
         string length_string;
         length_string = std::strtol(iter->second);
         for (iter++; iter != _header_fields.end() && iter->first == "Content-Length"; iter++) {
@@ -145,7 +147,7 @@ void http_request::_input_default_body(int count)
                 return;
         }
     }
-    if (length_string.find(',') != std::string::npos) // content-length가 x, y 형태로 들어온 경우
+    if (length_string.find(',') != std::string::npos) // content-length가 x, y 형태로 들어온 경우 -> 오류로 취급
         return;
     length = std::strtol(length_string);
 
@@ -153,7 +155,7 @@ void http_request::_input_default_body(int count)
     _status = INPUT_FINISH;
 }
 
-void http_request::_input_chunked_body()
+void http_request::_input_chunked_body(int transfer_encoding_count)
 {
     enum {
         LENGTH = 0,
@@ -163,6 +165,15 @@ void http_request::_input_chunked_body()
     size_t start, end;
     long long length;
     bool mode = LENGTH;
+
+    if (transfer_encoding_count == 0) {
+        _status = INPUT_FINISH;
+        return;
+    }
+
+    if (_header_fields["Transfer-Encoding"] != "chunked") { // chunked가 아닌 경우 error로 간주하기
+        return;
+    }
 
     start = 0;
     _line_v.clear();
