@@ -13,6 +13,34 @@
 class http_request_parser
 {
 private:
+    class request_line
+    {
+    private:
+        short _method;
+        std::string _request_target;
+        std::pair<short, short> _version;
+
+    public:
+        enum method
+        {
+            GET,
+            HEAD,
+            POST,
+            DELETE
+        };
+
+        request_line(short method, std::string uri, std::pair<short, short> version);
+        request_line &operator=(const request_line &ref);
+
+        void http_request_parser::request_line::set_method(short method);
+        void http_request_parser::request_line::set_request_target(std::string _request_target);
+        void http_request_parser::request_line::set_version(std::pair<short, short> version);
+
+        int get_method() const;
+        std::string get_request_target() const;
+        std::pair<short, short> get_version() const;
+    };
+
     enum
     {
         INPUT_READY,
@@ -33,6 +61,10 @@ private:
     std::vector<std::string> _line_v;
     std::queue<http_request> _http_request_q;
 
+    request_line _request_line;
+    std::multimap<std::string, std::string> _header_fields;
+    std::string _message_body;
+
     void _input_start();
 
     void _input_request_line();
@@ -42,9 +74,12 @@ private:
     void _parse_header_field();
 
     void _input_message_body();
+    void _input_default_body(int content_length_count, int transfer_encoding_count);
+    void _input_chunked_body(int transfer_encoding_count);
 
     void _push_request();
     void _push_err_request();
+
 
 public:
     http_request_parser(int fd);

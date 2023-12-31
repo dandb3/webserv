@@ -1,11 +1,11 @@
 #ifndef EVENT_HANDLER_HPP
-# define EVENT_HANDLER_HPP
+#define EVENT_HANDLER_HPP
 
-# include <vector>
-# include <sys/event.h>
-# include <sys/time.h>
+#include <vector>
+#include <sys/event.h>
+#include <sys/time.h>
 
-# define EVENTLIST_SIZE 10
+#define EVENTLIST_SIZE 10
 
 class event_handler
 {
@@ -24,7 +24,6 @@ public:
 
     void ev_catch();
     void ev_update(int ident, short filter, u_short flags);
-
 };
 
 inline int event_handler::get_nevents() const
