@@ -1,11 +1,11 @@
 #include <unistd.h>
-#include "http_request.hpp"
+#include "http_request_parser.hpp"
 
-http_request::http_request(int fd)
+http_request_parser::http_request_parser(int fd)
     : _fd(fd), _status(INPUT_REQUEST_LINE)
 {}
 
-bool http_request::_input_request_line()
+bool http_request_parser::_input_request_line()
 {
     size_t start, end;
 
@@ -20,7 +20,7 @@ bool http_request::_input_request_line()
     return SUCCESS;
 }
 
-bool http_request::_parse_request_line()
+bool http_request_parser::_parse_request_line()
 {
     std::string request_line = _line_v[0];
 
@@ -61,7 +61,7 @@ bool http_request::_parse_request_line()
     return SUCCESS;
 }
 
-void http_request::_input_header_field()
+void http_request_parser::_input_header_field()
 {
     const std::string whitespace = WHITESPACE;
     size_t start, end;
@@ -87,7 +87,7 @@ void http_request::_input_header_field()
     _status = PARSE_HEADER_FIELD;
 }
 
-bool http_request::_parse_header_field()
+bool http_request_parser::_parse_header_field()
 {
     const std::string whitespace = WHITESPACE;
     std::string key, value;
@@ -118,7 +118,7 @@ Case of the messsage body
 5. content-length O, transfer-encoding O -> sender MUST NOT
 6. content-length가 여러개 있거나 list형태로 오는 경우
 */
-void http_request::_input_message_body()
+void http_request_parser::_input_message_body()
 {
     int content_length_count = _header_fields.count("Content-Length");
     int transfer_encoding_count = _header_fields.count("Transfer-Encoding");
@@ -129,7 +129,7 @@ void http_request::_input_message_body()
         _input_chunked_body(transfer_encoding_count);
 }
 
-void http_request::_input_default_body(int content_length_count, int transfer_encoding_count)
+void http_request_parser::_input_default_body(int content_length_count, int transfer_encoding_count)
 {
     std::string length_string;
     long long length;
@@ -155,7 +155,7 @@ void http_request::_input_default_body(int content_length_count, int transfer_en
     _status = INPUT_FINISH;
 }
 
-void http_request::_input_chunked_body(int transfer_encoding_count)
+void http_request_parser::_input_chunked_body(int transfer_encoding_count)
 {
     enum {
         LENGTH = 0,
@@ -191,7 +191,7 @@ void http_request::_input_chunked_body(int transfer_encoding_count)
     _status = INPUT_FINISH;
 }
 
-void http_request::read_input()
+void http_request_parser::read_input()
 {
     ssize_t size;
 

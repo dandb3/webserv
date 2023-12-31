@@ -26,7 +26,7 @@ private:
 
     config _conf;
     std::map<int, char> _type_m;
-    std::map<int, http_request> _http_request_m;
+    std::map<int, http_request_parser> _http_request_m;
     event_handler _handler;
 
 //  get type corresponding to fd value
