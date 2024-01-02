@@ -25,7 +25,7 @@
 class KqueueHandler
 {
 private:
-    enum socketType
+    enum SocketType_e
     {
         SOCKET_LISTEN,
         SOCKET_CLIENT,
@@ -49,6 +49,7 @@ public:
     /* method */
     void addEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void deleteEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
+    void eventCatch();
     // void enableEvent(/* args */);
     // void disableEvent(/* args */);
     char getEventType(int ident);

@@ -18,13 +18,9 @@ KqueueHandler::~KqueueHandler()
     close(_kqfd);
 }
 
-KqueueHandler::KqueueHandler(KqueueHandler const& ref)
-{
-}
+KqueueHandler::KqueueHandler(KqueueHandler const& ref) {}
 
-KqueueHandler& KqueueHandler::operator=(KqueueHandler const& ref)
-{
-}
+KqueueHandler& KqueueHandler::operator=(KqueueHandler const& ref) {}
 
 void KqueueHandler::addEvent(uintptr_t ident, int16_t filter, void* udata = NULL)
 {
@@ -54,6 +50,17 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = N
     }
     if (it == _eventsToMonitor.end())
         std::cerr << "deleteEvent() failed" << std::endl;
+}
+
+void KqueueHandler::eventCatch()
+{
+    int nev = kevent(_kqfd, &_eventsToMonitor[0], _eventsToMonitor.size(), _eventList, MAX_EVENTS, NULL);
+    if (nev == -1) {
+        std::cerr << "[eventCatch] : kevent() failed" << std::endl;
+        exit(1);
+    }
+    _nevents = nev;
+    _eventsToMonitor.clear(); // _eventsToMonitor를 비움. 맞는지 모르겠음
 }
 
 char KqueueHandler::getEventType(int ident)
