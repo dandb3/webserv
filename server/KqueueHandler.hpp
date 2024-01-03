@@ -25,13 +25,6 @@
 class KqueueHandler
 {
 private:
-    enum SocketType_e
-    {
-        SOCKET_LISTEN,
-        SOCKET_CLIENT,
-        SOCKET_CGI
-    };
-
     /* data */
     int _kqfd;
     int _nevents;
