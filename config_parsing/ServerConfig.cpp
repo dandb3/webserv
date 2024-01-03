@@ -25,7 +25,7 @@ t_directives& ServerConfig::getServerInfo() {
     return this->_server_info;
 }
 
-std::vector<std::string>& ServerConfig::getVariable(std::string& key) {
+std::vector<std::string>& ServerConfig::getVariable(const std::string& key) {
     return this->_server_info[key];
 }
 

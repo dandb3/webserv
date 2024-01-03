@@ -26,7 +26,7 @@ public:
 
     // getter
     t_directives &getServerInfo();
-    std::vector<std::string> &getVariable(std::string &key);
+    std::vector<std::string> &getVariable(const std::string &key);
 
     std::vector<LocationConfig> &getLocationList();
     LocationConfig &getLocation(std::string &path);
