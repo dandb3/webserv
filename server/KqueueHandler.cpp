@@ -36,11 +36,6 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = N
     std::vector<struct kevent>::iterator it = _eventsToMonitor.begin();
     while (it != _eventsToMonitor.end()) {
         if (it->ident == ident && it->filter == filter) {
-            // 커널에게 이벤트를 감시하지 않도록 지시
-            struct kevent kev;
-            EV_SET(&kev, ident, filter, EV_DELETE, 0, 0, udata);
-            kevent(_kqfd, &kev, 1, NULL, 0, NULL);
-
             // _eventsToMonitor에서 해당 이벤트를 삭제
             it = _eventsToMonitor.erase(it);
             break;
@@ -48,8 +43,10 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = N
         else
             ++it;   // 다음 이벤트로 이동
     }
-    if (it == _eventsToMonitor.end())
-        std::cerr << "deleteEvent() failed" << std::endl;
+    // 커널에게 이벤트를 감시하지 않도록 지시
+    struct kevent kev;
+    EV_SET(&kev, ident, filter, EV_DELETE, 0, 0, udata);
+    kevent(_kqfd, &kev, 1, NULL, 0, NULL);
 }
 
 void KqueueHandler::eventCatch()

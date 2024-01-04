@@ -3,7 +3,6 @@
 #include "ServerManager.hpp"
 
 std::pair<std::string, int> getIpPort(std::string listen) {
-    // std::string listen = it->getVariable("listen")[0];
     std::string ip;
     int port;
     size_t pos = listen.find(":");
@@ -51,6 +50,8 @@ void ServerManager::initServer()
     std::vector<ServerConfig>& server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
     for (; it != server_v.end(); it++) {
+        // getVariable 실패 시 어떻게 처리할지 고민
+        // default 값 설정해서 실패 안나게 할까? or 예외 처리?
         std::pair<std::string, int> ip_port = getIpPort(it->getVariable("listen")[0]);
         int sockfd;
         struct sockaddr_in servaddr;
