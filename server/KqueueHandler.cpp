@@ -27,17 +27,17 @@ void KqueueHandler::addEvent(uintptr_t ident, int16_t filter, void* udata = NULL
     struct kevent kev;
 
     EV_SET(&kev, ident, filter, EV_ADD, 0, 0, udata);
-    _eventsToMonitor.push_back(kev);
+    _eventsToAdd.push_back(kev);
 }
 
 void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = NULL)
 {
-    // _eventsToMonitor에서 해당 이벤트를 찾아 삭제
-    std::vector<struct kevent>::iterator it = _eventsToMonitor.begin();
-    while (it != _eventsToMonitor.end()) {
+    // _eventsToAdd에서 해당 이벤트를 찾아 삭제
+    std::vector<struct kevent>::iterator it = _eventsToAdd.begin();
+    while (it != _eventsToAdd.end()) {
         if (it->ident == ident && it->filter == filter) {
-            // _eventsToMonitor에서 해당 이벤트를 삭제
-            it = _eventsToMonitor.erase(it);
+            // _eventsToAdd에서 해당 이벤트를 삭제
+            it = _eventsToAdd.erase(it);
             break;
         }
         else
@@ -51,13 +51,13 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = N
 
 void KqueueHandler::eventCatch()
 {
-    int nev = kevent(_kqfd, &_eventsToMonitor[0], _eventsToMonitor.size(), _eventList, MAX_EVENTS, NULL);
+    int nev = kevent(_kqfd, &_eventsToAdd[0], _eventsToAdd.size(), _eventList, MAX_EVENTS, NULL);
     if (nev == -1) {
         std::cerr << "[eventCatch] : kevent() failed" << std::endl;
         exit(1);
     }
     _nevents = nev;
-    _eventsToMonitor.clear(); // _eventsToMonitor를 비움. 맞는지 모르겠음
+    _eventsToAdd.clear(); // _eventsToAdd를 비움. 맞는지 모르겠음
 }
 
 char KqueueHandler::getEventType(int ident)

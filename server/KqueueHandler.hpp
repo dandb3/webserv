@@ -28,7 +28,7 @@ private:
     /* data */
     int _kqfd;
     int _nevents;
-    std::vector<struct kevent> _eventsToMonitor;
+    std::vector<struct kevent> _eventsToAdd;
     struct kevent _eventList[MAX_EVENTS];
     std::map<int, char> _type;
 
