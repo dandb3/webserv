@@ -12,7 +12,7 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
         }
         else { // ip만 있는 경우
             ip_str = listen;
-            port = 80;
+            port = 8080;
         }
     }
     else { // ip:port 형식인 경우

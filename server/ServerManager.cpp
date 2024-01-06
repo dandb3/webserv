@@ -2,27 +2,6 @@
 
 #include "ServerManager.hpp"
 
-std::pair<std::string, int> getIpPort(std::string listen) {
-    std::string ip;
-    int port;
-    size_t pos = listen.find(":");
-    if (pos == std::string::npos) {
-        if (listen.find(".") == std::string::npos) {
-            ip = "";
-            port = atoi(listen.c_str());
-        }
-        else {
-            ip = listen;
-            port = 80;
-        }
-    }
-    else {
-        ip = listen.substr(0, listen.find(":"));
-        port = atoi(listen.substr(listen.find(":") + 1).c_str());
-    }
-    return std::make_pair(ip, port);
-}
-
 ServerManager::ServerManager()
 {
     Config::getInstance();
@@ -52,7 +31,6 @@ void ServerManager::initServer()
     for (; it != server_v.end(); it++) {
         // getVariable 실패 시 어떻게 처리할지 고민
         // default 값 설정해서 실패 안나게 할까? or 예외 처리?
-        std::pair<std::string, int> ip_port = getIpPort(it->getVariable("listen")[0]);
         int sockfd;
         struct sockaddr_in servaddr;
 
@@ -62,11 +40,8 @@ void ServerManager::initServer()
 
         memset(&servaddr, 0, sizeof(servaddr));
         servaddr.sin_family = AF_INET;
-        if (ip_port.first == "")
-            servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        else
-            servaddr.sin_addr.s_addr = inet_addr(ip_port.first.c_str());
-        servaddr.sin_port = htons(ip_port.second);
+        servaddr.sin_addr.s_addr = (it->getIp()).s_addr;
+        servaddr.sin_port = htons(it->getPort());
 
         // bind(): Address already in use 해결
         int optval = 1;

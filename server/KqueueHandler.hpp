@@ -19,8 +19,7 @@
 
 /*
 **  KqueueHandler
-**  Kqueue에 대한 이벤트를 처리하는 클래스
-**
+
 */
 class KqueueHandler
 {
@@ -42,12 +41,17 @@ public:
     /* method */
     void addEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void deleteEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
+    void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, void *udata = NULL);
     void eventCatch();
     // void enableEvent(/* args */);
     // void disableEvent(/* args */);
     char getEventType(int ident);
     void setEventType(int ident, char type);
     void deleteEventType(int ident);
+
+    /* getter */
+    struct kevent *getEventList() const;
+    int getNevents() const;
 };
 
 #endif

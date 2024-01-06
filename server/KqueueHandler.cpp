@@ -32,21 +32,18 @@ void KqueueHandler::addEvent(uintptr_t ident, int16_t filter, void* udata = NULL
 
 void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = NULL)
 {
-    // _eventsToAdd에서 해당 이벤트를 찾아 삭제
-    std::vector<struct kevent>::iterator it = _eventsToAdd.begin();
-    while (it != _eventsToAdd.end()) {
-        if (it->ident == ident && it->filter == filter) {
-            // _eventsToAdd에서 해당 이벤트를 삭제
-            it = _eventsToAdd.erase(it);
-            break;
-        }
-        else
-            ++it;   // 다음 이벤트로 이동
-    }
-    // 커널에게 이벤트를 감시하지 않도록 지시
     struct kevent kev;
+
     EV_SET(&kev, ident, filter, EV_DELETE, 0, 0, udata);
-    kevent(_kqfd, &kev, 1, NULL, 0, NULL);
+    _eventsToAdd.push_back(kev);
+}
+
+void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, void* udata = NULL)
+{
+    struct kevent kev;
+
+    EV_SET(&kev, ident, filter, flags, 0, 0, udata);
+    _eventsToAdd.push_back(kev);
 }
 
 void KqueueHandler::eventCatch()
@@ -57,7 +54,7 @@ void KqueueHandler::eventCatch()
         exit(1);
     }
     _nevents = nev;
-    _eventsToAdd.clear(); // _eventsToAdd를 비움. 맞는지 모르겠음
+    _eventsToAdd.clear();
 }
 
 char KqueueHandler::getEventType(int ident)
@@ -83,4 +80,14 @@ void KqueueHandler::deleteEventType(int ident)
         return;
     }
     _type.erase(it);
+}
+
+struct kevent* KqueueHandler::getEventList() const
+{
+    return (struct kevent*)_eventList;
+}
+
+int KqueueHandler::getNevents() const
+{
+    return _nevents;
 }
