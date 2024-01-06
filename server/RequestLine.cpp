@@ -1,4 +1,3 @@
-#include <sstream>
 #include "HttpRequestModule.hpp"
 
 RequestLine& RequestLine::operator=(const RequestLine& ref)

@@ -1,4 +1,4 @@
-#include <unistd.h>
+#include <sstream>
 #include "HttpRequestModule.hpp"
 
 HttpRequestHandler::HttpRequestHandler(std::queue<HttpRequest> &httpRequestQ, int fd) : _fd(fd), _status(INPUT_READY)

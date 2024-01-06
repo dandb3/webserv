@@ -1,5 +1,5 @@
-#ifndef HTTP_REQUEST_HANDLER_HPP
-# define HTTP_REQUEST_HANDLER_HPP
+#ifndef HTTP_REQUEST_MODULE_HPP
+# define HTTP_REQUEST_MODULE_HPP
 
 # include <string>
 # include <vector>
@@ -34,8 +34,6 @@ public:
 class HttpRequest
 {
 private:
-    int _fd;
-
     RequestLine _requestLine;
     std::multimap<std::string, std::string> _headerFields;
     std::string _messageBody;
