@@ -7,7 +7,7 @@
 #define CRLF "\r\n"
 #define WHITESPACE " \t\n\r\f\v"
 
-#include "Exception.hpp"
+// #include "Exception.hpp"
 
 #ifndef _SYS_EVENT_H_
 #define _SYS_EVENT_H_
