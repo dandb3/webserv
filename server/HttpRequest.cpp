@@ -3,11 +3,13 @@
 HttpRequest::HttpRequest(int fd) : _fd(fd) {}
 
 HttpRequest::HttpRequest(RequestLine &requestLine, \
-        std::multimap<std::string, std::string> &headerFields, std::string &messageBody) {}
+        std::multimap<std::string, std::string> &headerFields, std::string &messageBody) 
+        : _requestLine(requestLine), _headerFields(headerFields), _messageBody(messageBody) {}
 
 void HttpRequest::setRequestLine(RequestLine &requestLine)
 {
     _requestLine = requestLine;
+
 }
 
 void HttpRequest::setHeaderFields(std::multimap<std::string, std::string> &headerFields)
