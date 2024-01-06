@@ -22,6 +22,7 @@ private:
     serv_ip_t _ip;
     serv_port_t _port;
     int _httpSockfd;
+	int _cgiSockfd;
     bool _closed;
 
     HttpRequestHandler _hrqHandler;
