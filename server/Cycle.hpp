@@ -2,13 +2,9 @@
 # define CYCLE_HPP
 
 # include <map>
+# include <queue>
 # include "webserv.hpp"
 # include "NetConfig.hpp"
-# include "HttpRequest.hpp"
-# include "HttpResponse.hpp"
-# include "CgiRequest.hpp"
-# include "CgiResponse.hpp"
-
 
 /**
  * closed 상태에서 request queue에 있는 것이 다 비어있고,
@@ -27,17 +23,19 @@ private:
     serv_port_t _port;
     int _httpSockfd;
     bool _closed;
-    HttpRequest* _httpRequest;
-    HttpResponse* _httpResponse;
-    CgiRequest* _cgiRequest;
-    CgiResponse* _cgiResponse;
+
+    HttpRequestHandler _hrqHandler;
+    HttpResponseHandler _hrspHandler;
+    CgiRequestHandler _crqHandler;
+    CgiResponseHandler _crspHandler;
+
+	std::queue<HttpRequest> _hrqQueue;
 
 public:
     static Cycle* newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
     static void deleteCycle(Cycle* cycle);
 
     Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
-    ~Cycle();
 
     inline serv_ip_t getIp() const;
     inline serv_port_t getPort() const;
