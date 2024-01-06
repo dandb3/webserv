@@ -33,6 +33,18 @@ std::vector<LocationConfig>& ServerConfig::getLocationList() {
     return this->_location_v;
 }
 
+struct sockaddr_in ServerConfig::getIp() {
+    return this->ip;
+}
+
+int ServerConfig::getPort() {
+    return this->port;
+}
+
+std::vector<std::string> ServerConfig::getServerName() {
+    return this->server_name;
+}
+
 LocationConfig& ServerConfig::getLocation(std::string& path) {
     for (std::vector<LocationConfig>::iterator it = this->_location_v.begin(); it != this->_location_v.end(); it++) {
         if (it->getPath() == path)
@@ -48,6 +60,18 @@ void ServerConfig::setServerInfo(t_directives& server_info) {
 
 void ServerConfig::setVariable(std::string& key, std::vector<std::string>& value) {
     this->_server_info[key] = value;
+}
+
+void ServerConfig::setIp(struct sockaddr_in ip) {
+    this->ip = ip;
+}
+
+void ServerConfig::setPort(int port) {
+    this->port = port;
+}
+
+void ServerConfig::setServerName(std::vector<std::string>& server_name) {
+    this->server_name = server_name;
 }
 
 void ServerConfig::setLocationList(std::vector<LocationConfig>& location_v) {

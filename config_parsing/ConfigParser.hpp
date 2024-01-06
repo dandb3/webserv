@@ -5,6 +5,7 @@
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
 #include "Config.hpp"
+#include <arpa/inet.h>
 #include <iostream>
 #include <map>
 #include <string>
@@ -21,6 +22,8 @@ private:
     static std::string getWord(std::string const &file_content, size_t &i, std::string const &delimiter);
 
     static void parseServer(std::string const &file_content, size_t &i, Config &config);
+
+    static std::pair<struct sockaddr_in, int> getIpPort(std::string listen);
 
     static void parseLocation(std::string const &file_content, size_t &i, ServerConfig &server_config);
 

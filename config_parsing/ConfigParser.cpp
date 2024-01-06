@@ -1,5 +1,30 @@
 #include "ConfigParser.hpp"
 
+std::pair<struct sockaddr_in, int> ConfigParser::getIpPort(std::string listen) {
+    std::string ip_str;
+    struct sockaddr_in ip;
+    int port;
+    size_t colon = listen.find(":");
+    if (colon == std::string::npos) {
+        if (listen.find(".") == std::string::npos) { // port만 있는 경우
+            ip_str = "0.0.0.0";
+            port = atoi(listen.c_str());
+        }
+        else { // ip만 있는 경우
+            ip_str = listen;
+            port = 80;
+        }
+    }
+    else { // ip:port 형식인 경우
+        ip_str = listen.substr(0, listen.find(":"));
+        port = atoi(listen.substr(listen.find(":") + 1).c_str());
+    }
+    if (inet_aton(ip_str.c_str(), &ip.sin_addr) == 0) {
+        throw std::runtime_error("ip 주소 변환 실패");
+    }
+    return std::make_pair(ip, port);
+}
+
 std::string ConfigParser::getWord(std::string const& file_content, size_t& i, std::string const& delimiter) {
     size_t start = file_content.find_first_not_of(delimiter, i);
     size_t end = file_content.find_first_of(delimiter, start);
@@ -77,7 +102,16 @@ void ConfigParser::parseServer(std::string const& file_content, size_t& i, Confi
                     throw std::runtime_error("config 파일 파싱 중 에러 발생");
                 value.push_back(word);
             }
-            server_config.setVariable(key, value);
+            if (key == "listen") {
+                std::pair<struct sockaddr_in, int> ip_port = getIpPort(value[0]);
+                server_config.setIp(ip_port.first);
+                server_config.setPort(ip_port.second);
+            }
+            else if (key == "server_name") {
+                server_config.setServerName(value);
+            }
+            else
+                server_config.setVariable(key, value);
         }
         key = getWord(file_content, i, DELIMITER);
         if (i == std::string::npos)

@@ -10,7 +10,6 @@ Config::Config() {
     _config_path = "";
 }
 
-
 Config::Config(std::string const& config_path) {
     // parseConfig(config_path);
     std::cout << "config_path: " << config_path << std::endl;
@@ -22,7 +21,6 @@ Config::Config(std::string const& config_path) {
 Config::~Config() {
 }
 
-// 구현 x
 Config::Config(const Config& ref) {
     // 복사 생성자의 구현: 적절히 멤버 변수를 복사하여 새로운 객체 생성
     _http_info = ref._http_info;
