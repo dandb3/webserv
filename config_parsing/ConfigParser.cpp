@@ -1,8 +1,8 @@
 #include "ConfigParser.hpp"
 
-std::pair<struct sockaddr_in, int> ConfigParser::getIpPort(std::string listen) {
+std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
     std::string ip_str;
-    struct sockaddr_in ip;
+    struct in_addr ip;
     int port;
     size_t colon = listen.find(":");
     if (colon == std::string::npos) {
@@ -19,7 +19,7 @@ std::pair<struct sockaddr_in, int> ConfigParser::getIpPort(std::string listen) {
         ip_str = listen.substr(0, listen.find(":"));
         port = atoi(listen.substr(listen.find(":") + 1).c_str());
     }
-    if (inet_aton(ip_str.c_str(), &ip.sin_addr) == 0) {
+    if (inet_aton(ip_str.c_str(), &ip) == 0) {
         throw std::runtime_error("ip 주소 변환 실패");
     }
     return std::make_pair(ip, port);
@@ -103,7 +103,7 @@ void ConfigParser::parseServer(std::string const& file_content, size_t& i, Confi
                 value.push_back(word);
             }
             if (key == "listen") {
-                std::pair<struct sockaddr_in, int> ip_port = getIpPort(value[0]);
+                std::pair<struct in_addr, int> ip_port = getIpPort(value[0]);
                 server_config.setIp(ip_port.first);
                 server_config.setPort(ip_port.second);
             }

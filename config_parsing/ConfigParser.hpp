@@ -23,7 +23,7 @@ private:
 
     static void parseServer(std::string const &file_content, size_t &i, Config &config);
 
-    static std::pair<struct sockaddr_in, int> getIpPort(std::string listen);
+    static std::pair<struct in_addr, int> getIpPort(std::string listen);
 
     static void parseLocation(std::string const &file_content, size_t &i, ServerConfig &server_config);
 

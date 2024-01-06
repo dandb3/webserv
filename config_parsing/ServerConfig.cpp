@@ -33,7 +33,7 @@ std::vector<LocationConfig>& ServerConfig::getLocationList() {
     return this->_location_v;
 }
 
-struct sockaddr_in ServerConfig::getIp() {
+struct in_addr ServerConfig::getIp() {
     return this->ip;
 }
 
@@ -62,7 +62,7 @@ void ServerConfig::setVariable(std::string& key, std::vector<std::string>& value
     this->_server_info[key] = value;
 }
 
-void ServerConfig::setIp(struct sockaddr_in ip) {
+void ServerConfig::setIp(struct in_addr ip) {
     this->ip = ip;
 }
 
