@@ -25,12 +25,24 @@ t_directives& ServerConfig::getServerInfo() {
     return this->_server_info;
 }
 
-std::vector<std::string>& ServerConfig::getVariable(std::string& key) {
+std::vector<std::string>& ServerConfig::getVariable(const std::string& key) {
     return this->_server_info[key];
 }
 
 std::vector<LocationConfig>& ServerConfig::getLocationList() {
     return this->_location_v;
+}
+
+struct in_addr ServerConfig::getIp() {
+    return this->ip;
+}
+
+int ServerConfig::getPort() {
+    return this->port;
+}
+
+std::vector<std::string> ServerConfig::getServerName() {
+    return this->server_name;
 }
 
 LocationConfig& ServerConfig::getLocation(std::string& path) {
@@ -48,6 +60,18 @@ void ServerConfig::setServerInfo(t_directives& server_info) {
 
 void ServerConfig::setVariable(std::string& key, std::vector<std::string>& value) {
     this->_server_info[key] = value;
+}
+
+void ServerConfig::setIp(struct in_addr ip) {
+    this->ip = ip;
+}
+
+void ServerConfig::setPort(int port) {
+    this->port = port;
+}
+
+void ServerConfig::setServerName(std::vector<std::string>& server_name) {
+    this->server_name = server_name;
 }
 
 void ServerConfig::setLocationList(std::vector<LocationConfig>& location_v) {

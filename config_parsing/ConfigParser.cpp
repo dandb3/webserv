@@ -1,5 +1,70 @@
 #include "ConfigParser.hpp"
 
+int ft_inet_aton(const char* str, struct in_addr* addr) {
+    int i, len, n;
+    uint32_t ip;
+    char c;
+
+    if (!strcmp(str, "0.0.0.0")) {
+        addr->s_addr = INADDR_ANY;
+        return 1;
+    }
+    ip = 0;
+    for (i = 0; i < 4; i++) {
+        n = 0;
+        ip >>= 8;
+        for (len = 0; len < 4; len++) {
+            if (str[len] == '.' || str[len] == '\0')
+                break;
+        }
+        if (len == 0 || len == 4)
+            return 0;
+        if ((i == 3 && str[len] == '.') || (i != 3 && str[len] == '\0'))
+            return 0;
+
+        c = *str++;
+        // n에 숫자 담기
+        while (len--) {
+            if (c < '0' || c > '9')
+                return 0;
+            n = (n * 10) + c - '0';
+            c = *str++;
+        }
+        if (i == 0 && n == 0)
+            return 0;
+        if (n > 255)
+            return 0;
+        ip = ip | (n << 24);
+    }
+    addr->s_addr = ip;
+    return 1;
+}
+
+std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
+    std::string ip_str;
+    struct in_addr ip;
+    int port;
+    size_t colon = listen.find(":");
+    if (colon == std::string::npos) {
+        if (listen.find(".") == std::string::npos) { // port만 있는 경우
+            ip_str = "0.0.0.0";
+            port = atoi(listen.c_str());
+        }
+        else { // ip만 있는 경우
+            ip_str = listen;
+            port = 8080;
+        }
+    }
+    else { // ip:port 형식인 경우
+        ip_str = listen.substr(0, listen.find(":"));
+        port = atoi(listen.substr(listen.find(":") + 1).c_str());
+    }
+    if (ft_inet_aton(ip_str.c_str(), &ip) == 0) {
+        throw std::runtime_error("ip 주소 변환 실패");
+    }
+    return std::make_pair(ip, port);
+}
+
 std::string ConfigParser::getWord(std::string const& file_content, size_t& i, std::string const& delimiter) {
     size_t start = file_content.find_first_not_of(delimiter, i);
     size_t end = file_content.find_first_of(delimiter, start);
@@ -77,7 +142,18 @@ void ConfigParser::parseServer(std::string const& file_content, size_t& i, Confi
                     throw std::runtime_error("config 파일 파싱 중 에러 발생");
                 value.push_back(word);
             }
-            server_config.setVariable(key, value);
+            if (key == "listen") {
+                std::pair<struct in_addr, int> ip_port = getIpPort(value[0]);
+                if (ip_port.first.s_addr == INADDR_ANY)
+                    server_config.portsWithINADDR_ANY.push_back(ip_port.second);
+                server_config.setIp(ip_port.first);
+                server_config.setPort(ip_port.second);
+            }
+            else if (key == "server_name") {
+                server_config.setServerName(value);
+            }
+            else
+                server_config.setVariable(key, value);
         }
         key = getWord(file_content, i, DELIMITER);
         if (i == std::string::npos)

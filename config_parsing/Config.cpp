@@ -2,40 +2,55 @@
 
 #include "Config.hpp"
 
-std::string Config::DEFAULT_PATH = "./config/default.conf";
+std::string Config::DEFAULT_PATH = "./conf/default.conf";
+
+Config Config::_instance = Config();
 
 Config::Config() {
-    // parseConfig(DEFAULT_PATH);
-    std::cout << "default_path: " << DEFAULT_PATH << std::endl;
-    ConfigParser::parse(DEFAULT_PATH, *this);
-    std::cout << "parse finish" << std::endl;
+    _config_path = "";
 }
-
 
 Config::Config(std::string const& config_path) {
     // parseConfig(config_path);
     std::cout << "config_path: " << config_path << std::endl;
     ConfigParser::parse(config_path, *this);
     std::cout << "parse finish" << std::endl;
+    _config_path = config_path;
 }
 
 Config::~Config() {
 }
 
-// 구현 x
-Config::Config(Config const& ref) {}
-Config& Config::operator=(Config const& ref) {
+Config::Config(const Config& ref) {
+    // 복사 생성자의 구현: 적절히 멤버 변수를 복사하여 새로운 객체 생성
+    _http_info = ref._http_info;
+    _server_v = ref._server_v;
+    _mime_types = ref._mime_types;
+    _config_path = ref._config_path;
+}
+
+Config& Config::operator=(const Config& ref) {
+    // 대입 연산자의 구현: 적절히 멤버 변수를 복사하여 현재 객체에 대입
+    if (this != &ref) {
+        _http_info = ref._http_info;
+        _server_v = ref._server_v;
+        _mime_types = ref._mime_types;
+        _config_path = ref._config_path;
+    }
     return *this;
 }
 
+
 // getInstace
 Config& Config::getInstance() {
-    static Config _instance(DEFAULT_PATH);
+    if (_instance._config_path == "")
+        _instance = Config(DEFAULT_PATH);
     return _instance;
 }
 
 Config& Config::getInstance(std::string const& config_path) {
-    static Config _instance(config_path);
+    if (_instance._config_path == "")
+        _instance = Config(config_path);
     return _instance;
 }
 
