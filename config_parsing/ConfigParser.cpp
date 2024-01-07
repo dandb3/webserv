@@ -5,6 +5,10 @@ int ft_inet_aton(const char* str, struct in_addr* addr) {
     uint32_t ip;
     char c;
 
+    if (!strcmp(str, "0.0.0.0")) {
+        addr->s_addr = INADDR_ANY;
+        return 1;
+    }
     ip = 0;
     for (i = 0; i < 4; i++) {
         n = 0;
@@ -140,6 +144,8 @@ void ConfigParser::parseServer(std::string const& file_content, size_t& i, Confi
             }
             if (key == "listen") {
                 std::pair<struct in_addr, int> ip_port = getIpPort(value[0]);
+                if (ip_port.first.s_addr == INADDR_ANY)
+                    server_config.portsWithINADDR_ANY.push_back(ip_port.second);
                 server_config.setIp(ip_port.first);
                 server_config.setPort(ip_port.second);
             }

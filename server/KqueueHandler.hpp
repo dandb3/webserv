@@ -19,7 +19,6 @@
 
 /*
 **  KqueueHandler
-
 */
 class KqueueHandler
 {

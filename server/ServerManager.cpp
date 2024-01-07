@@ -12,6 +12,10 @@ ServerManager::ServerManager(std::string config_path)
     Config::getInstance(config_path);
 }
 
+// bool isInaddrAny(ServerConfig &server) {
+//     if (server.getIp().s_addr == INADDR_ANY && )
+// }
+
 /**
  * @brief 서버 초기화 함수
  * @details
@@ -33,6 +37,9 @@ void ServerManager::initServer()
         // default 값 설정해서 실패 안나게 할까? or 예외 처리?
         int sockfd;
         struct sockaddr_in servaddr;
+        if (std::find(it->portsWithINADDR_ANY.begin(), it->portsWithINADDR_ANY.end(), it->getPort()) != it->portsWithINADDR_ANY.end() && \
+            it->getIp().s_addr != INADDR_ANY)
+            continue;
 
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd == -1)

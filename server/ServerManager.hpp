@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <algorithm>
 #include "config_parsing/Config.hpp"
 #include "KqueueHandler.hpp"
 

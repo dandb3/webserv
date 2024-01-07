@@ -22,6 +22,7 @@ private:
     std::vector<LocationConfig> _location_v;
 
 public:
+    static std::vector<int> portsWithINADDR_ANY;
     ServerConfig();
     ServerConfig(const ServerConfig &ref);
     ~ServerConfig();
