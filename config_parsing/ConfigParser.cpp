@@ -1,5 +1,41 @@
 #include "ConfigParser.hpp"
 
+int ft_inet_aton(const char* str, struct in_addr* addr) {
+    int i, len, n;
+    uint32_t ip;
+    char c;
+
+    ip = 0;
+    for (i = 0; i < 4; i++) {
+        n = 0;
+        ip >>= 8;
+        for (len = 0; len < 4; len++) {
+            if (str[len] == '.' || str[len] == '\0')
+                break;
+        }
+        if (len == 0 || len == 4)
+            return 0;
+        if ((i == 3 && str[len] == '.') || (i != 3 && str[len] == '\0'))
+            return 0;
+
+        c = *str++;
+        // n에 숫자 담기
+        while (len--) {
+            if (c < '0' || c > '9')
+                return 0;
+            n = (n * 10) + c - '0';
+            c = *str++;
+        }
+        if (i == 0 && n == 0)
+            return 0;
+        if (n > 255)
+            return 0;
+        ip = ip | (n << 24);
+    }
+    addr->s_addr = ip;
+    return 1;
+}
+
 std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
     std::string ip_str;
     struct in_addr ip;
@@ -19,7 +55,7 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
         ip_str = listen.substr(0, listen.find(":"));
         port = atoi(listen.substr(listen.find(":") + 1).c_str());
     }
-    if (inet_aton(ip_str.c_str(), &ip) == 0) {
+    if (ft_inet_aton(ip_str.c_str(), &ip) == 0) {
         throw std::runtime_error("ip 주소 변환 실패");
     }
     return std::make_pair(ip, port);
