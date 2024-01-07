@@ -3,19 +3,11 @@
 
 # include <string>
 # include <map>
-# include "http_request_parser.hpp"
 # include "cgi_response.hpp"
 
 class StatusLine
 {
 private:
-    enum
-    {
-        GET,
-        HEAD,
-        POST,
-        DELETE
-    };
     std::pair<short, short> _version;
     short _code;
     std::string _text;
@@ -42,7 +34,6 @@ public:
 		RES_PROCESSING,
 		RES_READY,
 	};
-	HttpResponse(int fd, const http_request_parser& hreq);
 	HttpResponse(int fd, const cgi_response& cres);
 
 	int get_status() const;
@@ -58,8 +49,10 @@ private:
 	size_t _pos;
 	char _status;
 
+	HttpResponse _httpResponse;
+
 public:
 
-}
+};
 
 #endif
