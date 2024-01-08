@@ -89,6 +89,13 @@ void ServerManager::initServer()
 */
 void ServerManager::operate()
 {
+    struct EventInfo
+    {
+        int sockfd;
+        std::string type;
+        std::string data;
+    };
+
     while (true) {
         _kqueue_handler.eventCatch();
         int nevents = _kqueue_handler.getNevents();
@@ -132,14 +139,18 @@ void ServerManager::operate()
                     if (n == -1)
                         throw std::runtime_error("read error");
                     else if (n == 0) {
+                        delete (EventInfo *)curEvent.udata;
                         _kqueue_handler.deleteEvent(sockfd, EVFILT_READ);
                         _kqueue_handler.deleteEventType(sockfd);
                         close(sockfd);
                     }
                     else {
                         buf[n] = '\0';
-                        // Cast std::string to const char* before assigning to curEvent.udata
-                        curEvent.udata = (void *)(std::string((char *)curEvent.udata) + buf).c_str();
+                        EventInfo *curEventInfo = new EventInfo;
+                        curEventInfo->sockfd = sockfd;
+                        curEventInfo->type = (type == SOCKET_LISTEN) ? "listen" : "client";
+                        curEventInfo->data = curEventInfo->data + buf;
+                        curEvent.udata = (void *)curEventInfo;
                         _kqueue_handler.changeEvent(sockfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, curEvent.udata);
                         // write(sockfd, buf, n);
                     }
@@ -148,13 +159,24 @@ void ServerManager::operate()
             else if (curEvent.filter == EVFILT_WRITE) {
                 std::cout << "EVFILT_WRITE" << std::endl;
                 if (type == SOCKET_CLIENT) {
-                    std::string data = (char *)curEvent.udata;
-                    int n = write(sockfd, data.c_str(), data.length());
-                    if (n == -1)
-                        throw std::runtime_error("write error");
-                    else if (n != data.length()) {
-                        curEvent.udata = (void *)(data.substr(n)).c_str();
+                    EventInfo *data = (EventInfo *)curEvent.udata;
+                    // EventInfo에 대한 fd string으로 변환
+                    std::string fd = std::to_string(data->sockfd);
+
+                    std::string msg = "fd: " + fd + ", type: " + data->type + ", data: " + data->data;
+                    int n = write(sockfd, msg.c_str(), msg.length());
+                    if (n == -1) {
+                        std::cerr << "write error" << std::endl;
+                        std::cerr << "clients disconnected" << std::endl;
+                        delete (EventInfo *)curEvent.udata;
+                        _kqueue_handler.deleteEvent(sockfd, EVFILT_WRITE);
+                        _kqueue_handler.deleteEventType(sockfd);
+                        close(sockfd);
                     }
+                    else { // udata 삭제
+                        delete (EventInfo *)curEvent.udata;
+                    }
+
                 }
             }
         }
