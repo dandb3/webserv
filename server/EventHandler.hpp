@@ -1,6 +1,7 @@
 #ifndef EVENT_HANDLER_HPP
 # define EVENT_HANDLER_HPP
 
+# include "webserv.hpp"
 # include "KqueueHandler.hpp"
 
 class EventHandler
@@ -14,18 +15,14 @@ private:
 		EVENT_CGI_REQ,
 		EVENT_CGI_RES,
 		EVENT_ERROR,
-	};
+	};    
 
-    KqueueHandler _kqueueHandler;
-
-    
-
-    void _servListen();
-    void _servHttpRequest();
-    void _servHttpResponse();
-    void _servCgiRequest();
-    void _servCgiResponse();
-    void _servError();
+    void _servListen(const struct kevent& kev);
+    void _servHttpRequest(const struct kevent& kev);
+    void _servHttpResponse(const struct kevent& kev);
+    void _servCgiRequest(const struct kevent& kev);
+    void _servCgiResponse(const struct kevent& kev);
+    void _servError(const struct kevent& kev);
 
 public:
     void operate();

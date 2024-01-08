@@ -4,17 +4,23 @@
 
 char CgiResponseHandler::_buf[BUF_SIZE];
 
-void CgiResponseHandler::recvCgiResponse(int fd, size_t size)
-{
-    size_t recvLen;
+CgiResponseHandler::CgiResponseHandler()
+: _cgiResponse(), _rawCgiResponse(), _eof(false)
+{}
 
-    while (size > 0) {
-        recvLen = (BUF_SIZE < size) ? BUF_SIZE : size;
-        size -= recvLen;
-        if (read(fd, _buf, recvLen) == FAILURE)
+void CgiResponseHandler::recvCgiResponse(struct kevent& kev)
+{
+    size_t recvLen, totalSize = static_cast<size_t>(kev.data);
+
+    while (totalSize > 0) {
+        recvLen = (BUF_SIZE < totalSize) ? BUF_SIZE : totalSize;
+        totalSize -= recvLen;
+        if (read(kev.ident, _buf, recvLen) == FAILURE)
             throw ERROR;
         _rawCgiResponse.append(_buf, recvLen);
     }
+    if (kev.flags & EV_EOF)
+        _eof = true;
 }
 
 void CgiResponseHandler::makeCgiResponse()
@@ -26,4 +32,9 @@ void CgiResponseHandler::makeCgiResponse()
 const CgiResponse& CgiResponseHandler::getCgiResponse() const
 {
     return _cgiResponse;
+}
+
+bool CgiResponseHandler::eof() const
+{
+    return _eof;
 }

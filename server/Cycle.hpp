@@ -5,6 +5,10 @@
 # include <queue>
 # include "webserv.hpp"
 # include "NetConfig.hpp"
+# include "HttpRequestModule.hpp"
+# include "HttpResponseModule.hpp"
+# include "CgiRequestModule.hpp"
+# include "CgiResponseModule.hpp"
 
 /**
  * closed 상태에서 request queue에 있는 것이 다 비어있고,
@@ -39,31 +43,16 @@ public:
 
     Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
 
-    inline serv_ip_t getIp() const;
-    inline serv_port_t getPort() const;
-    inline int getHttpSockfd() const;
-    inline bool closed() const;
+    serv_ip_t getIp() const;
+    serv_port_t getPort() const;
+    int getHttpSockfd() const;
+    bool closed() const;
+
+    HttpRequestHandler& getHttpRequestHandler() const;
+    HttpResponseHandler& getHttpResponseHandler() const;
+    CgiRequestHandler& getCgiRequestHandler() const;
+    CgiResponseHandler& getCgiResponseHandler() const;
 
 };
-
-inline serv_ip_t Cycle::getIp() const
-{
-    return _ip;
-}
-
-inline serv_port_t Cycle::getPort() const
-{
-    return _port;
-}
-
-inline int Cycle::getHttpSockfd() const
-{
-    return _httpSockfd;
-}
-
-inline bool Cycle::closed() const
-{
-    return _closed;
-}
 
 #endif

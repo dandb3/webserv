@@ -18,3 +18,43 @@ void Cycle::deleteCycle(Cycle* cycle)
 {
     _cycleStorage.erase(std::make_pair(cycle->getIp(), cycle->getPort()));
 }
+
+serv_ip_t Cycle::getIp() const
+{
+    return _ip;
+}
+
+serv_port_t Cycle::getPort() const
+{
+    return _port;
+}
+
+int Cycle::getHttpSockfd() const
+{
+    return _httpSockfd;
+}
+
+bool Cycle::closed() const
+{
+    return _closed;
+}
+
+HttpRequestHandler& Cycle::getHttpRequestHandler() const
+{
+    return _httpRequestHandler;
+}
+
+HttpResponseHandler& Cycle::getHttpResponseHandler() const
+{
+    return _httpResponseHandler;
+}
+
+CgiRequestHandler& Cycle::getCgiRequestHandler() const
+{
+    return _cgiRequestHandler;
+}
+
+CgiResponseHandler& Cycle::getCgiResponseHandler() const
+{
+    return _cgiResponseHandler;
+}

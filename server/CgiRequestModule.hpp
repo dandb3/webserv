@@ -32,6 +32,7 @@ class CgiRequestHandler
 private:
 	CgiRequest _cgiRequest;
 	size_t _pos;
+	bool _eof;
 
 	char** _makeArgv() const;
 	char** _makeEnvp() const;
@@ -47,7 +48,9 @@ public:
 	 * -> 구조가 꼬인다!
 	*/
 	void callCgiScript(int& cgiSendFd, int& cgiRecvFd) const;
-	void sendCgiRequest(int fd, size_t size);
+	void sendCgiRequest(struct kevent& kev);
+
+	bool eof() const;
 
 };
 

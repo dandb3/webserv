@@ -5,7 +5,7 @@
 #include "CgiRequestModule.hpp"
 
 CgiRequestHandler::CgiRequestHandler()
-: _cgiRequest(), _pos(0)
+: _cgiRequest(), _pos(0), _eof(false)
 {}
 
 char** CgiRequestHandler::_makeArgv() const
@@ -75,17 +75,22 @@ void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
         _parentProcess(servToCgi, cgiToServ);
 }
 
-void CgiRequestHandler::sendCgiRequest(int fd, size_t size)
+void CgiRequestHandler::sendCgiRequest(struct kevent& kev)
 {
     const std::string& messageBody = _cgiRequst.getMessageBody();
-    size_t remainSize, sendSize;
+    size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
 
     remainSize = messageBody.size() - _pos;
-    sendSize = (remainSize < size) ? remainSize : size;
+    sendSize = (remainSize < maxSize) ? remainSize : maxSize;
 
-    if (write(fd, messageBody.c_str() + _pos, sendSize) == FAILURE)
+    if (write(kev.ident, messageBody.c_str() + _pos, sendSize) == FAILURE)
         throw ERROR;
     _pos += sendSize;
-    if (remainSize <= size)
-        close(fd); // no need to call deleteEvent();
+    if (remainSize <= maxSize)
+        _eof = true;
+}
+
+bool CgiRequestHandler::eof() const
+{
+    return _eof;
 }

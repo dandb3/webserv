@@ -1,5 +1,8 @@
 #include "CgiResponseModule.hpp"
 
+CgiResponse::CgiResponse()
+{}
+
 CgiResponse::CgiResponse(const std::string& rawCgiResponse)
 // : header-fields(), message-body()
 {}

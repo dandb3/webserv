@@ -12,6 +12,7 @@ private:
     // message-body
 
 public:
+    CgiResponse();
     CgiResponse(const std::string& rawCgiResponse);
     CgiResponse& operator=(const CgiResponse& cgiResponse);
 
@@ -27,12 +28,16 @@ private:
 
     CgiResponse _cgiResponse;
     std::string _rawCgiResponse;
+    bool _eof;
 
 public:
-    void recvCgiResponse(int fd, size_t size);
+    CgiResponseHandler();
+
+    void recvCgiResponse(struct kevent& kev);
     void makeCgiResponse();
 
     const CgiResponse& getCgiResponse() const;
+    bool eof() const;
 
 };
 
