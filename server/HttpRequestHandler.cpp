@@ -1,7 +1,7 @@
 #include <sstream>
 #include "HttpRequestModule.hpp"
 
-HttpRequestHandler::HttpRequestHandler(std::queue<HttpRequest> &httpRequestQ, int fd) : _fd(fd), _status(INPUT_READY)
+HttpRequestHandler::HttpRequestHandler(std::queue<HttpRequest> &httpRequestQ) : _status(INPUT_READY)
 {}
 
 void HttpRequestHandler::_inputStart()

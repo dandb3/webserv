@@ -39,7 +39,7 @@ private:
     std::string _messageBody;
 
 public:
-    HttpRequest(int fd);
+    HttpRequest();
     HttpRequest(RequestLine &requestLine, \
         std::multimap<std::string, std::string> &headerFields, std::string &messageBody);
 
@@ -69,7 +69,6 @@ private:
     };
 
     static char _buf[BUF_SIZE];
-    int _fd;
     char _status;
 
     std::string _remain;
@@ -95,7 +94,7 @@ private:
 
 
 public:
-    HttpRequestHandler(int fd);
+    HttpRequestHandler();
 
     void recv_request(size_t size);
     void parse_request(bool eof);
