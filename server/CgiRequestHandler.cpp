@@ -37,7 +37,6 @@ void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ) const
 {
     if (close(servToCgi[0]) == FAILURE || close(cgiToServ[1]) == FAILURE)
         throw ERROR;
-    
 }
 
 void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
@@ -67,6 +66,8 @@ void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
     if (fcntl(servToCgi[1], F_SETFL, O_NONBLOCK) == FAILURE \
         || fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK) == FAILURE)
         throw ERROR;
+    cgiSendFd = servToCgi[1];
+    cgiRecvFd = cgiToServ[0];
     if ((pid = fork()) == FAILURE)
         throw ERROR;
     if (pid == 0)

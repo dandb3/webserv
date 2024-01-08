@@ -35,10 +35,8 @@ private:
 
 public:
 	void makeCgiRequest(HttpRequest& httpRequest);
-	// socketpair(), fork()
-	// addEvent()를 내부적으로 해주는게 좋을 것 같긴한데 그러면 handler 클래스의 
 	/**
-	 * socketpair(), fork()
+	 * pipe(), fork()
 	 * addEvent()를 내부적으로 해주는게 좋을 것 같긴한데
 	 * 그러면 handler 클래스의 레퍼런스를 받아와야됨..
 	 * -> 구조가 꼬인다!
