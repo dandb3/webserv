@@ -51,8 +51,12 @@ private:
 
 	HttpResponse _httpResponse;
 
-public:
+	void _makeStatusLine();
+	void _makeHeaderField();
+	void _makeMessageBody();
 
+public:
+	HttpResponseHandler();
 };
 
 #endif
