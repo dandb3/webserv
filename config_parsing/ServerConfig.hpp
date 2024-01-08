@@ -23,11 +23,15 @@ private:
 
 public:
     static std::vector<int> portsWithINADDR_ANY;
+
     ServerConfig();
     ServerConfig(const ServerConfig &ref);
     ~ServerConfig();
 
     ServerConfig &operator=(const ServerConfig &ref);
+
+    // add int to portsWithINADDR_ANY
+    static void addPort(int port);
 
     // getter
     t_directives &getServerInfo();

@@ -1,6 +1,6 @@
 #include "ConfigParser.hpp"
 
-int ft_inet_aton(const char* str, struct in_addr* addr) {
+int ft_inet_aton(const char *str, struct in_addr *addr) {
     int i, len, n;
     uint32_t ip;
     char c;
@@ -65,7 +65,7 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
     return std::make_pair(ip, port);
 }
 
-std::string ConfigParser::getWord(std::string const& file_content, size_t& i, std::string const& delimiter) {
+std::string ConfigParser::getWord(std::string const &file_content, size_t &i, std::string const &delimiter) {
     size_t start = file_content.find_first_not_of(delimiter, i);
     size_t end = file_content.find_first_of(delimiter, start);
     if (start == std::string::npos || end == std::string::npos) {
@@ -92,7 +92,7 @@ std::string ConfigParser::getWord(std::string const& file_content, size_t& i, st
  *
  * 파싱 시에 key 값이 내가 찾는 값이 아닌경우 key가 무엇인지 알려주고 오류 처리 (해야할 것)
 */
-void ConfigParser::parse(std::string const& config_path, Config& config) {
+void ConfigParser::parse(std::string const &config_path, Config &config) {
     std::cout << "read config file" << std::endl;
     std::string file_content = FileReader::read_file(config_path); // 실패 시 throw
     std::cout << "finish read config file" << std::endl;
@@ -123,7 +123,18 @@ void ConfigParser::parse(std::string const& config_path, Config& config) {
 
 }
 
-void ConfigParser::parseServer(std::string const& file_content, size_t& i, Config& config) {
+void printServerInfo2(ServerConfig &server) {
+    std::cout << "======================" << std::endl;
+    std::cout << "[parseServer] " << "portsWithINADDR_ANY: ";
+    for (std::vector<int>::iterator it = ServerConfig::portsWithINADDR_ANY.begin(); it != ServerConfig::portsWithINADDR_ANY.end(); it++)
+        std::cout << *it << " ";
+    std::cout << std::endl;
+    std::cout << "[parseServer] " << "ip: " << server.getIp().s_addr << std::endl;
+    std::cout << "[parseServer] " << "port: " << server.getPort() << std::endl;
+    std::cout << "======================" << std::endl;
+}
+
+void ConfigParser::parseServer(std::string const &file_content, size_t &i, Config &config) {
     ServerConfig server_config;
     if (getWord(file_content, i, DELIMITER) != "{")
         throw std::runtime_error("config 파일 파싱 중 에러 발생");
@@ -144,10 +155,12 @@ void ConfigParser::parseServer(std::string const& file_content, size_t& i, Confi
             }
             if (key == "listen") {
                 std::pair<struct in_addr, int> ip_port = getIpPort(value[0]);
-                if (ip_port.first.s_addr == INADDR_ANY)
-                    server_config.portsWithINADDR_ANY.push_back(ip_port.second);
+                if (ip_port.first.s_addr == INADDR_ANY) {
+                    server_config.addPort(ip_port.second);
+                }
                 server_config.setIp(ip_port.first);
                 server_config.setPort(ip_port.second);
+                // printServerInfo2(server_config);
             }
             else if (key == "server_name") {
                 server_config.setServerName(value);
@@ -162,7 +175,7 @@ void ConfigParser::parseServer(std::string const& file_content, size_t& i, Confi
     config.setServer(server_config);
 }
 
-void ConfigParser::parseLocation(std::string const& file_content, size_t& i, ServerConfig& server_config) {
+void ConfigParser::parseLocation(std::string const &file_content, size_t &i, ServerConfig &server_config) {
     LocationConfig location_config;
     size_t start = file_content.find_first_of('{', i);
     std::string argv;
@@ -198,7 +211,7 @@ void ConfigParser::parseLocation(std::string const& file_content, size_t& i, Ser
     server_config.setLocation(location_config);
 }
 
-void ConfigParser::parseTypes(std::string const& file_path, Config& config) {
+void ConfigParser::parseTypes(std::string const &file_path, Config &config) {
     t_directives mime_types;
     std::string file_content = FileReader::read_file(file_path); // 실패 시 throw
     size_t i = 0;
