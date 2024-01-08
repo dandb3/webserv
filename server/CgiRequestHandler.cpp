@@ -1,5 +1,4 @@
 #include <cstring>
-#include <algorithm>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -82,7 +81,7 @@ void CgiRequestHandler::sendCgiRequest(int fd, size_t size)
     size_t remainSize, sendSize;
 
     remainSize = messageBody.size() - _pos;
-    sendSize = std::min(remainSize, size);
+    sendSize = (remainSize < size) ? remainSize : size;
 
     if (write(fd, messageBody.c_str() + _pos, sendSize) == FAILURE)
         throw ERROR;
