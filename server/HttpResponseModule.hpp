@@ -3,6 +3,7 @@
 
 # include <string>
 # include <map>
+# include <utility>
 # include "cgi_response.hpp"
 
 class StatusLine
@@ -36,8 +37,8 @@ public:
 	};
 	HttpResponse(int fd, const cgi_response& cres);
 
-	int get_status() const;
-	void set_status(int status);
+	int getStatus() const;
+	void setStatus(StatusLine statusLine);
 
 	void send_response(size_t size);
 };
