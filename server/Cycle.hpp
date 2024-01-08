@@ -22,15 +22,16 @@ private:
     serv_ip_t _ip;
     serv_port_t _port;
     int _httpSockfd;
-	int _cgiSockfd;
+	int _cgiInputfd;
+    int _cgiOutputfd;
     bool _closed;
 
-    HttpRequestHandler _hrqHandler;
-    HttpResponseHandler _hrspHandler;
-    CgiRequestHandler _crqHandler;
-    CgiResponseHandler _crspHandler;
+    HttpRequestHandler _httpRequestHandler;
+    HttpResponseHandler _httpResponseHandler;
+    CgiRequestHandler _cgiRequestHandler;
+    CgiResponseHandler _cgiResponseHandler;
 
-	std::queue<HttpRequest> _hrqQueue;
+	std::queue<HttpRequest> _httpRequestQueue;
 
 public:
     static Cycle* newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd);

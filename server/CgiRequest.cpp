@@ -13,3 +13,13 @@ CgiRequest& CgiRequest::operator=(const CgiRequest& cgiRequest)
     _messageBody = cgiRequest._messageBody;
     return *this;
 }
+
+const std::vector<std::string>& CgiRequest::getMetaVariables() const
+{
+    return _metaVariables;
+}
+
+const std::string& CgiRequest::getMessageBody() const
+{
+    return _messageBody;
+}

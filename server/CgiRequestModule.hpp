@@ -8,6 +8,10 @@
 
 # define CGI_PATH "undefined"
 
+/**
+ * HttpRequest -> CgiRequest로 바꾸는 부분 미구현
+*/
+
 class CgiRequest
 {
 private:
@@ -18,13 +22,14 @@ public:
 	CgiRequest();
 	CgiRequest& operator=(const CgiRequest& cgiRequest);
 
+	const std::vector<std::string>& getMetaVariables() const;
+	const std::string& getMessageBody() const;
+
 };
 
 class CgiRequestHandler
 {
 private:
-	friend class CgiRequest;
-
 	CgiRequest _cgiRequest;
 	size_t _pos;
 
@@ -42,7 +47,7 @@ public:
 	 * -> 구조가 꼬인다!
 	*/
 	void callCgiScript(int& cgiSendFd, int& cgiRecvFd) const;
-	void sendCgiRequest(size_t size);
+	void sendCgiRequest(int fd, size_t size);
 
 };
 

@@ -1,5 +1,7 @@
 #include "Cycle.hpp"
 
+std::map<std::pair<serv_ip_t, serv_port_t>, Cycle> Cycle::_cycleStorage;
+
 Cycle::Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
 : _netConfig(), _ip(ip), _port(port), _httpSockfd(httpSockfd), _closed(false)
 {}

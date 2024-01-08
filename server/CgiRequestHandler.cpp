@@ -21,7 +21,7 @@ char** CgiRequestHandler::_makeArgv() const
 
 char** CgiRequestHandler::_makeEnvp() const
 {
-    std::vector<std::string>& metaVariables = _cgiRequest._metaVariables;
+    std::vector<std::string>& metaVariables = _cgiRequest.getMetaVariables();
     char** result = new char*[metaVariables.size() + 1];
 
     for (size_t i = 0; i < metaVariables.size(); ++i) {
@@ -76,17 +76,17 @@ void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
         _parentProcess(servToCgi, cgiToServ);
 }
 
-void CgiRequestHandler::sendCgiRequest(int sockfd, size_t size)
+void CgiRequestHandler::sendCgiRequest(int fd, size_t size)
 {
-    const std::string& messageBody = _cgiRequst._messageBody;
+    const std::string& messageBody = _cgiRequst.getMessageBody();
     size_t remainSize, sendSize;
 
     remainSize = messageBody.size() - _pos;
     sendSize = std::min(remainSize, size);
 
-    if (write(sockfd, messageBody.c_str() + _pos, sendSize) == FAILURE)
+    if (write(fd, messageBody.c_str() + _pos, sendSize) == FAILURE)
         throw ERROR;
     _pos += sendSize;
     if (remainSize <= size)
-        close(sockfd); // no need to call deleteEvent();
+        close(fd); // no need to call deleteEvent();
 }
