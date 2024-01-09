@@ -1,6 +1,7 @@
 #ifndef EVENT_HANDLER_HPP
 # define EVENT_HANDLER_HPP
 
+# include <vector>
 # include "webserv.hpp"
 # include "KqueueHandler.hpp"
 
@@ -14,8 +15,12 @@ private:
 		EVENT_HTTP_RES,
 		EVENT_CGI_REQ,
 		EVENT_CGI_RES,
-		EVENT_ERROR,
-	};    
+		EVENT_ERROR
+	};
+
+    KqueueHandler _kqueueHandler;
+
+    char _getEventType(const struct kevent& kev);
 
     void _servListen(const struct kevent& kev);
     void _servHttpRequest(const struct kevent& kev);
@@ -25,6 +30,9 @@ private:
     void _servError(const struct kevent& kev);
 
 public:
+    EventHandler();
+
+    void initEvent(const std::vector<int>& listenFds);
     void operate();
 
 };
