@@ -136,18 +136,19 @@ void EventHandler::_servCgiResponse(struct kevent& kev)
     }
 }
 
+/**
+ * kevent에 의하면 kev.data 개수만큼 있는데 0이 리턴되는 경우도 말이 안 된다.
+ * 라고 생각했었는데,
+ * SIGCHLD가 발생하는 경우를 찾아보니, 자식 프로세스가 종료되는 경우 뿐만 아니라
+ * stopped 되거나 continue 되거나 되게 다양한 상황이 존재한다.
+ * 그러므로 waitpid() 호출 후 0이 리턴되는 경우도 존재할 수 있다.
+ * 다만, SIGCHLD 발생 시 마다 waitpid()를 호출하는 경우가 실제 자식프로세스의
+ * 종료되는 횟수보다 많거나 같다는 점은 알고 있어야 한다.
+ * (완전히 최적화되지는 않는다는 뜻)
+*/
+
 void EventHandler::_servSigchld(const struct kevent& kev)
 {
-    /**
-     * kevent에 의하면 kev.data 개수만큼 있는데 0이 리턴되는 경우도 말이 안 된다.
-     * 라고 생각했었는데,
-     * SIGCHLD가 발생하는 경우를 찾아보니, 자식 프로세스가 종료되는 경우 뿐만 아니라
-     * stopped 되거나 continue 되거나 되게 다양한 상황이 존재한다.
-     * 그러므로 waitpid() 호출 후 0이 리턴되는 경우도 존재할 수 있다.
-     * 다만, SIGCHLD 발생 시 마다 waitpid()를 호출하는 경우가 실제 자식프로세스의
-     * 종료되는 횟수보다 많거나 같다는 점은 알고 있어야 한다.
-     * (완전히 최적화되지는 않는다는 뜻)
-    */
     for (intptr_t i = 0; i < kev.data; ++i)
         if (waitpid(-1, NULL, WNOHANG) == FAILURE)
             throw ERROR;
