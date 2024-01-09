@@ -26,7 +26,7 @@ private:
     serv_ip_t _ip;
     serv_port_t _port;
     int _httpSockfd;
-	int _cgiInputfd;
+	int _cgiSendfd;
     int _cgiOutputfd;
     bool _closed;
 
@@ -46,12 +46,15 @@ public:
     serv_ip_t getIp() const;
     serv_port_t getPort() const;
     int getHttpSockfd() const;
+    int getCgiSendfd() const;
+    int getCgiRecvfd() const;
     bool closed() const;
 
     HttpRequestHandler& getHttpRequestHandler() const;
     HttpResponseHandler& getHttpResponseHandler() const;
     CgiRequestHandler& getCgiRequestHandler() const;
     CgiResponseHandler& getCgiResponseHandler() const;
+    std::queue<HttpRequest>& getHttpRequestQueue() const;
 
 };
 

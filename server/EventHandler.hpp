@@ -3,6 +3,7 @@
 
 # include <vector>
 # include "webserv.hpp"
+# include "Cycle.hpp"
 # include "KqueueHandler.hpp"
 
 class EventHandler
@@ -15,18 +16,21 @@ private:
 		EVENT_HTTP_RES,
 		EVENT_CGI_REQ,
 		EVENT_CGI_RES,
+        EVENT_SIGCHLD,
 		EVENT_ERROR
 	};
 
     KqueueHandler _kqueueHandler;
 
     char _getEventType(const struct kevent& kev);
+    void _processHttpRequest(Cycle* cycle);
 
     void _servListen(const struct kevent& kev);
     void _servHttpRequest(const struct kevent& kev);
     void _servHttpResponse(const struct kevent& kev);
     void _servCgiRequest(const struct kevent& kev);
     void _servCgiResponse(const struct kevent& kev);
+    void _servSigchld(const struct kevent& kev);
     void _servError(const struct kevent& kev);
 
 public:

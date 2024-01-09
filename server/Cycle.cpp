@@ -34,6 +34,16 @@ int Cycle::getHttpSockfd() const
     return _httpSockfd;
 }
 
+int Cycle::getCgiSendfd() const
+{
+    return _cgiSendfd;
+}
+
+int Cycle::getCgiRecvfd() const
+{
+    return _cgiOutputfd;
+}
+
 bool Cycle::closed() const
 {
     return _closed;
@@ -57,4 +67,9 @@ CgiRequestHandler& Cycle::getCgiRequestHandler() const
 CgiResponseHandler& Cycle::getCgiResponseHandler() const
 {
     return _cgiResponseHandler;
+}
+
+std::queue<HttpRequest>& Cycle::getHttpRequestQueue() const
+{
+    return _httpRequestQueue;
 }

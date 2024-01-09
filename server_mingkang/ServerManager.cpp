@@ -1,26 +1,14 @@
 #include <iostream>
-#include <signal.h>
-#include <sys/wait.h>
 #include "ServerManager.hpp"
-
-static void sigChldHandler(int signal)
-{
-    if (waitpid(-1, NULL, WNOHANG) == FAILURE)
-        throw ERROR;
-}
 
 ServerManager::ServerManager()
 {
     Config::getInstance();
-    if (signal(SIGCHLD, sigChldHandler) == SIG_ERR)
-        throw ERROR;
 }
 
 ServerManager::ServerManager(std::string config_path)
 {
     Config::getInstance(config_path);
-    if (signal(SIGCHLD, sigChldHandler) == SIG_ERR)
-        throw ERROR;
 }
 
 // bool isInaddrAny(ServerConfig &server) {
@@ -75,7 +63,5 @@ void ServerManager::initServer()
         if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
             throw std::runtime_error("fcntl error");
         listenFds.push_back(sockfd);
-        _kqueue_handler.addEvent(sockfd, EVFILT_READ);
-        _kqueue_handler.setEventType(sockfd, SOCKET_LISTEN);
     }
 }
