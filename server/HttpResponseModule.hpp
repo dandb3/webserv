@@ -5,6 +5,8 @@
 # include <map>
 # include <utility>
 # include "cgi_response.hpp"
+# include "HttpRequestModule.hpp"
+# include "NetConfig.hpp"
 
 class StatusLine
 {
@@ -29,18 +31,10 @@ private:
 	std::multimap<std::string, std::string> _headerFields;
 
 public:
-	enum
-	{
-		RES_IDLE,
-		RES_PROCESSING,
-		RES_READY,
-	};
 	HttpResponse(int fd, const cgi_response& cres);
 
 	int getStatus() const;
-	void setStatus(StatusLine statusLine);
-
-	void send_response(size_t size);
+	void setStatus(StatusLine &statusLine);
 };
 
 class HttpResponseHandler
@@ -57,7 +51,16 @@ private:
 	void _makeMessageBody();
 
 public:
+	enum
+	{
+		RES_IDLE,
+		RES_PROCESSING,
+		RES_READY,
+	};
 	HttpResponseHandler();
+
+	void makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig);
+	void sendHttpResponse(size_t size);
 };
 
 #endif

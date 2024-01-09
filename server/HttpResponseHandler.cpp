@@ -53,3 +53,10 @@ void HttpResponseHandler::_makeHeaderField()
 {
 
 }
+
+void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig)
+{
+    _makeStatusLine();
+    _makeMessageBody();
+    _makeHeaderField();
+}

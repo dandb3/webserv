@@ -10,7 +10,7 @@ StatusLine& StatusLine::operator=(const StatusLine& ref)
     return *this;
 }
 
-void StatusLine::setVersion(std::pair<short, short> version)
+void StatusLine::setVersion(std::pair<short, short> &version)
 {
     _version = version;
 }
@@ -20,7 +20,7 @@ void StatusLine::setCode(short code)
     _code = code;
 }
 
-void StatusLine::setText(std::string text)
+void StatusLine::setText(std::string &text)
 {
     _text = text;
 }
