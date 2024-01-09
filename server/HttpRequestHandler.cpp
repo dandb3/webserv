@@ -1,7 +1,7 @@
 #include <sstream>
 #include "HttpRequestModule.hpp"
 
-HttpRequestHandler::HttpRequestHandler(std::queue<HttpRequest> &httpRequestQ) : _status(INPUT_READY)
+HttpRequestHandler::HttpRequestHandler() : _status(INPUT_READY)
 {}
 
 void HttpRequestHandler::_inputStart()
@@ -199,32 +199,32 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
     _status = PARSE_FINISHED;
 }
 
-void HttpRequestHandler::_push_err_request(Cycle &cycle)
+void HttpRequestHandler::_push_err_request(std::queue<HttpRequest> &httpRequestQ)
 {
-    _httpRequestQ.push(HttpRequest(_requestLine, _headerFields, _messageBody));
+    httpRequestQ.push(_httpRequest);
     _status = INPUT_CLOSED;
 }
 
-void HttpRequestHandler::_push_request()
+void HttpRequestHandler::_push_request(std::queue<HttpRequest> &httpRequestQ)
 {
-    _httpRequestQ.push(HttpRequest(_requestLine, _headerFields, _messageBody));
+    httpRequestQ.push(_httpRequest);
     _status = INPUT_READY;
     // 만약 Connection: closed라면 -> _status = INPUT_CLOSED;
 }
 
-void HttpRequestHandler::recv_request(size_t size)
+void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 {
     ssize_t read_len;
 
     while (size > 0) {
-        if ((read_len = read(_fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
+        if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
             throw err_syscall();
         size -= read_len;
         _remain.append(_buf, static_cast<size_t>(read_len));
     }
 }
 
-void HttpRequestHandler::parse_request(bool eof)
+void HttpRequestHandler::parseHttpRequest(bool eof)
 {
     do {
         // 사실 여기서 status 값으로 PARSE_* 애들은 빼도 될 것 같음.

@@ -73,7 +73,6 @@ private:
 
     std::string _remain;
     std::vector<std::string> _lineV;
-    std::queue<HttpRequest>& _httpRequestQ;
 
     HttpRequest _httpRequest;
 
