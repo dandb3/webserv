@@ -22,6 +22,15 @@
 */
 class KqueueHandler
 {
+public:
+	enum SocketType_e
+	{
+		SOCKET_LISTEN,
+		SOCKET_CLIENT,
+		SOCKET_CGI,
+        SOCKET_ERROR
+	};
+
 private:
     /* data */
     int _kqfd;

@@ -12,20 +12,14 @@
 #include <fcntl.h>
 #include <algorithm>
 #include "config_parsing/Config.hpp"
-#include "KqueueHandler.hpp"
+#include "EventHandler.hpp"
 
 #define GETV_SIZE 10
 
 class ServerManager
 {
 private:
-	enum SocketType_e
-	{
-		SOCKET_LISTEN,
-		SOCKET_CLIENT,
-		SOCKET_CGI
-	};
-	KqueueHandler _kqueue_handler;
+	EventHandler _eventHandler;
 
 public:
 	ServerManager();						// 생성자, 만들면서 config 파일 읽어서 파싱

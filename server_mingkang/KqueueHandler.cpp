@@ -62,7 +62,7 @@ char KqueueHandler::getEventType(int ident)
     std::map<int, char>::iterator it = _type.find(ident);
     if (it == _type.end()) {
         std::cerr << "getEventType() failed" << std::endl;
-        return -1;
+        return SOCKET_ERROR;
     }
     return it->second;
 }
