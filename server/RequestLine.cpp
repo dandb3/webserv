@@ -15,12 +15,27 @@ void RequestLine::setMethod(short method)
     _method = method;
 }
 
-void RequestLine::setRequestTarget(std::string requestTarget)
+void RequestLine::setRequestTarget(std::string &requestTarget)
 {
     _request_target = requestTarget;
 }
 
-void RequestLine::setVersion(std::pair<short, short> version)
+void RequestLine::setVersion(std::pair<short, short> &version)
 {
     _version = version;
+}
+
+const short RequestLine::getMethod() const
+{
+    return _method;
+}
+
+const std::string& RequestLine::getRequestTarget() const
+{
+    return _requestTarget;
+}
+
+const std::pair<short, short>& RequestLine::getVersion() const
+{
+    return _version;
 }

@@ -29,6 +29,10 @@ public:
     void setMethod(short method);
     void setRequestTarget(std::string &requestTarget);
     void setVersion(std::pair<short, short> &version);
+
+    const short getMethod() const;
+    const std::string &getRequestTarget() const;
+    const std::pair<short, short> &getVersion() const;
 };
 
 class HttpRequest
@@ -46,6 +50,10 @@ public:
     void setRequestLine(RequestLine &requestLine);
     void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
     void setMessageBody(std::string &messageBody);
+
+    const RequestLine &getRequestLine() const;
+    const std::multimap<std::string, std::string> &getHeaderFields() const;
+    const std::string &getMessageBody() const;
 
     inline bool closed() const;
 };
