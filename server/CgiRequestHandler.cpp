@@ -66,9 +66,19 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
         exit(1);
 }
 
+/**
+ * header-field find할 때, 해당 header-field 값이 여러 개가 존재할 수 있는 경우가 모두 고려된 건가?
+ * 아마 안 됐을 듯.
+ * 그렇다면 헤더필드에 대해서 체크 해주어야 하는 함수를 어디엔가 넣어주어야 한다..?
+*/
+
 void CgiRequestHandler::makeCgiRequest(HttpRequest& httpRequest)
 {
-    
+    const RequestLine& requestLine = httpRequest.getRequestLine();
+    const std::multimap<std::string, std::string>& headerFields = httpRequest.getHeaderFields();
+    const std::string& messageBody = httpRequest.getMessageBody();
+
+    // 아직 미구현..
 }
 
 void CgiRequestHandler::sendCgiRequest(struct kevent& kev)
