@@ -136,11 +136,11 @@ void ServerManager::operate()
                 else if (type == SOCKET_CLIENT) {
                     char buf[1024];
                     int n = read(sockfd, buf, 1024);
-                    if (n == -1)
+                    if (n == -1) {
                         throw std::runtime_error("read error");
+                    }
                     else if (n == 0) {
-                        delete (EventInfo *)curEvent.udata;
-                        _kqueue_handler.deleteEvent(sockfd, EVFILT_READ);
+                        std::cerr << "clients disconnected" << std::endl;
                         _kqueue_handler.deleteEventType(sockfd);
                         close(sockfd);
                     }
