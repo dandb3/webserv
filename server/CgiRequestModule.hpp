@@ -8,10 +8,6 @@
 
 # define CGI_PATH "undefined"
 
-/**
- * HttpRequest -> CgiRequest로 바꾸는 부분 미구현
-*/
-
 class CgiRequest
 {
 private:
@@ -21,6 +17,9 @@ private:
 public:
 	CgiRequest();
 	CgiRequest& operator=(const CgiRequest& cgiRequest);
+
+	void addMetaVariable(const std::string& metaVariable);
+	void setMessageBody(const std::string& messageBody);
 
 	const std::vector<std::string>& getMetaVariables() const;
 	const std::string& getMessageBody() const;
@@ -40,15 +39,12 @@ private:
 	void _childProcess(int* servToCgi, int* cgiToServ) const;
 
 public:
+	CgiRequestHandler();
+	CgiRequestHandler& operator=(const CgiRequestHandler& cgiRequestHandler);
+
 	void makeCgiRequest(HttpRequest& httpRequest);
-	/**
-	 * pipe(), fork()
-	 * addEvent()를 내부적으로 해주는게 좋을 것 같긴한데
-	 * 그러면 handler 클래스의 레퍼런스를 받아와야됨..
-	 * -> 구조가 꼬인다!
-	*/
-	void callCgiScript(int& cgiSendFd, int& cgiRecvFd) const;
 	void sendCgiRequest(struct kevent& kev);
+	void callCgiScript(int& cgiSendFd, int& cgiRecvFd) const;
 
 	bool eof() const;
 

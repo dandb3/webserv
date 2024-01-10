@@ -21,8 +21,8 @@ private:
     */
 
 public:
-
     NetConfig();
+    NetConfig& operator=(const Netconfig& netConfig);
 
     inline uint32_t getIp() const;
     inline u_short getPort() const;

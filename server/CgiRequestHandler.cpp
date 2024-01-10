@@ -2,11 +2,23 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "HttpRequestModule.hpp"
 #include "CgiRequestModule.hpp"
 
 CgiRequestHandler::CgiRequestHandler()
 : _cgiRequest(), _pos(0), _eof(false)
 {}
+
+CgiRequestHandler& CgiRequestHandler::operator=(const CgiRequestHandler& cgiRequestHandler)
+{
+    if (this == &cgiRequestHandler)
+        return *this;
+
+    _cgiRequest = cgiRequestHandler._cgiRequest;
+    _pos = cgiRequestHandler._pos;
+    _eof = cgiRequestHandler._eof;
+    return *this;
+}
 
 char** CgiRequestHandler::_makeArgv() const
 {
@@ -54,6 +66,26 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
         exit(1);
 }
 
+void CgiRequestHandler::makeCgiRequest(HttpRequest& httpRequest)
+{
+    
+}
+
+void CgiRequestHandler::sendCgiRequest(struct kevent& kev)
+{
+    const std::string& messageBody = _cgiRequst.getMessageBody();
+    size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
+
+    remainSize = messageBody.size() - _pos;
+    sendSize = (remainSize < maxSize) ? remainSize : maxSize;
+
+    if (write(kev.ident, messageBody.c_str() + _pos, sendSize) == FAILURE)
+        throw ERROR;
+    _pos += sendSize;
+    if (remainSize <= maxSize)
+        _eof = true;
+}
+
 void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
 {
     int servToCgi[2], cgiToServ[2];
@@ -73,21 +105,6 @@ void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
         _childProcess(servToCgi, cgiToServ);
     else
         _parentProcess(servToCgi, cgiToServ);
-}
-
-void CgiRequestHandler::sendCgiRequest(struct kevent& kev)
-{
-    const std::string& messageBody = _cgiRequst.getMessageBody();
-    size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
-
-    remainSize = messageBody.size() - _pos;
-    sendSize = (remainSize < maxSize) ? remainSize : maxSize;
-
-    if (write(kev.ident, messageBody.c_str() + _pos, sendSize) == FAILURE)
-        throw ERROR;
-    _pos += sendSize;
-    if (remainSize <= maxSize)
-        _eof = true;
 }
 
 bool CgiRequestHandler::eof() const

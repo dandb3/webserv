@@ -41,7 +41,7 @@ int Cycle::getCgiSendfd() const
 
 int Cycle::getCgiRecvfd() const
 {
-    return _cgiOutputfd;
+    return _cgiRecvfd;
 }
 
 bool Cycle::closed() const
@@ -72,4 +72,15 @@ CgiResponseHandler& Cycle::getCgiResponseHandler() const
 std::queue<HttpRequest>& Cycle::getHttpRequestQueue() const
 {
     return _httpRequestQueue;
+}
+
+void Cycle::resetCycle()
+{
+    _netConfig = NetConfig();
+    _cgiSendfd = -1;
+    _cgiRecvfd = -1;
+    // _httpRequestHandler = HttpRequestHandler();
+    // _httpResponseHandler = HttpResponseHandler();
+    _cgiRequestHandler = CgiRequestHandler();
+    _cgiResponseHandler = CgiResponseHandler();
 }

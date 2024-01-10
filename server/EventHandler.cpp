@@ -95,8 +95,8 @@ void EventHandler::_servHttpResponse(struct kevent& kev)
     /**
      * sendHttpResponse();
      * if eof()라면? (전송이 다 끝난다면)
+     *     cycle 초기화 (httpResponseHandler의 status를 IDLE로 바꿈. 도 포함)
      *     deleteEvent(); (혹은 disable?)
-     *     httpResponseHandler의 status를 IDLE로 바꿈.
      *     if queue가 비어있지 않다면?
      *         _processHttpRequest(cycle);
      *     else if Cycle이 closed상태라면?

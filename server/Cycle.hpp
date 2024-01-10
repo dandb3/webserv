@@ -27,7 +27,7 @@ private:
     serv_port_t _port;
     int _httpSockfd;
 	int _cgiSendfd;
-    int _cgiOutputfd;
+    int _cgiRecvfd;
     bool _closed;
 
     HttpRequestHandler _httpRequestHandler;
@@ -55,6 +55,8 @@ public:
     CgiRequestHandler& getCgiRequestHandler() const;
     CgiResponseHandler& getCgiResponseHandler() const;
     std::queue<HttpRequest>& getHttpRequestQueue() const;
+
+    void resetCycle();
 
 };
 

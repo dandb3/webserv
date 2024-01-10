@@ -8,6 +8,17 @@ CgiResponseHandler::CgiResponseHandler()
 : _cgiResponse(), _rawCgiResponse(), _eof(false)
 {}
 
+CgiResponseHandler& CgiResponseHandler::operator=(const CgiResponseHandler& cgiResponseHandler)
+{
+    if (this == &cgiResponseHandler)
+        return *this;
+
+    _cgiResponse = cgiResponseHandler._cgiResponse;
+    _rawCgiResponse = cgiResponseHandler._rawCgiResponse;
+    _eof = cgiResponseHandler._eof;
+    return *this;
+}
+
 void CgiResponseHandler::recvCgiResponse(struct kevent& kev)
 {
     size_t recvLen, totalSize = static_cast<size_t>(kev.data);
