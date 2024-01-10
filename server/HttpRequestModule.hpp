@@ -99,22 +99,14 @@ private:
     void _push_request();
     void _push_err_request();
 
-
 public:
     HttpRequestHandler();
 
-    void recv_request(size_t size);
-    void parse_request(bool eof);
+    void recvHttpRequest(int fd, size_t size);
+    void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);
 
-    inline std::queue<http_request>& get_queue();
     inline bool closed() const;
-
 };
-
-inline std::queue<http_request>& HttpRequestHandler::get_queue()
-{
-    return _http_request_q;
-}
 
 inline bool HttpRequestHandler::closed() const
 {

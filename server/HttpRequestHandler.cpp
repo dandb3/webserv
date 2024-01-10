@@ -49,7 +49,7 @@ bool HttpRequestHandler::_parseRequestLine()
         requestLine.setMethod(POST);
     else if (token == "DELETE")
         requestLine.setMethod(DELETE);
-    else // 처리하지 않을 header
+    else // 처리하지 않을 header -> 501 Not Implemented
         return FAILURE;
 
     // set uri
@@ -224,7 +224,7 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
     }
 }
 
-void HttpRequestHandler::parseHttpRequest(bool eof)
+void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
 {
     do {
         // 사실 여기서 status 값으로 PARSE_* 애들은 빼도 될 것 같음.
@@ -238,8 +238,8 @@ void HttpRequestHandler::parseHttpRequest(bool eof)
         if (_status == INPUT_MESSAGE_BODY)
             _inputMessageBody();
         if (_status != PARSE_FINISHED && eof)
-            _push_err_request();
+            _push_err_request(httpRequestQ);
         if (_status == PARSE_FINISHED)
-            _push_request();
+            _push_request(httpRequestQ);
     } while (_status == INPUT_READY);
 }
