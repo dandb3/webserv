@@ -40,7 +40,6 @@ Config &Config::operator=(const Config &ref) {
     return *this;
 }
 
-
 // getInstace
 Config &Config::getInstance() {
     if (_instance._config_path == "")

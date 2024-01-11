@@ -17,7 +17,7 @@ ServerConfig::~ServerConfig() {
 ServerConfig &ServerConfig::operator=(ServerConfig const &ref) {
     if (this != &ref) {
         this->_server_info = ref._server_info;
-        this->_location_v = ref._location_v;
+        this->_location_m = ref._location_m;
         this->ip = ref.ip;
         this->port = ref.port;
         this->server_name = ref.server_name;
@@ -41,8 +41,8 @@ std::vector<std::string> &ServerConfig::getVariable(const std::string &key) {
     return this->_server_info[key];
 }
 
-std::vector<LocationConfig> &ServerConfig::getLocationList() {
-    return this->_location_v;
+std::map<std::string, LocationConfig> &ServerConfig::getLocationList() {
+    return this->_location_m;
 }
 
 struct in_addr ServerConfig::getIp() {
@@ -58,11 +58,9 @@ std::vector<std::string> ServerConfig::getServerName() {
 }
 
 LocationConfig &ServerConfig::getLocation(std::string &path) {
-    for (std::vector<LocationConfig>::iterator it = this->_location_v.begin(); it != this->_location_v.end(); it++) {
-        if (it->getPath() == path)
-            return *it;
-    }
-    return *this->_location_v.end();
+    if (this->_location_m.find(path) != this->_location_m.end())
+        return this->_location_m[path];
+    throw std::runtime_error("location이 존재하지 않습니다.");
 }
 
 // setter
@@ -86,10 +84,10 @@ void ServerConfig::setServerName(std::vector<std::string> &server_name) {
     this->server_name = server_name;
 }
 
-void ServerConfig::setLocationList(std::vector<LocationConfig> &location_v) {
-    this->_location_v = location_v;
+void ServerConfig::setLocationList(std::map<std::string, LocationConfig> &location_m) {
+    this->_location_m = location_m;
 }
 
-void ServerConfig::setLocation(LocationConfig &location) {
-    this->_location_v.push_back(location);
+void ServerConfig::setLocation(std::string path, LocationConfig &location) {
+    this->_location_m.insert(std::pair<std::string, LocationConfig>(path, location));
 }

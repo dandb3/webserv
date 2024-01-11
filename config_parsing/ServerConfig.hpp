@@ -19,7 +19,7 @@ private:
     int port;
     std::vector<std::string> server_name;
     t_directives _server_info;
-    std::vector<LocationConfig> _location_v;
+    std::map<std::string, LocationConfig> _location_m;
 
 public:
     static std::vector<int> portsWithINADDR_ANY;
@@ -39,8 +39,7 @@ public:
     struct in_addr getIp();
     int getPort();
     std::vector<std::string> getServerName();
-
-    std::vector<LocationConfig> &getLocationList();
+    std::map<std::string, LocationConfig> &getLocationList();
     LocationConfig &getLocation(std::string &path);
 
     // setter
@@ -49,8 +48,8 @@ public:
     void setIp(struct in_addr ip);
     void setPort(int port);
     void setServerName(std::vector<std::string> &server_name);
-    void setLocationList(std::vector<LocationConfig> &location_v);
-    void setLocation(LocationConfig &location);
+    void setLocationList(std::map<std::string, LocationConfig> &location_m);
+    void setLocation(std::string path, LocationConfig &location);
 };
 
 #endif
