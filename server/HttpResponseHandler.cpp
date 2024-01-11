@@ -1,5 +1,10 @@
 #include "HttpResponseModule.hpp"
 
+void HttpResponseHandler::_selectConfigBlock()
+{
+    
+}
+
 void HttpResponseHandler::_makeStatusLine()
 {
     StatusLine statusLine;
@@ -56,6 +61,7 @@ void HttpResponseHandler::_makeHeaderField()
 
 void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig)
 {
+    _selectConfigBlock();
     _makeStatusLine();
     _makeMessageBody();
     _makeHeaderField();

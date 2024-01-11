@@ -46,6 +46,7 @@ private:
 
 	HttpResponse _httpResponse;
 
+	void _selectConfigBlock();
 	void _makeStatusLine();
 	void _makeHeaderField();
 	void _makeMessageBody();
