@@ -1,9 +1,36 @@
+#include <sstream>
 #include <cstring>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "utils.hpp"
 #include "HttpRequestModule.hpp"
 #include "CgiRequestModule.hpp"
+
+/* 제거 예정 */
+#ifndef HTTP_REQUEST_MODULE_HPP
+#include <map>
+#endif
+
+/* -------------------------- CGI request meta-variable setters -------------------------- */
+static void setAuthType(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setContentLength(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setContentType(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setGatewayInterface(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setPathInfo(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setPathTranslated(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRemoteAddr(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRemoteHost(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRemoteIdent(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRemoteUser(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setScriptName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerPort(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerProtocol(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerSoftware(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setProtocolSpecific(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 
 CgiRequestHandler::CgiRequestHandler()
 : _cgiRequest(), _pos(0), _eof(false)
@@ -18,6 +45,32 @@ CgiRequestHandler& CgiRequestHandler::operator=(const CgiRequestHandler& cgiRequ
     _pos = cgiRequestHandler._pos;
     _eof = cgiRequestHandler._eof;
     return *this;
+}
+
+void CgiRequestHandler::_setMetaVariables(HttpRequest& httpRequest)
+{
+    const RequestLine& requestLine = httpRequest.getRequestLine();
+    const std::string& messageBody = httpRequest.getMessageBody();
+    const std::multimap<std::string, std::string>& headerFields = httpRequest.getHeaderFields();
+
+    setAuthType(cgiRequest, requestLine, headerFields, messageBody);
+    setContentLength(cgiRequest, requestLine, headerFields, messageBody);
+    setContentType(cgiRequest, requestLine, headerFields, messageBody);
+    setGatewayInterface(cgiRequest, requestLine, headerFields, messageBody);
+    setPathInfo(cgiRequest, requestLine, headerFields, messageBody);
+    setPathTranslated(cgiRequest, requestLine, headerFields, messageBody);
+    setQueryString(cgiRequest, requestLine, headerFields, messageBody);
+    setRemoteAddr(cgiRequest, requestLine, headerFields, messageBody);
+    setRemoteHost(cgiRequest, requestLine, headerFields, messageBody);
+    setRemoteIdent(cgiRequest, requestLine, headerFields, messageBody);
+    setRemoteUser(cgiRequest, requestLine, headerFields, messageBody);
+    setRequestMethod(cgiRequest, requestLine, headerFields, messageBody);
+    setScriptName(cgiRequest, requestLine, headerFields, messageBody);
+    setServerName(cgiRequest, requestLine, headerFields, messageBody);
+    setServerPort(cgiRequest, requestLine, headerFields, messageBody);
+    setServerProtocol(cgiRequest, requestLine, headerFields, messageBody);
+    setServerSoftware(cgiRequest, requestLine, headerFields, messageBody);
+    setProtocolSpecific(cgiRequest, requestLine, headerFields, messageBody);
 }
 
 char** CgiRequestHandler::_makeArgv() const
@@ -70,15 +123,13 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
  * header-field find할 때, 해당 header-field 값이 여러 개가 존재할 수 있는 경우가 모두 고려된 건가?
  * 아마 안 됐을 듯.
  * 그렇다면 헤더필드에 대해서 체크 해주어야 하는 함수를 어디엔가 넣어주어야 한다..?
+ * -> 파싱부에서 헤더필드를 다 읽어온 다음에 각 항목별로 Syntax Check를 해 주어야 한다.
 */
 
 void CgiRequestHandler::makeCgiRequest(HttpRequest& httpRequest)
 {
-    const RequestLine& requestLine = httpRequest.getRequestLine();
-    const std::multimap<std::string, std::string>& headerFields = httpRequest.getHeaderFields();
-    const std::string& messageBody = httpRequest.getMessageBody();
-
-    // 아직 미구현..
+    _setMetaVariables(httpRequest);
+    _cgiRequest.setMessageBody(httpRequest.getMessageBody());
 }
 
 void CgiRequestHandler::sendCgiRequest(struct kevent& kev)
@@ -103,7 +154,7 @@ void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
 
     if (pipe(servToCgi) == FAILURE || pipe(cgiToServ) == FAILURE)
         throw ERROR;
-    // we don't know how cgi script acts, so let them blocking fds.
+    // we don't know how cgi script acts, so let I/O fds blocking state.
     if (fcntl(servToCgi[1], F_SETFL, O_NONBLOCK) == FAILURE \
         || fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK) == FAILURE)
         throw ERROR;
@@ -121,3 +172,61 @@ bool CgiRequestHandler::eof() const
 {
     return _eof;
 }
+
+/* ----------- static functions ----------- */
+
+static void setAuthType(CgiRequest& cgiRequest, __attribute__((unused)) const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, __attribute__((unused)) const std::string& messageBody)
+{
+    std::multimap<std::string, std::string>::const_iterator it;
+
+    if ((it = headerFields.find("Authorization")) != headerFields.end())
+        cgiRequest.addMetaVariable("AUTH_TYPE", it->second.substr(0, it->second.find_first_of(' ')));
+}
+
+static void setContentLength(CgiRequest& cgiRequest, __attribute__((unused)) const RequestLine& requestLine, __attribute__((unused)) const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+{
+    if (!messageBody.empty())
+        cgiRequest.addMetaVariable("CONTENT_LENGTH", sizeToStr(messageBody.size()));
+}
+
+static void setContentType(CgiRequest& cgiRequest, __attribute__((unused)) const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, __attribute__((unused)) const std::string& messageBody)
+{
+    std::multimap<std::string, std::string>::const_iterator it;
+
+    if ((it = headerFields.find("Content-Type")) != headerFields.end())
+        cgiRequest.addMetaVariable("CONTENT_TYPE", it->second);
+    /**
+     * 사실은 message-body를 통해 content-type을 추론하는 과정이 필요한데
+     * 편의상 생략했고, 추후 추가 가능.
+    */
+    else
+        cgiRequest.addMetaVariable("CONTENT_TYPE", "application/octet-stream");
+}
+
+static void setGatewayInterface(CgiRequest& cgiRequest, __attribute__((unused)) const RequestLine& requestLine, __attribute__((unused)) const std::multimap<std::string, std::string>& headerFields, __attribute__((unused)) const std::string& messageBody)
+{
+    cgiRequest.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
+}
+
+static void setPathInfo(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setPathTranslated(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRemoteAddr(CgiRequest& cgiRequest, in_addr_t addr)
+{
+    cgiRequest.addMetaVariable("REMOTE_ADDR", ft_inet_ntoa(addr));
+}
+
+static void setRemoteHost(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+{
+    
+}
+
+static void setRemoteIdent(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRemoteUser(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setScriptName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerPort(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerProtocol(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setServerSoftware(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setProtocolSpecific(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);

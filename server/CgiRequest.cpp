@@ -14,9 +14,9 @@ CgiRequest& CgiRequest::operator=(const CgiRequest& cgiRequest)
     return *this;
 }
 
-void CgiRequest::addMetaVariable(const std::string& metaVariable)
+void CgiRequest::addMetaVariable(const std::string& key, const std::string& value)
 {
-    _metaVariables.push_back(metaVariable);
+    _metaVariables.push_back(key + "=" + value);
 }
 
 void CgiRequest::setMessageBody(const std::string& messageBody)

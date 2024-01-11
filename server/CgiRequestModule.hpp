@@ -18,7 +18,7 @@ public:
 	CgiRequest();
 	CgiRequest& operator=(const CgiRequest& cgiRequest);
 
-	void addMetaVariable(const std::string& metaVariable);
+	void addMetaVariable(const std::string& key, const std::string& value);
 	void setMessageBody(const std::string& messageBody);
 
 	const std::vector<std::string>& getMetaVariables() const;
@@ -33,6 +33,7 @@ private:
 	size_t _pos;
 	bool _eof;
 
+	void _setMetaVariables(HttpRequest& httpRequest);
 	char** _makeArgv() const;
 	char** _makeEnvp() const;
 	void _parentProcess(int* servToCgi, int* cgiToServ) const;
