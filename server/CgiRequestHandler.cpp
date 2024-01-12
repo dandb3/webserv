@@ -216,17 +216,56 @@ static void setRemoteAddr(CgiRequest& cgiRequest, in_addr_t addr)
     cgiRequest.addMetaVariable("REMOTE_ADDR", ft_inet_ntoa(addr));
 }
 
-static void setRemoteHost(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+static void setRemoteHost(CgiRequest& cgiRequest, in_addr_t addr)
 {
-    
+    cgiRequest.addMetaVariable("REMOTE_HOST", ft_inet_ntoa(addr));
 }
 
 static void setRemoteIdent(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 static void setRemoteUser(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestLine)
+{
+/**
+ * RequestLine의 enum들을 public으로 돌려야 할 듯.
+*/
+}
+
 static void setScriptName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setServerName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setServerPort(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setServerProtocol(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setServerSoftware(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setProtocolSpecific(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
+{
+/**
+ * 앞서 http request를 파싱하고 난 이후에 CGI를 실행할 것인지, http response를 바로 만들 것인지
+ * 판별하는 단계에서 미리 CGI의 경로를 알아내는 것이 좋을 것 같다.
+*/
+}
+
+static void setServerName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+{
+/**
+ * ServerConfig를 불러와서 거기에 있는 server_name 값을 집어넣으면 된다.
+*/
+}
+
+static void setServerPort(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+{
+/**
+ * http request가 수신된 서버소켓의 포트값.
+*/
+}
+
+static void setServerProtocol(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+{
+    cgiRequest.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");
+}
+
+static void setServerSoftware(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+{
+    cgiRequest.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
+}
+
+static void setProtocolSpecific(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+{
+    /**
+     * 앞서 설정하고 남은 헤더필드의 경우, 여러 예외사항 (노션에 업로드 예정) 을 제외하고,
+     * HTTP_ 접두사를 붙여서 그대로 CGI Script에 전달한다.
+    */
+}
