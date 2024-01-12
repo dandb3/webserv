@@ -76,10 +76,6 @@ bool ConfigParser::isAlreadyExist(std::vector<ServerConfig> &serverList, ServerC
     return false;
 }
 
-// getKey에서 들어올 수 있는 key에 속하는지 확인 -> 아니면 에러
-// key에 들어올 수 있는 값들의 목록
-
-
 void ConfigParser::parseServer(std::string const &fileContent, size_t &i, Config &config) {
     ServerConfig serverConfig;
     if (getWord(fileContent, i) != "{")

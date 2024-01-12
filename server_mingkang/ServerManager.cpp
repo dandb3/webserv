@@ -12,20 +12,6 @@ ServerManager::ServerManager(std::string config_path)
     Config::getInstance(config_path);
 }
 
-void printServerInfo(ServerConfig &server)
-{
-    std::cout << "======================" << std::endl;
-    std::cout << "server name: " << server.getServerName()[0] << std::endl;
-    for (auto it2 = server.getServerInfo().begin(); it2 != server.getServerInfo().end(); it2++) {
-        std::cout << it2->first << ": ";
-        for (auto it3 = it2->second.begin(); it3 != it2->second.end(); it3++) {
-            std::cout << *it3 << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << "======================" << std::endl;
-}
-
 /**
  * @brief 서버 초기화 함수
  * @details
@@ -42,17 +28,20 @@ void ServerManager::initServer()
     Config &config = Config::getInstance();
     std::vector<ServerConfig> &server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
+    std::set<std::pair<struct in_addr, int> > server_set;
     for (; it != server_v.end(); it++) {
         // getVariable 실패 시 어떻게 처리할지 고민
         // default 값 설정해서 실패 안나게 할까? or 예외 처리?
 
-        // it 값 확인
-        // printServerInfo(*it);
         int sockfd;
         struct sockaddr_in servaddr;
         // 해당 port의 "0.0.0.0" ip가 있는 경우 -> 서버 생성하지 않고 넘어가기
         if (std::find(it->portsWithINADDR_ANY.begin(), it->portsWithINADDR_ANY.end(), it->getPort()) != it->portsWithINADDR_ANY.end() && \
             it->getIp().s_addr != INADDR_ANY)
+            continue;
+
+        // 이미 해당 ip, port로 서버가 생성된 경우 -> 서버 생성하지 않고 넘어가기
+        if (server_set.find(std::make_pair(it->getIp(), it->getPort())) != server_set.end())
             continue;
 
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -78,6 +67,7 @@ void ServerManager::initServer()
             throw std::runtime_error("fcntl error");
         _kqueue_handler.addEvent(sockfd, EVFILT_READ);
         _kqueue_handler.setEventType(sockfd, SOCKET_LISTEN);
+        server_set.insert(std::make_pair(it->getIp(), it->getPort()));
     }
 }
 
