@@ -130,7 +130,7 @@ void EventHandler::_servCgiResponse(struct kevent& kev)
     if (cgiResponseHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
-        cgiResponseHandler.makeCgiResponse();
+        cgiResponseHandler.parseCgiResponse();
         // httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
     }

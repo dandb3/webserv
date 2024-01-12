@@ -2,6 +2,8 @@
 #include "webserv.hpp"
 #include "CgiResponseModule.hpp"
 
+void parseCgiResponse(CgiResponse& cgiResponse, const std::string& rawCgiResponse);
+
 char CgiResponseHandler::_buf[BUF_SIZE];
 
 CgiResponseHandler::CgiResponseHandler()
@@ -36,8 +38,7 @@ void CgiResponseHandler::recvCgiResponse(struct kevent& kev)
 
 void CgiResponseHandler::makeCgiResponse()
 {
-    _cgiResponse = CgiResponse(_rawCgiResponse);
-    _rawCgiResponse.clear();
+    parseCgiResponse(_cgiResponse, _rawCgiResponse);
 }
 
 const CgiResponse& CgiResponseHandler::getCgiResponse() const
