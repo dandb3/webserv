@@ -53,7 +53,7 @@ int ServerConfig::getPort() {
     return this->port;
 }
 
-std::vector<std::string> ServerConfig::getServerName() {
+std::string ServerConfig::getServerName() {
     return this->server_name;
 }
 
@@ -80,7 +80,7 @@ void ServerConfig::setPort(int port) {
     this->port = port;
 }
 
-void ServerConfig::setServerName(std::vector<std::string> &server_name) {
+void ServerConfig::setServerName(std::string &server_name) {
     this->server_name = server_name;
 }
 
