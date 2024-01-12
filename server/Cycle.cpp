@@ -77,8 +77,6 @@ std::queue<HttpRequest>& Cycle::getHttpRequestQueue() const
 void Cycle::resetCycle()
 {
     _netConfig = NetConfig();
-    _cgiSendfd = -1;
-    _cgiRecvfd = -1;
     // _httpRequestHandler = HttpRequestHandler();
     // _httpResponseHandler = HttpResponseHandler();
     _cgiRequestHandler = CgiRequestHandler();
