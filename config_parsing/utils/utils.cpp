@@ -17,14 +17,6 @@ std::string getWord(std::string const &fileContent, size_t &i) {
     return ret;
 }
 
-// getKey에서 들어올 수 있는 key에 속하는지 확인 -> 아니면 에러
-// key에 들어올 수 있는 값들의 목록
-std::set<std::string> SERVER_KEY_SET = {
-    "listen", "server_name", "root", "index", "autoindex", "client_max_body_size", \
-    "error_page", "location", "access_log", "error_log", "cgi", "allow_methods", \
-    "request_timeout", "keepalive_timeout"
-};
-
 std::string getKey(std::string const &fileContent, size_t &i) {
     std::string key = getWord(fileContent, i);
     if (key.find_first_of(SEPARATOR) != std::string::npos)

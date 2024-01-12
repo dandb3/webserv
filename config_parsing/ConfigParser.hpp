@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,8 @@ class Config;
 class ConfigParser
 {
 private:
+    static const std::set<std::string> SERVER_KEY_SET;
+
     static bool isAlreadyExist(std::vector<ServerConfig> &serverList, ServerConfig &serverConfig);
 
     static void parseServer(std::string const &fileContent, size_t &i, Config &config);

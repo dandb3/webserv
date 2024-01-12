@@ -1,5 +1,10 @@
 #include "ConfigParser.hpp"
 
+const std::set<std::string> ConfigParser::SERVER_KEY_SET = {
+    "listen", "server_name", "root", "index", "autoindex", "client_max_body_size",
+    "error_page", "location", "access_log", "error_log", "cgi", "allow_methods",
+    "request_timeout", "keepalive_timeout", "session" };
+
 std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
     std::string ipStr;
     struct in_addr ip;
@@ -71,6 +76,10 @@ bool ConfigParser::isAlreadyExist(std::vector<ServerConfig> &serverList, ServerC
     return false;
 }
 
+// getKey에서 들어올 수 있는 key에 속하는지 확인 -> 아니면 에러
+// key에 들어올 수 있는 값들의 목록
+
+
 void ConfigParser::parseServer(std::string const &fileContent, size_t &i, Config &config) {
     ServerConfig serverConfig;
     if (getWord(fileContent, i) != "{")
@@ -78,7 +87,8 @@ void ConfigParser::parseServer(std::string const &fileContent, size_t &i, Config
     std::string key;
     while (fileContent[i] != '}') {
         key = getKey(fileContent, i);
-        if (i == std::string::npos) // 서버 파싱 전에 끝까지 파싱한 경우
+        std::cout << key << std::endl;
+        if (i == std::string::npos || ConfigParser::SERVER_KEY_SET.find(key) == ConfigParser::SERVER_KEY_SET.end())
             throw std::runtime_error("config 파일 파싱 중 에러 발생");
         if (key == "location") {
             LocationConfig locationConfig;

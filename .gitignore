@@ -1,3 +1,6 @@
 .vscode
 a.out
 nginx*
+settings.json
+.gitignore
+```
