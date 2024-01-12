@@ -17,6 +17,8 @@ class Config;
 class ConfigParser
 {
 private:
+    static bool isAlreadyExist(std::vector<ServerConfig> &serverList, ServerConfig &serverConfig);
+
     static void parseServer(std::string const &file_content, size_t &i, Config &config);
 
     static std::pair<struct in_addr, int> getIpPort(std::string listen);

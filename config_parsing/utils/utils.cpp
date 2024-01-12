@@ -33,14 +33,14 @@ std::string getKey(std::string const &file_content, size_t &i) {
 }
 
 // delimiter를 만나기 전까지의 문자열을 split해서 반환
-std::vector<std::string> getValue(std::string const &file_content, size_t &i, char delimiter) {
-    std::vector<std::string> value;
+std::vector<std::string> getValues(std::string const &file_content, size_t &i, char delimiter) {
+    std::vector<std::string> values;
     size_t end = file_content.find_first_of(delimiter, i);
     if (end == std::string::npos)
-        throw std::runtime_error("config 파일 파싱 중 에러 발생: getValue실패");
+        throw std::runtime_error("config 파일 파싱 중 에러 발생: getValues실패");
     std::string str = file_content.substr(i, end - i);
     if (str.find_first_of("{};") != std::string::npos)
-        throw std::runtime_error("config 파일 파싱 중 에러 발생: getValue실패");
+        throw std::runtime_error("config 파일 파싱 중 에러 발생: getValues실패");
     size_t pos = 0;
     std::string word;
 
@@ -48,10 +48,17 @@ std::vector<std::string> getValue(std::string const &file_content, size_t &i, ch
         word = getWord(str, pos);
         if (word == "")
             break;
-        value.push_back(word);
+        values.push_back(word);
     }
     i = end + 1;
-    return value;
+    return values;
+}
+
+std::string getValue(std::string const &file_content, size_t &i, char delimiter) {
+    std::vector<std::string> values = getValues(file_content, i, delimiter);
+    if (values.size() != 1)
+        throw std::runtime_error("config 파일 파싱 중 에러 발생: getValue실패");
+    return values[0];
 }
 
 int ft_inet_aton(const char *str, struct in_addr *addr) {
