@@ -15,6 +15,7 @@ int main() {
     std::cout << "======================" << std::endl;
     std::vector<ServerConfig> &server = config.getServerConfig();
     for (auto it = server.begin(); it != server.end(); it++) {
+        printParsedServer(*it);
         ServerConfig &server_config = *it;
         for (auto it2 = server_config.getServerInfo().begin(); it2 != server_config.getServerInfo().end(); it2++) {
             std::cout << it2->first << ": ";

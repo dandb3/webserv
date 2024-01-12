@@ -1,25 +1,25 @@
 #include "ConfigParser.hpp"
 
 std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
-    std::string ip_str;
+    std::string ipStr;
     struct in_addr ip;
     int port;
     size_t colon = listen.find(":");
     if (colon == std::string::npos) {
         if (listen.find(".") == std::string::npos) { // port만 있는 경우
-            ip_str = "0.0.0.0";
+            ipStr = "0.0.0.0";
             port = atoi(listen.c_str());
         }
         else { // ip만 있는 경우
-            ip_str = listen;
+            ipStr = listen;
             port = 8080;
         }
     }
     else { // ip:port 형식인 경우
-        ip_str = listen.substr(0, listen.find(":"));
+        ipStr = listen.substr(0, listen.find(":"));
         port = atoi(listen.substr(listen.find(":") + 1).c_str());
     }
-    if (ft_inet_aton(ip_str.c_str(), &ip) == 0) {
+    if (ft_inet_aton(ipStr.c_str(), &ip) == 0) {
         throw std::runtime_error("ip 주소 변환 실패");
     }
     return std::make_pair(ip, port);
@@ -36,28 +36,28 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
  *
  * 파싱 시에 key 값이 내가 찾는 값이 아닌경우 key가 무엇인지 알려주고 오류 처리 (해야할 것)
 */
-void ConfigParser::parse(std::string const &config_path, Config &config) {
+void ConfigParser::parse(std::string const &configPath, Config &config) {
     std::cout << "read config file" << std::endl;
-    std::string file_content = FileReader::read_file(config_path); // 실패 시 throw
+    std::string fileContent = FileReader::read_file(configPath); // 실패 시 throw
     std::cout << "finish read config file" << std::endl;
     size_t i = 0;
     std::string key;
-    while (i != std::string::npos && i < file_content.size()) {
-        key = getKey(file_content, i);
+    while (i != std::string::npos && i < fileContent.size()) {
+        key = getKey(fileContent, i);
         if (key == "server") {
-            parseServer(file_content, i, config);
+            parseServer(fileContent, i, config);
         }
         else if (key == "include") { // include mime.types;
-            std::string file_path = getValue(file_content, i, ';');
+            std::string filePath = getValue(fileContent, i, ';');
             if (i == std::string::npos)
                 throw std::runtime_error("config 파일 파싱 중 에러 발생");
-            parseTypes(file_path, config);
+            parseTypes(filePath, config);
         }
         else {
-            std::vector<std::string> value = getValues(file_content, i, ';');
+            std::vector<std::string> value = getValues(fileContent, i, ';');
             config.setVariable(key, value);
         }
-        i = file_content.find_first_not_of(WHITESPACE, i);
+        i = fileContent.find_first_not_of(WHITESPACE, i);
     }
 }
 
@@ -71,83 +71,83 @@ bool ConfigParser::isAlreadyExist(std::vector<ServerConfig> &serverList, ServerC
     return false;
 }
 
-void ConfigParser::parseServer(std::string const &file_content, size_t &i, Config &config) {
-    ServerConfig server_config;
-    if (getWord(file_content, i) != "{")
+void ConfigParser::parseServer(std::string const &fileContent, size_t &i, Config &config) {
+    ServerConfig serverConfig;
+    if (getWord(fileContent, i) != "{")
         throw std::runtime_error("config 파일 파싱 중 에러 발생");
     std::string key;
-    while (file_content[i] != '}') {
-        key = getKey(file_content, i);
+    while (fileContent[i] != '}') {
+        key = getKey(fileContent, i);
         if (i == std::string::npos) // 서버 파싱 전에 끝까지 파싱한 경우
             throw std::runtime_error("config 파일 파싱 중 에러 발생");
         if (key == "location") {
-            LocationConfig location_config;
-            parseLocation(file_content, i, server_config, location_config);
+            LocationConfig locationConfig;
+            parseLocation(fileContent, i, serverConfig, locationConfig);
         }
         else {
             if (key == "listen") {
-                std::string value = getValue(file_content, i, ';');
+                std::string value = getValue(fileContent, i, ';');
 
-                std::pair<struct in_addr, int> ip_port = getIpPort(value);
-                if (ip_port.first.s_addr == INADDR_ANY) {
-                    server_config.addPort(ip_port.second);
+                std::pair<struct in_addr, int> ipPort = getIpPort(value);
+                if (ipPort.first.s_addr == INADDR_ANY) {
+                    serverConfig.addPort(ipPort.second);
                 }
-                server_config.setIp(ip_port.first);
-                server_config.setPort(ip_port.second);
+                serverConfig.setIp(ipPort.first);
+                serverConfig.setPort(ipPort.second);
             }
             else if (key == "server_name") {
-                std::string value = getValue(file_content, i, ';');
+                std::string value = getValue(fileContent, i, ';');
 
-                server_config.setServerName(value);
+                serverConfig.setServerName(value);
             }
             else {
-                std::vector<std::string> value = getValues(file_content, i, ';');
-                server_config.setVariable(key, value);
+                std::vector<std::string> value = getValues(fileContent, i, ';');
+                serverConfig.setVariable(key, value);
             }
         }
-        i = file_content.find_first_not_of(WHITESPACE, i);
+        i = fileContent.find_first_not_of(WHITESPACE, i);
     }
     i++;
-    if (!isAlreadyExist(config.getServerConfig(), server_config))
-        config.setServer(server_config);
+    if (!isAlreadyExist(config.getServerConfig(), serverConfig))
+        config.setServer(serverConfig);
 }
 
 // ServeraConfig에 location path 같은게 있으면 뒤에꺼는 무시하고 앞에꺼만 적용되는데
 // locationConfig 구조 변경 -> path를 key로 하는 map으로 변경
-void ConfigParser::parseLocation(std::string const &file_content, size_t &i, ServerConfig &server_config, LocationConfig &location_config) {
-    std::map<std::string, LocationConfig> location_m = server_config.getLocationList();
-    std::string path = getValue(file_content, i, '{');
+void ConfigParser::parseLocation(std::string const &fileContent, size_t &i, ServerConfig &serverConfig, LocationConfig &locationConfig) {
+    std::map<std::string, LocationConfig> locationMap = serverConfig.getLocationList();
+    std::string path = getValue(fileContent, i, '{');
     if (i == std::string::npos)
         throw std::runtime_error("config 파일 파싱 중 에러 발생");
-    while (file_content[i] != '}') {
-        std::string key = getKey(file_content, i);
+    while (fileContent[i] != '}') {
+        std::string key = getKey(fileContent, i);
         if (i == std::string::npos)
             throw std::runtime_error("config 파일 파싱 중 에러 발생");
         if (key == "location") { // location에 대한 파싱이 다 끝난 후에야 옴.
-            LocationConfig new_location_config = location_config;
-            parseLocation(file_content, i, server_config, new_location_config);
+            LocationConfig newLocationConfig = locationConfig;
+            parseLocation(fileContent, i, serverConfig, newLocationConfig);
         }
         else {
-            std::vector<std::string> value = getValues(file_content, i, ';');
-            location_config.setVariable(key, value);
+            std::vector<std::string> value = getValues(fileContent, i, ';');
+            locationConfig.setVariable(key, value);
         }
-        i = file_content.find_first_not_of(WHITESPACE, i);
+        i = fileContent.find_first_not_of(WHITESPACE, i);
     }
-    if (location_m.find(path) == location_m.end()) {
-        server_config.setLocation(path, location_config);
+    if (locationMap.find(path) == locationMap.end()) {
+        serverConfig.setLocation(path, locationConfig);
     }
     i++;
 }
 
-void ConfigParser::parseTypes(std::string const &file_path, Config &config) {
+void ConfigParser::parseTypes(std::string const &filePath, Config &config) {
     t_directives mime_types;
-    std::string file_content = FileReader::read_file(file_path); // 실패 시 throw
+    std::string fileContent = FileReader::read_file(filePath); // 실패 시 throw
     size_t i = 0;
-    std::string key = getKey(file_content, i);
-    while (i != std::string::npos && i < file_content.size()) {
-        std::vector<std::string> value = getValues(file_content, i, ';');
+    std::string key = getKey(fileContent, i);
+    while (i != std::string::npos && i < fileContent.size()) {
+        std::vector<std::string> value = getValues(fileContent, i, ';');
         mime_types[key] = value;
-        key = getWord(file_content, i);
+        key = getWord(fileContent, i);
     }
     config.setMimeTypes(mime_types);
 }

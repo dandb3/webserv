@@ -1,18 +1,18 @@
 #include "utils.hpp"
 
 // i는 실행 후 다음 단어의 시작 위치를 가리킴
-std::string getWord(std::string const &file_content, size_t &i) {
-    size_t pos = file_content.find_first_not_of(WHITESPACE, i);
-    size_t nextPos = file_content.find_first_of(WHITESPACE, pos);
+std::string getWord(std::string const &fileContent, size_t &i) {
+    size_t pos = fileContent.find_first_not_of(WHITESPACE, i);
+    size_t nextPos = fileContent.find_first_of(WHITESPACE, pos);
     if (pos == std::string::npos) { // 더 이상 단어가 없음
         i = std::string::npos;
         return "";
     }
     if (nextPos == std::string::npos) { // 마지막 단어
         i = nextPos;
-        return file_content.substr(pos);
+        return fileContent.substr(pos);
     }
-    std::string ret = file_content.substr(pos, nextPos - pos);
+    std::string ret = fileContent.substr(pos, nextPos - pos);
     i = nextPos + 1;
     return ret;
 }
@@ -25,20 +25,20 @@ std::set<std::string> SERVER_KEY_SET = {
     "request_timeout", "keepalive_timeout"
 };
 
-std::string getKey(std::string const &file_content, size_t &i) {
-    std::string key = getWord(file_content, i);
+std::string getKey(std::string const &fileContent, size_t &i) {
+    std::string key = getWord(fileContent, i);
     if (key.find_first_of(SEPARATOR) != std::string::npos)
         throw std::runtime_error("config 파일 파싱 중 에러 발생");
     return key;
 }
 
 // delimiter를 만나기 전까지의 문자열을 split해서 반환
-std::vector<std::string> getValues(std::string const &file_content, size_t &i, char delimiter) {
+std::vector<std::string> getValues(std::string const &fileContent, size_t &i, char delimiter) {
     std::vector<std::string> values;
-    size_t end = file_content.find_first_of(delimiter, i);
+    size_t end = fileContent.find_first_of(delimiter, i);
     if (end == std::string::npos)
         throw std::runtime_error("config 파일 파싱 중 에러 발생: getValues실패");
-    std::string str = file_content.substr(i, end - i);
+    std::string str = fileContent.substr(i, end - i);
     if (str.find_first_of("{};") != std::string::npos)
         throw std::runtime_error("config 파일 파싱 중 에러 발생: getValues실패");
     size_t pos = 0;
@@ -54,8 +54,8 @@ std::vector<std::string> getValues(std::string const &file_content, size_t &i, c
     return values;
 }
 
-std::string getValue(std::string const &file_content, size_t &i, char delimiter) {
-    std::vector<std::string> values = getValues(file_content, i, delimiter);
+std::string getValue(std::string const &fileContent, size_t &i, char delimiter) {
+    std::vector<std::string> values = getValues(fileContent, i, delimiter);
     if (values.size() != 1)
         throw std::runtime_error("config 파일 파싱 중 에러 발생: getValue실패");
     return values[0];
