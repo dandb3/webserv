@@ -16,9 +16,9 @@ CgiResponse& CgiResponse::operator=(const CgiResponse& cgiResponse)
     return *this;
 }
 
-void CgiResponse::addHeaderField(const std::string& key, const std::string& value)
+void CgiResponse::addHeaderField(const std::pair<std::string, std::string>& p)
 {
-    _headerFields.insert(std::make_pair(key, value));
+    _headerFields.insert(p);
 }
 
 void CgiResponse::setMessageBody(const std::string& messageBody)

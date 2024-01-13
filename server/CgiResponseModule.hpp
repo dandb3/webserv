@@ -6,6 +6,8 @@
 
 # define BUF_SIZE 1024
 
+typedef std::pair<std::string, std::string> pair_t;
+
 class CgiResponse
 {
 private:
@@ -17,7 +19,7 @@ public:
     CgiResponse(const std::string& rawCgiResponse);
     CgiResponse& operator=(const CgiResponse& cgiResponse);
 
-    void addHeaderField(const std::string& key, const std::string& value);
+    void addHeaderField(const pair_t& p);
     void setMessageBody(const std::string& messageBody);
 
     const std::map<std::string, std::string>& getHeaderFields() const;
@@ -27,11 +29,21 @@ public:
 
 class CgiResponseHandler
 {
+public:
+	enum
+	{
+		DOCUMENT_RES,
+		LOCAL_REDIR_RES,
+		CLIENT_REDIR_RES,
+		CLIENT_REDIR_DOC_RES
+	};
+
 private:
     static char _buf[BUF_SIZE];
 
     CgiResponse _cgiResponse;
     std::string _rawCgiResponse;
+	char _type;
     bool _eof;
 
 public:
