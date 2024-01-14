@@ -2,32 +2,36 @@
 #define CONFIGPARSER_HPP
 
 #include "utils/FileReader.hpp"
+#include "utils/utils.hpp"
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
 #include "Config.hpp"
+#include <arpa/inet.h>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
 class Config;
 
-#define WHITESPACE " \t\n\r\f\v"
-#define DELIMITER " \t\n\r\f\v;"
-
 class ConfigParser
 {
 private:
-    static std::string getWord(std::string const &file_content, size_t &i, std::string const &delimiter);
+    static const std::set<std::string> SERVER_KEY_SET;
 
-    static void parseServer(std::string const &file_content, size_t &i, Config &config);
+    static bool isAlreadyExist(std::vector<ServerConfig> &serverList, ServerConfig &serverConfig);
 
-    static void parseLocation(std::string const &file_content, size_t &i, ServerConfig &server_config);
+    static void parseServer(std::string const &fileContent, size_t &i, Config &config);
 
-    static void parseTypes(std::string const &file_path, Config &config);
+    static std::pair<struct in_addr, int> getIpPort(std::string listen);
+
+    static void parseLocation(std::string const &fileContent, size_t &i, ServerConfig &serverConfig, LocationConfig &locationConfig);
+
+    static void parseTypes(std::string const &filePath, Config &config);
 
 public:
-    static void parse(std::string const &config_path, Config &config);
+    static void parse(std::string const &configPath, Config &config);
 };
 
 #endif

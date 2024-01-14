@@ -87,9 +87,8 @@
 		"bitset": "cpp",
 		"complex": "cpp",
 		"iomanip": "cpp",
-		"ios": "cpp",
-		"locale": "cpp",
-		"queue": "cpp",
-		"stack": "cpp"
+		"stack": "cpp",
+		"filesystem": "cpp",
+		"queue": "cpp"
 	}
 }

@@ -18,11 +18,26 @@ KqueueHandler::~KqueueHandler()
     close(_kqfd);
 }
 
-KqueueHandler::KqueueHandler(KqueueHandler const& ref) {}
+KqueueHandler::KqueueHandler(const KqueueHandler &ref) {
+    _kqfd = ref._kqfd;
+    _nevents = ref._nevents;
+    _eventsToAdd = ref._eventsToAdd;
+    std::copy(ref._eventList, ref._eventList + MAX_EVENTS, _eventList);
+    _type = ref._type;
+}
 
-KqueueHandler& KqueueHandler::operator=(KqueueHandler const& ref) {}
+KqueueHandler &KqueueHandler::operator=(const KqueueHandler &ref) {
+    if (this != &ref) {
+        _kqfd = ref._kqfd;
+        _nevents = ref._nevents;
+        _eventsToAdd = ref._eventsToAdd;
+        std::copy(ref._eventList, ref._eventList + MAX_EVENTS, _eventList);
+        _type = ref._type;
+    }
+    return *this;
+}
 
-void KqueueHandler::addEvent(uintptr_t ident, int16_t filter, void* udata = NULL)
+void KqueueHandler::addEvent(uintptr_t ident, int16_t filter, void *udata)
 {
     struct kevent kev;
 
@@ -59,12 +74,12 @@ void KqueueHandler::eventCatch()
 
 char KqueueHandler::getEventType(int ident)
 {
-    std::map<int, char>::iterator it = _type.find(ident);
-    if (it == _type.end()) {
-        std::cerr << "getEventType() failed" << std::endl;
-        return SOCKET_ERROR;
+    char type = _type[ident];
+    if (type == 0) {
+        std::cerr << "[getEventType] : there is no such event" << std::endl;
+        return -1;
     }
-    return it->second;
+    return type;
 }
 
 void KqueueHandler::setEventType(int ident, char type)
