@@ -11,8 +11,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <algorithm>
-#include "../config_parsing/Config.hpp"
+#include "../config/Config.hpp"
 #include "KqueueHandler.hpp"
+#include "EventHandler.hpp"
 
 #define GETV_SIZE 10
 

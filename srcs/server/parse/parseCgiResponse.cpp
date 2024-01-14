@@ -1,6 +1,6 @@
 #include <vector>
 #include "parse.hpp"
-#include "CgiResponseModule.hpp"
+#include "../modules/CgiResponseModule.hpp"
 
 static void readLines(const std::string& raw, std::vector<std::string>& lineV, std::string& messageBody)
 {

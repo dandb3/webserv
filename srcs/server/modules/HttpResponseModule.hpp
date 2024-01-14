@@ -4,9 +4,9 @@
 # include <string>
 # include <map>
 # include <utility>
-# include "cgi_response.hpp"
+# include "CgiResponseModule.hpp"
 # include "HttpRequestModule.hpp"
-# include "NetConfig.hpp"
+# include "../cycle/NetConfig.hpp"
 
 class StatusLine
 {

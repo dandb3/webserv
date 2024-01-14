@@ -5,10 +5,10 @@
 # include <queue>
 # include "webserv.hpp"
 # include "NetConfig.hpp"
-# include "HttpRequestModule.hpp"
-# include "HttpResponseModule.hpp"
-# include "CgiRequestModule.hpp"
-# include "CgiResponseModule.hpp"
+# include "../modules/HttpRequestModule.hpp"
+# include "../modules/HttpResponseModule.hpp"
+# include "../modules/CgiRequestModule.hpp"
+# include "../modules/CgiResponseModule.hpp"
 
 /**
  * closed 상태에서 request queue에 있는 것이 다 비어있고,

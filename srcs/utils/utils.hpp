@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <map>
 #include <set>
@@ -6,7 +5,7 @@
 #include <vector>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../ServerConfig.hpp"
+#include "../config/ServerConfig.hpp"
 
 #define WHITESPACE " \t\n\r\f\v"
 #define DELIMITER " \t\n\r\f\v;"

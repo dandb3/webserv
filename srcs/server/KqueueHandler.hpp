@@ -13,7 +13,7 @@
 #include <iostream>
 #include <map>
 
-#include "../config_parsing/Config.hpp"
+#include "../config/Config.hpp"
 
 #define MAX_EVENTS 20
 

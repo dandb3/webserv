@@ -4,7 +4,7 @@ RequestLine& RequestLine::operator=(const RequestLine& ref)
 {
     if (this != ref) {
         _method = ref._method;
-        _requestTarget = ref._requestTargetl
+        _requestTarget = ref._requestTarget;
         _version = ref._version;
     }
     return *this;

@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <unistd.h>
-#include "HttpResponse.hpp"
+#include "HttpResponseModule.hpp"
 
 HttpResponse::HttpResponse(int fd)
 : _fd(fd), _status(RES_IDLE), _pos(0)

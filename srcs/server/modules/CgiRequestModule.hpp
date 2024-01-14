@@ -3,8 +3,8 @@
 
 # include <vector>
 # include <string>
-# include "webserv.hpp"
-# include "HttpRequestHandler.hpp"
+# include "../../webserv.hpp"
+# include "HttpRequestModule.hpp"
 
 # define CGI_PATH "undefined"
 

@@ -1,6 +1,7 @@
 #ifndef WEBSERV_HPP
 #define WEBSERV_HPP
 
+#include <iostream>
 #include <netinet/in.h>
 
 #define FAILURE -1

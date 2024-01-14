@@ -1,6 +1,3 @@
 .vscode
 a.out
-nginx*
-test*
 settings.json
-.gitignore
