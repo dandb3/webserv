@@ -1,12 +1,11 @@
-#ifndef NETCONFIG_HPP
-# define NETCONFIG_HPP
+#ifndef NET_CONFIG_HPP
+# define NET_CONFIG_HPP
 
 # include <netinet/in.h>
 # include "Config.hpp"
 
 // int 자료형을 쓸 것인지, string 자료형을 쓸 것인지, 인자로 어떤 자료형을 받을 것인지, network byte order를 따를지 등은 논의 필요.
 // 사실 얘는 그냥 public 멤버 변수들로만 구성해도 괜찮을 것 같은데..
-
 class NetConfig
 {
 private:

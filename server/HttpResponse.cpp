@@ -1,14 +1,14 @@
 #include <algorithm>
 #include <unistd.h>
-#include "http_response.hpp"
+#include "HttpResponse.hpp"
 
-http_response::http_response(int fd)
+HttpResponse::HttpResponse(int fd)
 : _fd(fd), _status(RES_IDLE), _pos(0)
 {
-    
+
 }
 
-void http_response::send_response(size_t size)
+void HttpResponse::send_response(size_t size)
 {
     size_t write_len;
 
@@ -20,4 +20,14 @@ void http_response::send_response(size_t size)
         _status = RES_IDLE;
         _pos = 0;
     }
+}
+
+int HttpResponse::get_status() const
+{
+	return _status;
+}
+
+void HttpResponse::set_status(int status)
+{
+	_status = static_cast<char>(status);
 }
