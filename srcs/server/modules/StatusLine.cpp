@@ -24,3 +24,18 @@ void StatusLine::setText(std::string &text)
 {
     _text = text;
 }
+
+const std::pair<short, short>& StatusLine::getVersion() const
+{
+    return _version;
+}
+
+const short StatusLine::getCode() const
+{
+    return _code;
+}
+
+const std::string& StatusLine::getText() const
+{
+    return _text;
+}

@@ -18,23 +18,37 @@ private:
 public:
     StatusLine& operator=(const StatusLine& ref);
 
+	// setter
     void setVersion(std::pair<short, short> &version);
     void setCode(short code);
     void setText(std::string &text);
+
+	// getter
+	const std::pair<short, short> &getVersion() const;
+	const short getCode() const;
+	const std::string &getText() const;
+
 };
 
 class HttpResponse
 {
 private:
 	StatusLine _statusLine;
-	std::string _messageBody;
 	std::multimap<std::string, std::string> _headerFields;
+	std::string _messageBody;
 
 public:
-	HttpResponse(int fd, const cgi_response& cres);
+	// HttpResponse();
 
-	int getStatus() const;
-	void setStatus(StatusLine &statusLine);
+	// getter
+	const StatusLine &getStatusLine() const;
+	const std::multimap<std::string, std::string> &getHeaderFields() const;
+	const std::string &getMessageBody() const;
+
+	// setter
+	void setStatusLine(StatusLine &statusLine);
+	void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
+	void setMessageBody(std::string &messageBody);
 };
 
 class HttpResponseHandler
@@ -46,10 +60,13 @@ private:
 
 	HttpResponse _httpResponse;
 
-	void _selectConfigBlock();
-	void _makeStatusLine();
-	void _makeHeaderField();
-	void _makeMessageBody();
+	void _makeStatus();
+	
+	void _makeHttpResponse();
+	void _makeGETResponse();
+	void _makeHEADResponse();
+	void _makePUTResponse();
+	void _makeDELETEResponse();
 
 public:
 	enum
@@ -58,10 +75,10 @@ public:
 		RES_PROCESSING,
 		RES_READY,
 	};
-	HttpResponseHandler();
+	// HttpResponseHandler();
 
 	void makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig);
-	void sendHttpResponse(size_t size);
+	void sendHttpResponse(int fd, size_t size);
 };
 
 #endif

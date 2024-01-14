@@ -1,11 +1,6 @@
 #include "HttpResponseModule.hpp"
 
-void HttpResponseHandler::_selectConfigBlock()
-{
-    
-}
-
-void HttpResponseHandler::_makeStatusLine()
+void HttpResponseHandler::_makeStatus()
 {
     StatusLine statusLine;
     short code;
@@ -49,20 +44,35 @@ void HttpResponseHandler::_makeStatusLine()
     }
 }
 
-void HttpResponseHandler::_makeMessageBody()
+void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, CgiResponse &cgiResponse, NetConfig &netConfig)
 {
+    short method;
 
+    // if else -> switch?
+    if (method == GET || method == HEAD) {
+        
+    }
+    else if (method == PUT) {
+
+    }
+    else if (method == DELETE) {
+
+    }
+    else {
+
+    }
 }
 
-void HttpResponseHandler::_makeHeaderField()
+void HttpResponse::sendHttpResponse(int fd, size_t size)
 {
+    size_t writeLen;
 
-}
-
-void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig)
-{
-    _selectConfigBlock();
-    _makeStatusLine();
-    _makeMessageBody();
-    _makeHeaderField();
+    writeLen = std::min(_response.size() - _pos, size);
+    if (write(fd, _response.c_str() + _pos, writeLen) == FAILURE)
+        throw err_syscall();
+    _pos += writeLen;
+    if (_pos == size) {
+        _status = RES_IDLE;
+        _pos = 0;
+    }
 }

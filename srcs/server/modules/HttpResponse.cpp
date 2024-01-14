@@ -2,32 +2,37 @@
 #include <unistd.h>
 #include "HttpResponseModule.hpp"
 
-HttpResponse::HttpResponse(int fd)
-: _fd(fd), _status(RES_IDLE), _pos(0)
+void HttpResponse::setStatusLine(StatusLine &statusLine)
 {
+    _statusLine = statusLine;
 
 }
 
-void HttpResponse::send_response(size_t size)
+void HttpResponse::setHeaderFields(std::multimap<std::string, std::string> &headerFields)
 {
-    size_t write_len;
+    std::multimap<std::string, std::string>::iterator iter = headerFields.begin();
 
-    write_len = std::min(_response.size() - _pos, size);
-    if (write(_fd, _response.c_str() + _pos, write_len) == FAILURE)
-        throw err_syscall();
-    _pos += write_len;
-    if (_pos == size) {
-        _status = RES_IDLE;
-        _pos = 0;
+    for (; iter != headerFields.end(); iter++) {
+        _headerFields.insert(*iter);
     }
 }
 
-int HttpResponse::get_status() const
+void HttpResponse::setMessageBody(std::string &messageBody)
 {
-	return _status;
+    _messageBody = messageBody;
 }
 
-void HttpResponse::set_status(int status)
+const StatusLine& HttpResponse::getStatusLine() const
 {
-	_status = static_cast<char>(status);
+    return _statusLine;
+}
+
+const std::multimap<std::string, std::string>& HttpResponse::getHeaderFields() const
+{
+    return _headerFields;
+}
+
+const std::string& HttpResponse::getMessageBody() const
+{
+    return _messageBody;
 }
