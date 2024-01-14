@@ -30,12 +30,11 @@ private:
     struct kevent _eventList[MAX_EVENTS];
     std::map<int, char> _type;
 
-    KqueueHandler(const KqueueHandler &ref);
-    KqueueHandler &operator=(const KqueueHandler &ref);
-
 public:
     KqueueHandler();
     ~KqueueHandler();
+    KqueueHandler(const KqueueHandler &ref);
+    KqueueHandler &operator=(const KqueueHandler &ref);
 
     /* method */
     void addEvent(uintptr_t ident, int16_t filter, void *udata = NULL);

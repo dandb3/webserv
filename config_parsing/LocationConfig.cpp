@@ -5,43 +5,34 @@
 LocationConfig::LocationConfig() {
 }
 
-LocationConfig::LocationConfig(LocationConfig const& ref) {
+LocationConfig::LocationConfig(LocationConfig const &ref) {
     *this = ref;
 }
 
 LocationConfig::~LocationConfig() {
 }
 
-LocationConfig& LocationConfig::operator=(LocationConfig const& ref) {
+LocationConfig &LocationConfig::operator=(LocationConfig const &ref) {
     if (this != &ref) {
-        this->_path = ref._path;
-        this->_location_info = ref._location_info;
+        this->_locationInfo = ref._locationInfo;
     }
     return *this;
 }
 
 // getter
-std::string& LocationConfig::getPath() {
-    return this->_path;
+t_directives &LocationConfig::getLocationInfo() {
+    return this->_locationInfo;
 }
 
-t_directives& LocationConfig::getLocationInfo() {
-    return this->_location_info;
-}
-
-std::vector<std::string>& LocationConfig::getVariable(std::string& key) {
-    return this->_location_info[key];
+std::vector<std::string> &LocationConfig::getVariable(std::string &key) {
+    return this->_locationInfo[key];
 }
 
 // setter
-void LocationConfig::setPath(std::string& path) {
-    this->_path = path;
+void LocationConfig::setLocationInfo(t_directives &location_info) {
+    this->_locationInfo = location_info;
 }
 
-void LocationConfig::setLocationInfo(t_directives& location_info) {
-    this->_location_info = location_info;
-}
-
-void LocationConfig::setVariable(std::string& key, std::vector<std::string>& value) {
-    this->_location_info[key] = value;
+void LocationConfig::setVariable(std::string &key, std::vector<std::string> &value) {
+    this->_locationInfo[key] = value;
 }

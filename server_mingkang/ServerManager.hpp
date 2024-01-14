@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <algorithm>
-#include "config_parsing/Config.hpp"
+#include "../config_parsing/Config.hpp"
 #include "KqueueHandler.hpp"
 
 #define GETV_SIZE 10
@@ -21,7 +21,7 @@ class ServerManager
 private:
 	enum SocketType_e
 	{
-		SOCKET_LISTEN,
+		SOCKET_LISTEN = 1,
 		SOCKET_CLIENT,
 		SOCKET_CGI
 	};
@@ -32,6 +32,7 @@ public:
 	ServerManager(std::string config_path); // 생성자, 만들면서 config 파일 읽어서 파싱
 
 	void initServer(); // 서버 초기화
+	void operate();	   // 서버 동작
 };
 
 #endif

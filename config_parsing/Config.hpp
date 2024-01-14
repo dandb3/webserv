@@ -18,18 +18,18 @@ class Config
 {
 private:
     /* data */
-    t_directives _http_info;
-    std::vector<ServerConfig> _server_v;
-    t_directives _mime_types; // 나중에 어떻게 사용하는지 보고 자료구조 변경할 듯
+    t_directives _httpInfo;
+    std::vector<ServerConfig> _serverList;
+    t_directives _mimeTypes; // 나중에 어떻게 사용하는지 보고 자료구조 변경할 듯
 
-    std::string _config_path;
+    std::string _configPath;
 
     static std::string DEFAULT_PATH;
 
     /* private functions */
     Config();
     Config(const Config &ref); // x
-    Config(std::string const &config_path);
+    Config(std::string const &configPath);
     ~Config();
 
     Config &operator=(const Config &ref); // x
@@ -38,7 +38,7 @@ private:
 
 public:
     static Config &getInstance();
-    static Config &getInstance(std::string const &config_path);
+    static Config &getInstance(std::string const &configPath);
 
     // getter
     t_directives &getHttpInfo();
@@ -49,12 +49,12 @@ public:
     t_directives &getMimeTypes();
 
     // setter
-    void setHttpInfo(t_directives &http_info);
+    void setHttpInfo(t_directives &httpInfo);
     void setVariable(std::string &key, std::vector<std::string> &value);
 
-    void setServerConfig(std::vector<ServerConfig> &server_v);
+    void setServerConfig(std::vector<ServerConfig> &serverList);
     void setServer(ServerConfig &server);
-    void setMimeTypes(t_directives &mime_types);
+    void setMimeTypes(t_directives &mimeTypes);
 };
 
 #endif
