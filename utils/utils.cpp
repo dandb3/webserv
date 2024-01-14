@@ -1,4 +1,30 @@
+#include <sstream>
 #include "utils.hpp"
+
+static std::string sizeToStr(size_t size)
+{
+    std::stringstream ss;
+    std::string result;
+
+    ss << size;
+    ss >> result;
+    return result;
+}
+
+static std::string ft_inet_ntoa(in_addr_t addr)
+{
+    std::stringstream ss;
+    in_addr_t hAddr = ntohl(addr);
+    u_char* addrP;
+
+    addrP = reinterpret_cast<u_char*>(&hAddr);
+    for (int i = 0; i < 4; ++i) {
+        ss << addrP[i];
+        if (i != 3)
+            ss << '.';
+    }
+    return ss.str();
+}
 
 // i는 실행 후 다음 단어의 시작 위치를 가리킴
 std::string getWord(std::string const &fileContent, size_t &i) {
