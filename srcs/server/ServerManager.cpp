@@ -27,6 +27,8 @@ void ServerManager::initServer()
     std::vector<ServerConfig> &server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
     std::set<std::pair<struct in_addr, int> > server_set;
+    std::vector<int> listenFds;
+
     for (; it != server_v.end(); it++) {
         // getVariable 실패 시 어떻게 처리할지 고민
         // default 값 설정해서 실패 안나게 할까? or 예외 처리?
@@ -63,10 +65,10 @@ void ServerManager::initServer()
             throw std::runtime_error("listen error");
         if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
             throw std::runtime_error("fcntl error");
-        _kqueue_handler.addEvent(sockfd, EVFILT_READ);
-        _kqueue_handler.setEventType(sockfd, SOCKET_LISTEN);
         server_set.insert(std::make_pair(it->getIp(), it->getPort()));
+        listenFds.push_back(sockfd);
     }
+    _eventHandler.initEvent(listenFds);
 }
 
 /*
