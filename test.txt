@@ -1,12 +1,12 @@
 user hello_webserv;
 worker_processes 1;
-include ./conf/mime.types;
+include ./config_parsing/conf/mime.types;
 
 server {
 	listen       8100;
 	server_name  webserv;
 	error_page   /YoupiBanane/error_page/defaultError.html;
-	access_log   logs/domain1.access.log main;
+	access_log   logs/domain1.access.log  main;
 	root         html;
 	cgi 		.cgi;
 

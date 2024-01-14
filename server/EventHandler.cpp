@@ -95,8 +95,10 @@ void EventHandler::_servHttpResponse(struct kevent& kev)
     /**
      * sendHttpResponse();
      * if eof()라면? (전송이 다 끝난다면)
+
+     *     cycle 초기화 (httpResponseHandler의 status를 IDLE로 바꿈. 도 포함)
      *     deleteEvent(); (혹은 disable?)
-     *     httpResponseHandler의 status를 IDLE로 바꿈.
+
      *     if queue가 비어있지 않다면?
      *         _processHttpRequest(cycle);
      *     else if Cycle이 closed상태라면?
@@ -130,7 +132,7 @@ void EventHandler::_servCgiResponse(struct kevent& kev)
     if (cgiResponseHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
-        cgiResponseHandler.makeCgiResponse();
+        cgiResponseHandler.parseCgiResponse();
         // httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
     }

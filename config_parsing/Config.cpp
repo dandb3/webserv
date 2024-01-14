@@ -2,78 +2,92 @@
 
 #include "Config.hpp"
 
-std::string Config::DEFAULT_PATH = "./config/default.conf";
+std::string Config::DEFAULT_PATH = "./config_parsing/conf/default.conf";
+
+Config Config::_instance = Config();
 
 Config::Config() {
-    // parseConfig(DEFAULT_PATH);
-    std::cout << "default_path: " << DEFAULT_PATH << std::endl;
-    ConfigParser::parse(DEFAULT_PATH, *this);
-    std::cout << "parse finish" << std::endl;
+    _configPath = "";
 }
 
-
-Config::Config(std::string const& config_path) {
-    // parseConfig(config_path);
-    std::cout << "config_path: " << config_path << std::endl;
-    ConfigParser::parse(config_path, *this);
+Config::Config(std::string const &configPath) {
+    // parseConfig(configPath);
+    std::cout << "configPath: " << configPath << std::endl;
+    ConfigParser::parse(configPath, *this);
     std::cout << "parse finish" << std::endl;
+    _configPath = configPath;
 }
 
 Config::~Config() {
 }
 
-// 구현 x
-Config::Config(Config const& ref) {}
-Config& Config::operator=(Config const& ref) {
+Config::Config(const Config &ref) {
+    // 복사 생성자의 구현: 적절히 멤버 변수를 복사하여 새로운 객체 생성
+    _httpInfo = ref._httpInfo;
+    _serverList = ref._serverList;
+    _mimeTypes = ref._mimeTypes;
+    _configPath = ref._configPath;
+}
+
+Config &Config::operator=(const Config &ref) {
+    // 대입 연산자의 구현: 적절히 멤버 변수를 복사하여 현재 객체에 대입
+    if (this != &ref) {
+        _httpInfo = ref._httpInfo;
+        _serverList = ref._serverList;
+        _mimeTypes = ref._mimeTypes;
+        _configPath = ref._configPath;
+    }
     return *this;
 }
 
 // getInstace
-Config& Config::getInstance() {
-    static Config _instance(DEFAULT_PATH);
+Config &Config::getInstance() {
+    if (_instance._configPath == "")
+        _instance = Config(DEFAULT_PATH);
     return _instance;
 }
 
-Config& Config::getInstance(std::string const& config_path) {
-    static Config _instance(config_path);
+Config &Config::getInstance(std::string const &configPath) {
+    if (_instance._configPath == "")
+        _instance = Config(configPath);
     return _instance;
 }
 
 // getter
-t_directives& Config::getHttpInfo() {
-    return this->_http_info;
+t_directives &Config::getHttpInfo() {
+    return this->_httpInfo;
 }
 
-std::vector<std::string>& Config::getVariable(std::string& key) {
-    return this->_http_info[key];
+std::vector<std::string> &Config::getVariable(std::string &key) {
+    return this->_httpInfo[key];
 }
 
-std::vector<ServerConfig>& Config::getServerConfig() {
-    return this->_server_v;
+std::vector<ServerConfig> &Config::getServerConfig() {
+    return this->_serverList;
 }
 
-t_directives& Config::getMimeTypes() {
-    return this->_mime_types;
+t_directives &Config::getMimeTypes() {
+    return this->_mimeTypes;
 }
 
 // setter
-void Config::setHttpInfo(t_directives& http_info) {
-    this->_http_info = http_info;
+void Config::setHttpInfo(t_directives &httpInfo) {
+    this->_httpInfo = httpInfo;
 }
 
-void Config::setVariable(std::string& key, std::vector<std::string>& value) {
-    this->_http_info[key] = value;
+void Config::setVariable(std::string &key, std::vector<std::string> &value) {
+    this->_httpInfo[key] = value;
 }
 
-void Config::setServerConfig(std::vector<ServerConfig>& server_v) {
-    this->_server_v = server_v;
+void Config::setServerConfig(std::vector<ServerConfig> &serverList) {
+    this->_serverList = serverList;
 }
 
-void Config::setServer(ServerConfig& server) {
+void Config::setServer(ServerConfig &server) {
     // 똑같은 서버가 있는지 확인 과정 필요
-    this->_server_v.push_back(server);
+    this->_serverList.push_back(server);
 }
 
-void Config::setMimeTypes(t_directives& mime_types) {
-    this->_mime_types = mime_types;
+void Config::setMimeTypes(t_directives &mimeTypes) {
+    this->_mimeTypes = mimeTypes;
 }
