@@ -1,13 +1,19 @@
 #ifndef WEBSERV_HPP
 #define WEBSERV_HPP
 
+#include <netinet/in.h>
+
 #define FAILURE -1
 #define SUCCESS 0
 
 #define CRLF "\r\n"
 #define WHITESPACE " \t\n\r\f\v"
 
+typedef in_addr_t serv_ip_t;
+typedef in_port_t serv_port_t;
+
 #include "Exception.hpp"
+#define ERROR 1
 
 #ifndef _SYS_EVENT_H_
 #define _SYS_EVENT_H_

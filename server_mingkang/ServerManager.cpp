@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include "ServerManager.hpp"
 
 ServerManager::ServerManager()
@@ -11,7 +10,6 @@ ServerManager::ServerManager(std::string config_path)
 {
     Config::getInstance(config_path);
 }
-
 /**
  * @brief 서버 초기화 함수
  * @details

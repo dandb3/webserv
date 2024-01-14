@@ -19,6 +19,7 @@
 class ServerManager
 {
 private:
+	EventHandler _eventHandler;
 	enum SocketType_e
 	{
 		SOCKET_LISTEN = 1,
