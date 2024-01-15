@@ -26,7 +26,7 @@ void ServerManager::initServer()
     Config &config = Config::getInstance();
     std::vector<ServerConfig> &server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
-    std::set<std::pair<struct in_addr, int> > server_set;
+    std::set<std::pair<in_addr_t, int> > server_set;
     std::vector<int> listenFds;
 
     for (; it != server_v.end(); it++) {
@@ -41,7 +41,7 @@ void ServerManager::initServer()
             continue;
 
         // 이미 해당 ip, port로 서버가 생성된 경우 -> 서버 생성하지 않고 넘어가기
-        if (server_set.find(std::make_pair(it->getIp(), it->getPort())) != server_set.end())
+        if (server_set.find(std::make_pair(it->getIp().s_addr, it->getPort())) != server_set.end())
             continue;
 
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,7 +65,7 @@ void ServerManager::initServer()
             throw std::runtime_error("listen error");
         if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
             throw std::runtime_error("fcntl error");
-        server_set.insert(std::make_pair(it->getIp(), it->getPort()));
+        server_set.insert(std::make_pair(it->getIp().s_addr, it->getPort()));
         listenFds.push_back(sockfd);
     }
     _eventHandler.initEvent(listenFds);

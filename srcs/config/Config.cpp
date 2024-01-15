@@ -2,7 +2,7 @@
 
 #include "Config.hpp"
 
-std::string Config::DEFAULT_PATH = "./config_parsing/conf/default.conf";
+std::string Config::DEFAULT_PATH = "confTest/default.conf";
 
 Config Config::_instance = Config();
 

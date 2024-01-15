@@ -1,7 +1,7 @@
 #include <sstream>
 #include "utils.hpp"
 
-static std::string sizeToStr(size_t size)
+std::string sizeToStr(size_t size)
 {
     std::stringstream ss;
     std::string result;
@@ -11,13 +11,13 @@ static std::string sizeToStr(size_t size)
     return result;
 }
 
-static std::string ft_inet_ntoa(in_addr_t addr)
+std::string ft_inet_ntoa(in_addr_t addr)
 {
     std::stringstream ss;
     in_addr_t hAddr = ntohl(addr);
-    u_char* addrP;
+    u_char *addrP;
 
-    addrP = reinterpret_cast<u_char*>(&hAddr);
+    addrP = reinterpret_cast<u_char *>(&hAddr);
     for (int i = 0; i < 4; ++i) {
         ss << addrP[i];
         if (i != 3)
@@ -127,5 +127,5 @@ void printParsedServer(ServerConfig &server) {
     std::cout << std::endl;
     std::cout << "[parseServer] " << "ip: " << server.getIp().s_addr << std::endl;
     std::cout << "[parseServer] " << "port: " << server.getPort() << std::endl;
-    std::cout << "======================" << std::endl;
+    std::cout << "[parseServer] " << "serverName: " << server.getServerName() << std::endl;
 }
