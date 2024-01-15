@@ -33,8 +33,12 @@ static pair_t parseLine(const std::string& line)
 
 bool isContentType(const pair_t& p)
 {
-    return (isCaseInsensitiveSame(p.first, "Content-Type") \
-        && isMediaType(p.second));
+    return (isCaseInsensitiveSame(p.first, "Content-Type") && isMediaType(p.second));
+}
+
+bool isLocalLocation(const pair_t& p)
+{
+    return (isCaseInsensitiveSame(p.first, "Location") && isLocalPathquery(p.second));
 }
 
 void parseCgiResponse(CgiResponse& cgiResponse, const std::string& raw, char& type)

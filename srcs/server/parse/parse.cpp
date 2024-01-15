@@ -1,14 +1,9 @@
 #include "parse.hpp"
 
-#define check_range(str, start, end)    \
-    do {                                \
-        if ((start) >= (str).size())    \
-            return false;               \
-        if (start > end)                \
-            return false;               \
-        if ((end) > (str).size())       \
-            (end) = (str).size();       \
-    } while(0)
+bool isText(char ch)
+{
+    return ((ch >= '\x20' && ch <= '\x7E') || ch == '\t' || ch == '\n' || ch == '\r');
+}
 
 bool isVChar(char ch)
 {
@@ -65,19 +60,6 @@ bool isTChar(char ch)
         || ch == '^' || ch == '_' || ch == '`' || ch == '|' || ch == '~');
 }
 
-bool isToken(const std::string& str, size_t start, size_t end)
-{
-    size_t pos = start;
-
-    check_range(str, start, end);
-    if (start == end)
-        return false;
-    while (pos != end)
-        if (!isTChar(str[pos++]))
-            return false;
-    return true;
-}
-
 bool eatToken(const std::string& str, size_t& pos)
 {
     size_t p = pos;
@@ -125,14 +107,12 @@ bool isUnreserved(char ch)
     return (isAlphaNum(ch) || isMark(ch));
 }
 
-/**
- * 
- * 
- * 
- * 
-*/
+bool isExtra(char ch)
+{
+    return (ch == ':' || ch == '@' || ch == '&' || ch == '=' || ch == '+' || ch == '$' \
+        || ch == ',');
+}
 
-/*
 bool isEscaped(const std::string& str, size_t pos)
 {
     if (pos + 3 > str.size())
@@ -140,18 +120,35 @@ bool isEscaped(const std::string& str, size_t pos)
     return (str[pos] == '%' && isHex(str[pos + 1]) && isHex(str[pos + 2]));
 }
 
-bool isUric(const std::string& str, size_t pos)
+bool eatUnitUric(const std::string& str, size_t& pos)
 {
-    return (isReserved(str[pos]) || isUnreserved(str[pos]) || isEscaped(str, pos));
+    if (isReserved(str[pos]) || isUnreserved(str[pos])) {
+        ++pos;
+        return true;
+    }
+    if (isEscaped(str, pos)) {
+        pos += 3;
+        return true;
+    }
+    return false;
 }
 
-bool isUricNoSlash(const std::string& str, size_t pos)
+bool eatUnitUricNoSlash(const std::string& str, size_t& pos)
 {
-    return (isUnreserved(str[pos]) || isEscaped(str, pos) || str[pos] == ';' \
-        || str[pos] == '?' || str[pos] == ':' || str[pos] == '@' || str[pos] == '&' \
-        || str[pos] == '=' || str[pos] == '+' || str[pos] == '$' || str[pos] == ',');
+    if (isEscaped(str, pos)) {
+        pos += 3;
+        return true;
+    }
+    if (isUnreserved(str[pos]) || str[pos] == ';' || str[pos] == '?' \
+        || str[pos] == ':' || str[pos] == '@' || str[pos] == '&' \
+        || str[pos] == '=' || str[pos] == '+' || str[pos] == '$' \
+        || str[pos] == ',') {
+        ++pos;
+        return true;
+    }
+    return false;
 }
-*/
+
 
 std::string& toLower(std::string& str)
 {
@@ -169,40 +166,14 @@ bool isCaseInsensitiveSame(const std::string& str1, const std::string& str2)
     return (toLower(lowStr1) == toLower(lowStr2));
 }
 
-/**
- * 
- * 
- * 
- * 
-*/
-
-bool isOWS(const std::string& str, size_t start, size_t end)
+bool eatType(const std::string& str, size_t& pos)
 {
-    check_range(str, start, end);
-    for (size_t i = start; i < end; ++i)
-        if (!isWS(str[i]))
-            return false;
-    return true;
+    return eatToken(str, pos);
 }
 
-bool reatWS(const std::string& str, size_t& pos)
+bool eatSubType(const std::string& str, size_t& pos)
 {
-    for (; ; --pos) {
-        if (!isWS(str[pos]))
-            return true;
-        if (pos == 0)
-            return false;
-    }
-}
-
-bool isType(const std::string& str, size_t start, size_t end)
-{
-    return isToken(str, start, end);
-}
-
-bool isSubType(const std::string& str, size_t start, size_t end)
-{
-    return isToken(str, start, end);
+    return eatToken(str, pos);
 }
 
 bool isQuotedPair(const std::string& str, size_t pos)
@@ -213,26 +184,25 @@ bool isQuotedPair(const std::string& str, size_t pos)
         || isVChar(str[pos + 1]) || isObsText(str[pos + 1])));
 }
 
+/**
+ * RFC 3875에 의한 quoted-string.
+ * RFC 7230에서는 좀 다르다. qdtext | quoted-pair 로 구분됨.
+*/
 bool eatQuotedString(const std::string& str, size_t& pos)
 {
     size_t p = pos;
 
-    if (!str[p++] == '\"')
+    if (p >= str.size())
+        return false;
+    if (str[p++] != '\"')
         return false;
     while (p < str.size()) {
-        if (isQdText(str[p])) {
-            ++p;
-            continue;
-        }
-        if (isQuotedPair(str, p)) {
-            p += 2;
-            continue;
-        }
-        break;
+        if (!isQdText(str[p++]))
+            break;
     }
     if (p >= str.size())
         return false;
-    if (!str[p++] == '\"')
+    if (str[p++] != '\"')
         return false;
     pos = p;
     return true;
@@ -240,54 +210,241 @@ bool eatQuotedString(const std::string& str, size_t& pos)
 
 bool eatParameter(const std::string& str, size_t& pos)
 {
-    size_t sep;
+    size_t p = pos;
 
-    if (!eatToken(str, pos))
+    if (!eatToken(str, p))
         return false;
-    if (pos + 2 >= str.size())
+    if (p >= str.size())
         return false;
-    if (str[pos++] != '=')
+    if (str[p++] != '=')
         return false;
-    if (str[pos] == '\"')
-        return eatQuotedString(str, pos);
-    else
-        return eatToken(str, pos);
-}
-
-bool isMediaTypeRemain(const std::string& str, size_t pos)
-{
-    size_t sep;
-
-    do {
-        eatOWS(str, pos);
-        if (pos == str.size())
-            return false;
-        if (str[pos] != ';')
-            return false;
-        ++pos;
-        eatOWS(str, pos);
-        if (pos == str.size())
-            return false;
-        if (!eatParameter(str, pos))
-            return false;
-    } while (pos < str.size());
+    if (!eatQuotedString(str, p) || !eatToken(str, p))
+        return false;
+    pos = p;
     return true;
 }
 
 bool isMediaType(const std::string& str)
 {
-    size_t sep, subTypeEnd, remainPos;
+    size_t pos = 0;
 
-    if ((sep = str.find('/')) == std::string::npos)
+    if (!eatType(str, pos))
         return false;
-    if ((subTypeEnd = str.find(';', sep + 1)) != std::string::npos) {
-        --subTypeEnd;
-        reatWS(str, subTypeEnd);
-        ++subTypeEnd;
+    if (pos >= str.size())
+        return false;
+    if (str[pos++] != '/')
+        return false;
+    if (!eatSubType(str, pos))
+        return false;
+    while (pos < str.size()) {
+        eatOWS(str, pos);
+        if (pos >= str.size())
+            return false;
+        if (str[pos++] != ';')
+            return false;
+        eatOWS(str, pos);
+        if (!eatParameter(str, pos))
+            return false;
     }
-    else
-        subTypeEnd = str.size();
+    return true;
+}
 
-    return (isType(str, 0, sep) && isSubType(str, sep + 1, subTypeEnd) \
-        && isMediaTypeRemain(str, subTypeEnd));
+void eatSegment(const std::string& str, size_t& pos)
+{
+    while (pos < str.size()) {
+        if (isUnreserved(str[pos]) || isExtra(str[pos])) {
+            ++pos;
+            continue;
+        }
+        if (isEscaped(str, pos)) {
+            pos += 3;
+            continue;
+        }
+        break;
+    }
+}
+
+bool eatPathSegments(const std::string& str, size_t& pos)
+{
+    size_t p = pos;
+
+    eatSegment(str, p);
+    while (p < str.size()) {
+        if (str[p++] != '/') {
+            pos = p;
+            return true;
+        }
+        eatSegment(str, p);
+    }
+    pos = p;
+    return true;
+}
+
+bool eatAbsPath(const std::string& str, size_t& pos)
+{
+    size_t p = pos;
+
+    if (p >= str.size())
+        return false;
+    if (str[p++] != '/')
+        return false;
+    if (!eatPathSegments(str, p))
+        return false;
+    pos = p;
+    return true;
+}
+
+void eatQueryString(const std::string& str, size_t& pos)
+{
+    while (pos < str.size()) {
+        if (!eatUnitUric(str, pos))
+            break;
+    }
+}
+
+bool isLocalPathquery(const std::string& str)
+{
+    size_t pos = 0;
+
+    if (!eatAbsPath(str, pos))
+        return false;
+    if (pos >= str.size())
+        return true;
+    if (str[pos++] != '?')
+        return false;
+    eatQueryString(str, pos);
+    if (pos < str.size())
+        return false;
+    return true;
+}
+
+bool eatScheme(const std::string& str, size_t& pos)
+{
+    size_t p = pos;
+
+    if (p >= str.size())
+        return false;
+    if (!isAlpha(str[p++]))
+        return false;
+    while (p < str.size())
+        if (!isAlpha(str[p]) && !isDigit(str[p]) && str[p] != '+' && str[p] != '-' \
+            || str[p] != '.')
+            break;
+    if (p < str.size())
+        return false;
+    pos = p;
+    return true;
+}
+
+bool eatNetPath(const std::string& str, size_t& pos)
+{
+    size_t p = pos;
+
+    if (p >= str.size() || p + 2 > str.size())
+        return false;
+    if (str[p] != '/' || str[p + 1] != '/')
+        return false;
+    p += 2;
+    if (!eatAuthority(str, p))
+        return false;
+    eatAbsPath(str, p);
+    pos = p;
+    return true;
+}
+
+void eatQuery(const std::string& str, size_t& pos)
+{
+    eatQueryString(str, pos);
+}
+
+bool eatHierPart(const std::string& str, size_t& pos)
+{
+    size_t p = pos;
+
+    if (!eatNetPath(str, p) && !eatAbsPath(str, p))
+        return false;
+    if (p >= str.size() || str[p] != '?') {
+        pos = p;
+        return true;
+    }
+    eatQuery(str, p);
+    if (p < str.size())
+        return false;
+    pos = p;
+    return true;
+}
+
+bool eatAbsoluteURI(const std::string& str, size_t& pos)
+{
+    size_t p = pos;
+
+    if (!eatScheme(str, p))
+        return false;
+    if (p >= str.size())
+        return false;
+    if (str[p++] != ':')
+        return false;
+    if (!eatHierPart(str, p) && !eatOpaquePart(str, p))
+        return false;
+    if (p < str.size())
+        return false;
+    pos = p;
+    return true;
+}
+
+void eatFragment(const std::string& str, size_t& pos)
+{
+    while (pos < str.size())
+        if (!eatUnitUric(str, pos))
+            break;
+}
+
+bool isFragmentURI(const std::string& str)
+{
+    size_t pos = 0;
+
+    if (!eatAbsoluteURI(str, pos))
+        return false;
+    if (pos == str.size())
+        return true;
+    if (str[pos++] != '#')
+        return false;
+    eatFragment(str, pos);
+    if (pos < str.size())
+        return false;
+    return true;
+}
+
+bool isStatusCode(const std::string& str, size_t pos)
+{
+    if (pos >= str.size() || pos + 3 > str.size())
+        return false;
+    return (isDigit(str[pos]) && isDigit(str[pos + 1]) && isDigit(str[pos + 2]));
+}
+
+void eatReasonPhrase(const std::string& str, size_t& pos)
+{
+    while (pos < str.size())
+        if (!isText(str[pos++]))
+            break;
+}
+
+bool isStatus(const pair_t& p)
+{
+    const std::string& name = p.first, value = p.second;
+    size_t pos = 0;
+
+    if (!isCaseInsensitiveSame(name, "Status"))
+        return false;
+    if (!isStatusCode(value, pos))
+        return false;
+    pos += 3;
+    if (pos >= value.size())
+        return false;
+    if (value[pos++] != ' ')
+        return false;
+    eatReasonPhrase(value, pos);
+    if (pos < value.size())
+        return false;
+    return true;
 }

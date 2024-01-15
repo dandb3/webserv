@@ -6,8 +6,6 @@
 
 # define BUF_SIZE 1024
 
-typedef std::pair<std::string, std::string> pair_t;
-
 class CgiResponse
 {
 private:
