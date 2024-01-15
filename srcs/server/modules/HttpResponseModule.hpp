@@ -60,13 +60,12 @@ private:
 
 	HttpResponse _httpResponse;
 
-	void _makeStatus();
+	void _makeStatusLine(StatusLine &statusLine, short code);
 	
-	void _makeHttpResponse();
-	void _makeGETResponse();
-	void _makeHEADResponse();
-	void _makePUTResponse();
-	void _makeDELETEResponse();
+	void _makeGETResponse(HttpRequest &httpRequest, NetConfig &netConfig, bool isGET);
+	void _makeHEADResponse(HttpRequest &httpRequest, NetConfig &netConfig);
+	void _makePUTResponse(HttpRequest &httpRequest, NetConfig &netConfig);
+	void _makeDELETEResponse(HttpRequest &httpRequest, NetConfig &netConfig);
 
 public:
 	enum

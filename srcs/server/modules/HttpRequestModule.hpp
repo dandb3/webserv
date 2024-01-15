@@ -54,14 +54,7 @@ public:
     const RequestLine &getRequestLine() const;
     const std::multimap<std::string, std::string> &getHeaderFields() const;
     const std::string &getMessageBody() const;
-
-    inline bool closed() const;
 };
-
-inline bool HttpRequest::closed() const
-{
-    return (_status == INPUT_CLOSED);
-}
 
 class HttpRequestHandler
 {

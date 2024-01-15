@@ -1,62 +1,96 @@
 #include "HttpResponseModule.hpp"
 
-void HttpResponseHandler::_makeStatus()
+void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
 {
-    StatusLine statusLine;
-    short code;
+    std::string text;
 
     statusLine.setVersion(make_pair(1, 1));
     statusLine.setCode(code);
 
     switch (code) {
         case 100:
-            statusLine.setText("Continue");
+            text = "Continue";
             break;
         case 101:
-            statusLine.setText("Switching Protocol");
+            text = "Switching Protocol";
             break;
         case 102:
-            statusLine.setText("Processing");
+            text = "Processing";
             break;
         case 200:
-            statusLine.setText("OK");
+            text = "OK";
             break;
         case 201:
-            statusLine.setText("Created");
+            text = "Created";
             break;
         case 202:
-            statusLine.setText("Accepted");
+            text = "Accepted";
             break;
         case 203:
-            statusLine.setText("Non-Authoritative Information");
+            text = "Non-Authoritative Information";
             break;
         case 204:
-            statusLine.setText("No Content");
+            text = "No Content";
             break;
         case 404:
-            statusLine.setText("Not Found");
+            text = "Not Found";
             break;
         case 503:
-            statusLine.setText("Service Unavailable");
+            text = "Service Unavailable";
             break;
         default:
-            statusLine.setText("Not Yet Setted\n");
+            text = "Not Yet Setted\n";
     }
+
+    statusLine.setText(text);
 }
 
-void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, CgiResponse &cgiResponse, NetConfig &netConfig)
+void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, NetConfig &netConfig, bool isGET)
 {
-    short method;
+    const int fileFd = open(netConfig.getPath());
+    StatusLine statusLine;
+    std::multimap<std::string, std::string> headerFields;
+    std::string messageBody;
+
+    if (fileFd == -1) {
+        _makeStatusLine(statusLine, 404);
+        _httpResponse.setStatusLine(statusLine);
+        return;
+    }
+
+    // 여러가지 상황에 따라 code를 세팅한다.
+    // 아직 미구현 사항이며, 우선적으로 200 OK 혹은 404 Not Found를 보내는 것을 목표로 구현.
+    _makeStatusLine(statusLine, 200);
+
+    if (isGET) {
+        // fildFd로부터 해당 파일을 읽어온다.
+        // std::string에 append 혹은 push_back을 통해서 body를 만든다.(C++ version 확인)
+        // HTTPresponse의 messagebody에 할당해준다.
+        // method가 HEAD인 경우에 body를 세팅하지 않는다.
+    }
+
+    // Header Field들을 세팅해준다.
+    // _makeHeaderFields();
+    headerFields["Content-Length"] = strtol(messageBody);
+
+    _httpResponse.setStatusLine(statusLine);
+    _httpResponse.setHeaderFields(headerFields);
+    _httpResponse.setMessageBody(messageBody);
+}
+
+void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig)
+{
+    const short method = httpRequest.getRequestLine().getMethod();
 
     // if else -> switch?
     if (method == GET || method == HEAD) {
-        
+        _makeGETResponse(httpRequest, netConfig, (method == GET));
     }
     else if (method == PUT) {
-
+        _makePUTResponse();
     }
     else if (method == DELETE) {
-
+        _makeDELETEResponse();
     }
     else {
 
