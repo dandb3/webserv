@@ -71,17 +71,52 @@ void ServerManager::initServer()
     _eventHandler.initEvent(listenFds);
 }
 
-std::string createHttpResponse(const std::string &body) {
-    std::string httpResponse;
+std::string createHttpRequestPage(const std::string &httpRequest) {
+    // HTTP 요청 헤더와 본문을 추출
+    std::string headers;
+    std::string body;
+
+    size_t pos = httpRequest.find("\r\n\r\n");
+    if (pos != std::string::npos) {
+        headers = httpRequest.substr(0, pos);
+        body = httpRequest.substr(pos + 4);
+    }
+
+    // HTML 페이지 생성
+    std::string htmlContent = R"(
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>HTTP Request Page</title>
+        </head>
+        <body>
+            <header>
+                <h1>HTTP Request Content</h1>
+            </header>
+            <section>
+                <h2>Request Headers</h2>
+                <pre>)" + headers + R"(</pre>
+                <h2>Request Body</h2>
+                <pre>)" + body + R"(</pre>
+            </section>
+            <footer>
+                <p>&copy; 2024 My Website. All rights reserved.</p>
+            </footer>
+        </body>
+        </html>
+    )";
 
     // HTTP 헤더
+    std::string httpResponse;
     httpResponse += "HTTP/1.1 200 OK\r\n";
     httpResponse += "Content-Type: text/html\r\n";
-    httpResponse += "Content-Length: " + std::to_string(body.length()) + "\r\n";
+    httpResponse += "Content-Length: " + std::to_string(htmlContent.length()) + "\r\n";
     httpResponse += "\r\n"; // 헤더와 본문을 구분하는 빈 줄
 
     // HTTP 본문
-    httpResponse += body;
+    httpResponse += htmlContent;
 
     return httpResponse;
 }
@@ -168,37 +203,8 @@ void ServerManager::operate()
                     // EventInfo에 대한 fd string으로 변환
                     std::string fd = std::to_string(data->sockfd);
 
-                    std::string msg = R"(
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Sample HTML Page</title>
-        </head>
-        <body>
-            <header>
-                <h1>Welcome to My Website</h1>
-            </header>
-            <nav>
-                <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">About</a></li>
-                    <li><a href="#">Contact</a></li>
-                </ul>
-            </nav>
-            <section>
-                <h2>About Us</h2>
-                <p>This is a sample HTML page for testing purposes.</p>
-            </section>
-            <footer>
-                <p>&copy; 2024 My Website. All rights reserved.</p>
-            </footer>
-        </body>
-        </html>
-    )";
-                    std::string httpResponse = createHttpResponse(msg);
-                    int n = write(sockfd, httpResponse.c_str(), httpResponse.length());
+                    std::string msg = createHttpRequestPage(data->data);
+                    int n = write(sockfd, msg.c_str(), msg.length());
                     if (n == -1) {
                         std::cerr << "write error" << std::endl;
                         std::cerr << "clients disconnected" << std::endl;
