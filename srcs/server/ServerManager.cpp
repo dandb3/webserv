@@ -71,6 +71,21 @@ void ServerManager::initServer()
     _eventHandler.initEvent(listenFds);
 }
 
+std::string createHttpResponse(const std::string &body) {
+    std::string httpResponse;
+
+    // HTTP 헤더
+    httpResponse += "HTTP/1.1 200 OK\r\n";
+    httpResponse += "Content-Type: text/html\r\n";
+    httpResponse += "Content-Length: " + std::to_string(body.length()) + "\r\n";
+    httpResponse += "\r\n"; // 헤더와 본문을 구분하는 빈 줄
+
+    // HTTP 본문
+    httpResponse += body;
+
+    return httpResponse;
+}
+
 /*
 ** 서버 동작 함수
 ** 임시로 에코 서버 구현
@@ -85,7 +100,7 @@ void ServerManager::operate()
         std::string type;
         std::string data;
     };
-
+    _kqueue_handler = _eventHandler.getKqueueHandler();
     while (true) {
         _kqueue_handler.eventCatch();
         int nevents = _kqueue_handler.getNevents();
@@ -96,7 +111,6 @@ void ServerManager::operate()
             int sockfd = curEvent.ident;
             std::cout << "ident: " << sockfd << std::endl;
             char type = _kqueue_handler.getEventType(sockfd);
-            std::cout << "type: " << static_cast<int>(type) << std::endl;
             if (curEvent.flags & EV_ERROR) {
                 std::cerr << "EV_ERROR" << std::endl;
                 if (_kqueue_handler.getEventType(sockfd) == SOCKET_LISTEN) {
@@ -112,7 +126,8 @@ void ServerManager::operate()
             }
             else if (curEvent.filter == EVFILT_READ) {
                 std::cout << "EVFILT_READ" << std::endl;
-                if (type == SOCKET_LISTEN) {
+                if (type == _kqueue_handler.SOCKET_LISTEN) {
+                    std::cout << "SOCKET_LISTEN" << std::endl;
                     struct sockaddr_in cliaddr;
                     socklen_t cliLen = sizeof(cliaddr);
                     int clientSocket = accept(sockfd, (struct sockaddr *)&cliaddr, &cliLen);
@@ -121,9 +136,9 @@ void ServerManager::operate()
                     if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) == -1)
                         throw std::runtime_error("fcntl error");
                     _kqueue_handler.addEvent(clientSocket, EVFILT_READ, (void *)"");
-                    _kqueue_handler.setEventType(clientSocket, SOCKET_CLIENT);
+                    _kqueue_handler.setEventType(clientSocket, _kqueue_handler.SOCKET_CLIENT);
                 }
-                else if (type == SOCKET_CLIENT) {
+                else if (type == _kqueue_handler.SOCKET_CLIENT) {
                     char buf[1024];
                     int n = read(sockfd, buf, 1024);
                     if (n == -1) {
@@ -138,7 +153,7 @@ void ServerManager::operate()
                         buf[n] = '\0';
                         EventInfo *curEventInfo = new EventInfo;
                         curEventInfo->sockfd = sockfd;
-                        curEventInfo->type = (type == SOCKET_LISTEN) ? "listen" : "client";
+                        curEventInfo->type = (type == _kqueue_handler.SOCKET_LISTEN) ? "listen" : "client";
                         curEventInfo->data = curEventInfo->data + buf;
                         curEvent.udata = (void *)curEventInfo;
                         _kqueue_handler.changeEvent(sockfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, curEvent.udata);
@@ -148,13 +163,42 @@ void ServerManager::operate()
             }
             else if (curEvent.filter == EVFILT_WRITE) {
                 std::cout << "EVFILT_WRITE" << std::endl;
-                if (type == SOCKET_CLIENT) {
+                if (type == _kqueue_handler.SOCKET_CLIENT) {
                     EventInfo *data = (EventInfo *)curEvent.udata;
                     // EventInfo에 대한 fd string으로 변환
                     std::string fd = std::to_string(data->sockfd);
 
-                    std::string msg = "fd: " + fd + ", type: " + data->type + ", data: " + data->data;
-                    int n = write(sockfd, msg.c_str(), msg.length());
+                    std::string msg = R"(
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Sample HTML Page</title>
+        </head>
+        <body>
+            <header>
+                <h1>Welcome to My Website</h1>
+            </header>
+            <nav>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+            <section>
+                <h2>About Us</h2>
+                <p>This is a sample HTML page for testing purposes.</p>
+            </section>
+            <footer>
+                <p>&copy; 2024 My Website. All rights reserved.</p>
+            </footer>
+        </body>
+        </html>
+    )";
+                    std::string httpResponse = createHttpResponse(msg);
+                    int n = write(sockfd, httpResponse.c_str(), httpResponse.length());
                     if (n == -1) {
                         std::cerr << "write error" << std::endl;
                         std::cerr << "clients disconnected" << std::endl;

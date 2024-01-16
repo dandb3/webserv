@@ -37,6 +37,7 @@ public:
     EventHandler();
 
     void initEvent(const std::vector<int> &listenFds);
+    KqueueHandler &getKqueueHandler();
     // void operate();
 };
 

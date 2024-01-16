@@ -172,6 +172,11 @@ void EventHandler::initEvent(const std::vector<int> &listenFds)
     }
 }
 
+KqueueHandler &EventHandler::getKqueueHandler()
+{
+    return _kqueueHandler;
+}
+
 // void EventHandler::operate()
 // {
 //     struct kevent *eventList = _kqueueHandler.getEventList();

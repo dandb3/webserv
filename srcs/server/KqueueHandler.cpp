@@ -74,12 +74,11 @@ void KqueueHandler::eventCatch()
 
 char KqueueHandler::getEventType(int ident)
 {
-    char type = _type[ident];
-    if (type == 0) {
+    if (_type.find(ident) == _type.end()) {
         std::cerr << "[getEventType] : there is no such event" << std::endl;
         return -1;
     }
-    return type;
+    return _type[ident];
 }
 
 void KqueueHandler::setEventType(int ident, char type)

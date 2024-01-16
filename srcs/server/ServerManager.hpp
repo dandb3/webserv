@@ -24,7 +24,7 @@ private:
 	EventHandler _eventHandler;
 	enum SocketType_e
 	{
-		SOCKET_LISTEN = 1,
+		SOCKET_LISTEN,
 		SOCKET_CLIENT,
 		SOCKET_CGI
 	};
