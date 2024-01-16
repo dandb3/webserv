@@ -61,16 +61,18 @@ char EventHandler::_getEventType(const struct kevent &kev)
 //     */
 // }
 
-// void EventHandler::_servListen(const struct kevent& kev)
+// void EventHandler::_servListen(const struct kevent &kev)
 // {
-//     Cycle* cycle;
+//     Cycle *cycle;
 //     int sockfd;
 //     struct sockaddr_in sin;
 //     socklen_t len = sizeof(struct sockaddr_in);
 
 //     if ((sockfd = accept(kev.ident, NULL, NULL)) == FAILURE)
 //         throw ERROR;
-//     if (getsockname(sockfd, reinterpret_cast<struct sockaddr*>(&sin), &len) == FAILURE)
+//     if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == FAILURE)
+//         throw ERROR;
+//     if (getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&sin), &len) == FAILURE)
 //         throw ERROR;
 //     cycle = Cycle::newCycle(sin.sin_addr.s_addr, sin.sin_port, sockfd);
 //     _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
@@ -204,6 +206,70 @@ KqueueHandler &EventHandler::getKqueueHandler()
 //                 _servSigchld(eventList[i]);
 //             default:
 //                 _servError(eventList[i]);
+//                 break;
+//             }
+//         }
+//     }
+// }
+
+// void EventHandler::tmpHttpRequest(const struct kevent &kev) {
+//     char buf[1024];
+//     int n = read(kev.ident, buf, 1024);
+//     if (n == -1) {
+//         throw std::runtime_error("read error");
+//     }
+//     else if (n == 0) {
+//         std::cerr << "clients disconnected" << std::endl;
+//         _kqueueHandler.deleteEventType(kev.ident);
+//         close(kev.ident);
+//     }
+//     else {
+//         buf[n] = '\0';
+//         Cycle *curEventInfo = (Cycle *)kev.udata;
+//         curEventInfo->
+//         curEventInfo->data = curEventInfo->data + buf;
+//         kev.udata = (void *)curEventInfo;
+//         _kqueueHandler.changeEvent(kev.ident, EVFILT_WRITE, EV_ADD | EV_ONESHOT, curEvent.udata);
+//     }
+// }
+
+// void EventHandler::operate()
+// {
+//     struct kevent *eventList = _kqueueHandler.getEventList();
+
+//     while (true) {
+//         _kqueueHandler.eventCatch();
+//         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
+//             switch (_getEventType(eventList[i])) {
+//             case EVENT_LISTEN:
+//                 _servListen(eventList[i]);
+//                 break;
+//             case EVENT_HTTP_REQ:
+//                 _servHttpRequest(eventList[i]);
+//                 break;
+//             case EVENT_HTTP_RES:
+//                 _servHttpResponse(eventList[i]);
+//                 break;
+//             case EVENT_CGI_REQ:
+//                 _servCgiRequest(eventList[i]);
+//                 break;
+//             case EVENT_CGI_RES:
+//                 _servCgiResponse(eventList[i]);
+//                 break;
+//             case EVENT_SIGCHLD:
+//                 _servSigchld(eventList[i]);
+//             default:
+//                 std::cerr << "EV_ERROR" << std::endl;
+//                 if (_kqueueHandler.getEventType(eventList[i].ident) == KqueueHandler::SOCKET_LISTEN) {
+//                     std::cerr << "listen error" << std::endl;
+//                     _kqueueHandler.deleteEventType(eventList[i].ident);
+//                     close(eventList[i].ident);
+//                 }
+//                 else {
+//                     std::cerr << "client error" << std::endl;
+//                     _kqueueHandler.deleteEventType(eventList[i].ident);
+//                     close(eventList[i].ident);
+//                 }
 //                 break;
 //             }
 //         }

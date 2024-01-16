@@ -28,7 +28,6 @@ private:
 		SOCKET_CLIENT,
 		SOCKET_CGI
 	};
-	KqueueHandler _kqueue_handler;
 
 public:
 	ServerManager();						// 생성자, 만들면서 config 파일 읽어서 파싱

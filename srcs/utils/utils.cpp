@@ -121,8 +121,8 @@ int ft_inet_aton(const char *str, struct in_addr *addr) {
 
 void printParsedServer(ServerConfig &server) {
     std::cout << "======================" << std::endl;
-    std::cout << "[parseServer] " << "portsWithINADDR_ANY: ";
-    for (std::vector<int>::iterator it = ServerConfig::portsWithINADDR_ANY.begin(); it != ServerConfig::portsWithINADDR_ANY.end(); it++)
+    std::cout << "[parseServer] " << "globalPortList: ";
+    for (std::vector<int>::iterator it = ServerConfig::globalPortList.begin(); it != ServerConfig::globalPortList.end(); it++)
         std::cout << *it << " ";
     std::cout << std::endl;
     std::cout << "[parseServer] " << "ip: " << server.getIp().s_addr << std::endl;

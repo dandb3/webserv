@@ -36,7 +36,7 @@ void ServerManager::initServer()
         int sockfd;
         struct sockaddr_in servaddr;
         // 해당 port의 "0.0.0.0" ip가 있는 경우 -> 서버 생성하지 않고 넘어가기
-        if (std::find(it->portsWithINADDR_ANY.begin(), it->portsWithINADDR_ANY.end(), it->getPort()) != it->portsWithINADDR_ANY.end() && \
+        if (std::find(it->globalPortList.begin(), it->globalPortList.end(), it->getPort()) != it->globalPortList.end() && \
             it->getIp().s_addr != INADDR_ANY)
             continue;
 
@@ -135,7 +135,7 @@ void ServerManager::operate()
         std::string type;
         std::string data;
     };
-    _kqueue_handler = _eventHandler.getKqueueHandler();
+    KqueueHandler _kqueue_handler = _eventHandler.getKqueueHandler();
     while (true) {
         _kqueue_handler.eventCatch();
         int nevents = _kqueue_handler.getNevents();
@@ -192,7 +192,6 @@ void ServerManager::operate()
                         curEventInfo->data = curEventInfo->data + buf;
                         curEvent.udata = (void *)curEventInfo;
                         _kqueue_handler.changeEvent(sockfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, curEvent.udata);
-                        // write(sockfd, buf, n);
                     }
                 }
             }

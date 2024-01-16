@@ -5,6 +5,7 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <unistd.h>
 #include "../../webserv.hpp"
 
 #define BUF_SIZE 1024
