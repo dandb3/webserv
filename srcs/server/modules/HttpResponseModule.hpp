@@ -4,9 +4,15 @@
 # include <string>
 # include <map>
 # include <utility>
+# include <sys/stat.h>
+# include <ctime.h>
+# include <iomanip>
 # include "CgiResponseModule.hpp"
 # include "HttpRequestModule.hpp"
 # include "../cycle/NetConfig.hpp"
+# include "../utils/utils.hpp"
+
+# define CRLF "\r\n"
 
 class StatusLine
 {
@@ -27,7 +33,6 @@ public:
 	const std::pair<short, short> &getVersion() const;
 	const short getCode() const;
 	const std::string &getText() const;
-
 };
 
 class HttpResponse
@@ -60,12 +65,20 @@ private:
 
 	HttpResponse _httpResponse;
 
+	void _setFileTime(std::multimap<std::string, std::string> &headerFields);
+	void _setDate(std::multimap<std::string, std::string> &headerFields);
+	void _setContentType(std::multimap<std::string, std::string> &headerFields);
+	void _setContentLength(std::multimap<std::string, std::string> &headerFields);
+	void _setConnection(std::multimap<std::string, std::string> &headerFields);
+
 	void _makeStatusLine(StatusLine &statusLine, short code);
-	
+	void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, NetConfig &netConfig);
+
 	void _makeGETResponse(HttpRequest &httpRequest, NetConfig &netConfig, bool isGET);
 	void _makeHEADResponse(HttpRequest &httpRequest, NetConfig &netConfig);
 	void _makePUTResponse(HttpRequest &httpRequest, NetConfig &netConfig);
 	void _makeDELETEResponse(HttpRequest &httpRequest, NetConfig &netConfig);
+	void _httpResponseToString();
 
 public:
 	enum
