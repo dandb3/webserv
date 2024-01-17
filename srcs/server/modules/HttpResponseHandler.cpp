@@ -1,10 +1,12 @@
 #include "HttpResponseModule.hpp"
 
+HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
+
 void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
 {
     std::string text;
 
-    statusLine.setVersion(make_pair(1, 1));
+    statusLine.setVersion(std::make_pair(1, 1));
     statusLine.setCode(code);
 
     switch (code) {
@@ -58,7 +60,7 @@ void HttpResponseHandler::_setFileTime(std::multimap<std::string, std::string> &
     std::tm* timeInfo = std::gmtime(&lastModifiedTime);
     
     std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields["Last-Modified"] = std::string(buffer);
+    headerFields.insert(std::make_pair("Last-Modified", std::string(buffer)));
 }
 
 void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &headerFields)
@@ -68,29 +70,28 @@ void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &head
     char buffer[100];
 
     std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields["Date"] = std::string(buffer);
+    headerFields.insert(std::make_pair("Date", std::string(buffer)));
 }
 
 // 수정 필요
 void HttpResponseHandler::_setContentType(std::multimap<std::string, std::string> &headerFields)
 {
-    headerFields["Content-Type"] = "text/html";
+    headerFields.insert(std::make_pair("Content-Type", "text/html"));
 }
 
-// 수정 필요
 void HttpResponseHandler::_setContentLength(std::multimap<std::string, std::string> &headerFields)
 {
-    //headerFields["Content-Length"] = "0";
+    // chunked로 구현하기?
+    headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.getMessageBody().length())));
 }
 
 // 수정 필요
 void HttpResponseHandler::_setConnection(std::multimap<std::string, std::string> &headerFields)
 {
     if (1)
-        headerFields["Connection"] = "keep-alive";
+        headerFields.insert(std::make_pair("Connection", "keep-alive"));
     else    
-        headerFields["Connection"] = "close";
-
+        headerFields.insert(std::make_pair("Connection", "close"));
 }
 
 void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::string> &headerFields, NetConfig &netConfig)
@@ -98,7 +99,7 @@ void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::stri
     _setDate(headerFields);
     _setContentType(headerFields);
     _setConnection(headerFields);
-    // _setContentLength(headerFields);
+    _setContentLength(headerFields);
     // _setFileTime(headerFields, netConfig.getPath());
 }
 
@@ -111,7 +112,7 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, NetConfig &
 
     if (fileFd == -1) {
         _makeStatusLine(statusLine, 404);
-        fildFd = open(netConfig.getErrorPath());
+        fileFd = open(netConfig.getErrorPath());
 
         // 404 Not Found 페이지가 없는 경우
         if (fileFd == -1)
@@ -132,10 +133,7 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, NetConfig &
     }
 
     // Header Field들을 세팅해준다.
-    _makeHeaderFields(headerFields);
-
-    // chunked?
-    headerFields["Content-Length"] = toString(messageBody.length());
+    _makeHeaderFields(headerFields, netConfig);
 
     _httpResponse.setStatusLine(statusLine);
     _httpResponse.setHeaderFields(headerFields);
@@ -150,7 +148,7 @@ void HttpResponseHandler::_makeHEADResponse(HttpRequest &httpRequest, NetConfig 
     (void)netConfig;
 }
 
-void HttpResponseHandler::_makePUTResponse(HttpRequest &httpRequest, NetConfig &netConfig)
+void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, NetConfig &netConfig)
 {
     (void)httpRequest;
     (void)netConfig;
@@ -162,10 +160,10 @@ void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, NetConfi
     (void)netConfig;
 }
 
-
 void HttpResponseHandler::_statusLineToString()
 {
     const std::pair<short, short> version = _httpResponse.getStatusLine().getVersion();
+    const short code = _httpResponse.getStatusLine().getCode();
     std::string versionStr;
     std::string codeStr;
 
@@ -174,14 +172,16 @@ void HttpResponseHandler::_statusLineToString()
     versionStr.push_back('.');
     versionStr.push_back(static_cast<char>(version.second + '0'));
 
-    codeStr = toString(_httpResponse.getStatusLine().getCode());
+    codeStr = toString(code);
 
     _response = versionStr + " " + codeStr + " " + _httpResponse.getStatusLine().getText() + CRLF;
 }
 
-void HttpResponseHandler::_headerFieldsToString(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_headerFieldsToString()
 {
+    std::multimap<std::string, std::string> headerFields = _httpResponse.getHeaderFields();
     std::multimap<std::string, std::string>::iterator it;
+    
     for (it = headerFields.begin(); it != headerFields.end(); it++) {
         _response += it->first + ": " + it->second + CRLF;
     }
@@ -203,14 +203,14 @@ void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, NetConfig &
     if (method == GET || method == HEAD) {
         _makeGETResponse(httpRequest, netConfig, (method == GET));
     }
-    else if (method == PUT) {
-        _makePUTResponse();
+    else if (method == POST) {
+        _makePOSTResponse(httpRequest, netConfig);
     }
     else if (method == DELETE) {
-        _makeDELETEResponse();
+        _makeDELETEResponse(httpRequest, netConfig);
     }
     else {
-        cout << "??";
+        std::cout << "??";
     }
 
     _httpResponseToString();

@@ -5,8 +5,10 @@
 # include <map>
 # include <utility>
 # include <sys/stat.h>
-# include <ctime.h>
+# include <ctime>
 # include <iomanip>
+# include <fcntl.h>
+# include <unistd.h>
 # include "CgiResponseModule.hpp"
 # include "HttpRequestModule.hpp"
 # include "../cycle/NetConfig.hpp"
@@ -25,7 +27,7 @@ public:
     StatusLine& operator=(const StatusLine& ref);
 
 	// setter
-    void setVersion(std::pair<short, short> &version);
+    void setVersion(std::pair<short, short> version);
     void setCode(short code);
     void setText(std::string &text);
 
@@ -47,7 +49,7 @@ public:
 
 	// getter
 	const StatusLine &getStatusLine() const;
-	const std::multimap<std::string, std::string> &getHeaderFields() const;
+	std::multimap<std::string, std::string> &getHeaderFields();
 	const std::string &getMessageBody() const;
 
 	// setter
@@ -65,7 +67,7 @@ private:
 
 	HttpResponse _httpResponse;
 
-	void _setFileTime(std::multimap<std::string, std::string> &headerFields);
+	void _setFileTime(std::multimap<std::string, std::string> &headerFields, const char *path);
 	void _setDate(std::multimap<std::string, std::string> &headerFields);
 	void _setContentType(std::multimap<std::string, std::string> &headerFields);
 	void _setContentLength(std::multimap<std::string, std::string> &headerFields);
@@ -76,18 +78,28 @@ private:
 
 	void _makeGETResponse(HttpRequest &httpRequest, NetConfig &netConfig, bool isGET);
 	void _makeHEADResponse(HttpRequest &httpRequest, NetConfig &netConfig);
-	void _makePUTResponse(HttpRequest &httpRequest, NetConfig &netConfig);
+	void _makePOSTResponse(HttpRequest &httpRequest, NetConfig &netConfig);
 	void _makeDELETEResponse(HttpRequest &httpRequest, NetConfig &netConfig);
+	
+	void _statusLineToString();
+	void _headerFieldsToString();
 	void _httpResponseToString();
 
 public:
+    enum
+    {
+        GET,
+        HEAD,
+        POST,
+        DELETE
+    };
 	enum
 	{
 		RES_IDLE,
 		RES_PROCESSING,
 		RES_READY,
 	};
-	// HttpResponseHandler();
+	HttpResponseHandler();
 
 	void makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig);
 	void sendHttpResponse(int fd, size_t size);

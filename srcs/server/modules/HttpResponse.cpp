@@ -27,7 +27,7 @@ const StatusLine& HttpResponse::getStatusLine() const
     return _statusLine;
 }
 
-const std::multimap<std::string, std::string>& HttpResponse::getHeaderFields() const
+std::multimap<std::string, std::string>& HttpResponse::getHeaderFields()
 {
     return _headerFields;
 }

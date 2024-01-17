@@ -12,13 +12,6 @@
 class RequestLine
 {
 private:
-    enum
-    {
-        GET,
-        HEAD,
-        POST,
-        DELETE
-    };
     short _method;
     std::string _requestTarget;
     std::pair<short, short> _version;
@@ -93,6 +86,13 @@ private:
     void _push_err_request();
 
 public:
+    enum
+    {
+        GET,
+        HEAD,
+        POST,
+        DELETE
+    };
     HttpRequestHandler();
 
     void recvHttpRequest(int fd, size_t size);
