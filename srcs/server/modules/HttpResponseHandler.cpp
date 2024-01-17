@@ -116,6 +116,7 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, NetConfig &
 
         // 404 Not Found 페이지가 없는 경우
         if (fileFd == -1)
+            std::cout << "throw err sys call in makeGETResponse\n";
             throw err_syscall();
     }
     else {
@@ -222,7 +223,8 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
 
     writeLen = std::min(_response.size() - _pos, size);
     if (write(fd, _response.c_str() + _pos, writeLen) == FAILURE)
-        throw err_syscall();
+        std::cout << "throw err syscall in sendHttpResponse\n";
+        // throw err_syscall();
     _pos += writeLen;
     if (_pos == size) {
         _status = RES_IDLE;
