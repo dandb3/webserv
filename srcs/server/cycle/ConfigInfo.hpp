@@ -39,6 +39,7 @@ public:
 
 	void initConfigInfo(in_addr_t ip, in_port_t port, std::string uri);
 	void printConfigInfo();
+	std::string getPrintableConfigInfo();
 
 	// getter
 	std::string getRoot() const;

@@ -218,7 +218,7 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 
     while (size > 0) {
         if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
-            throw err_syscall();
+            throw std::runtime_error("recvHttpRequest에서 read 실패");
         size -= read_len;
         _remain.append(_buf, static_cast<size_t>(read_len));
     }

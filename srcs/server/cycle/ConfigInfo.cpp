@@ -1,4 +1,5 @@
 #include "ConfigInfo.hpp"
+#include <sstream>
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html";
@@ -80,7 +81,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
         else if (it->first == "index") {
             _index = it->second[0];
         }
-        else if (it->first == "allow_methods") {
+        else if (it->first == "allow_method") {
             for (size_t i = 0; i < it->second.size(); i++) {
                 if (it->second[i] == "GET")
                     _allowMethods[0] = true;
@@ -129,7 +130,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
         else if (it->first == "index") {
             _index = it->second[0];
         }
-        else if (it->first == "allow_methods") {
+        else if (it->first == "allow_method") {
             for (size_t i = 0; i < 4; i++) {
                 _allowMethods[i] = false;
             }
@@ -177,6 +178,37 @@ void ConfigInfo::printConfigInfo() {
         }
         std::cout << std::endl;
     }
+}
+
+std::string ConfigInfo::getPrintableConfigInfo() {
+    std::ostringstream result;
+
+    result << "root: " << _root << "\n";
+    result << "path: " << _path << "\n";
+
+    std::string allowMethods[4] = { "GET", "HEAD", "POST", "DELETE" };
+    result << "allow_methods: ";
+    for (size_t i = 0; i < 4; i++) {
+        if (_allowMethods[i] == true)
+            result << allowMethods[i] << " ";
+    }
+    result << "\n";
+
+    result << "index: " << _index << "\n";
+    result << "error_page: " << _errorPage << "\n";
+    result << "autoindex: " << _autoIndex << "\n";
+
+    result << "\ninfo\n";
+    for (t_directives::iterator it = _info.begin(); it != _info.end(); it++) {
+        result << it->first << ": ";
+        for (size_t i = 0; i < it->second.size(); i++) {
+            result << it->second[i] << " ";
+        }
+        result << "\n";
+    }
+
+    // 문자열로 변환된 결과 반환
+    return result.str();
 }
 
 // getter
