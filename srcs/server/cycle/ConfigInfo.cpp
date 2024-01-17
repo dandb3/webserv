@@ -47,19 +47,20 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
     std::vector<ServerConfig> &server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
     ServerConfig matchedServer;
-    bool isWildcard = false;
+    bool isMatched = false;
     // ip, port로 서버 찾기
     for (; it != server_v.end(); it++) {
         if (it->getIp().s_addr == 0 && it->getPort() == port) {
             matchedServer = *it;
-            isWildcard = true;
+            isMatched = true;
         }
         if (it->getIp().s_addr == ip && it->getPort() == port) {
             matchedServer = *it;
+            isMatched = true;
             break;
         }
     }
-    if (it == server_v.end() && !isWildcard)
+    if (!isMatched)
         throw std::runtime_error("ConfigInfo 생성자에서 서버 찾기 실패");
     t_directives &serverInfo = matchedServer.getServerInfo();
     for (t_directives::iterator it = serverInfo.begin(); it != serverInfo.end(); it++) {
@@ -98,16 +99,18 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
     }
     // LocationConfig location 찾기
     std::map<std::string, LocationConfig> &locationMap = matchedServer.getLocationList();
-    std::string path = uri;
-    while (locationMap.find(path) == locationMap.end()) {
-        if (path == "/")
+    std::string dir = uri;
+    while (locationMap.find(dir) == locationMap.end()) {
+        if (dir == "/")
             break;
-        size_t pos = path.find_last_of('/');
-        path = pos == 0 ? "/" : uri.substr(0, pos);
+        size_t pos = dir.find_last_of('/');
+        dir = pos == 0 ? "/" : uri.substr(0, pos);
     }
-    if (locationMap.find(path) == locationMap.end())
+    if (locationMap.find(dir) == locationMap.end())
         throw std::runtime_error("ConfigInfo 생성자에서 location 찾기 실패");
-    LocationConfig matchedLocation = locationMap[path];
+    // dir 뒷부분
+    std::string locationUri = (dir == "/") ? uri : uri.substr(dir.size());
+    LocationConfig matchedLocation = locationMap[dir];
     t_directives &locationInfo = matchedLocation.getLocationInfo();
     for (t_directives::iterator it = locationInfo.begin(); it != locationInfo.end(); it++) {
         if (it->first == "root") {
@@ -145,5 +148,8 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
             _info[it->first] = it->second;
         }
     }
-
+    if (_root[_root.size() - 1] == '/')
+        _path = _root + locationUri.substr(1);
+    else
+        _path = _root + locationUri;
 }
