@@ -13,13 +13,6 @@
 class RequestLine
 {
 private:
-    enum
-    {
-        GET,
-        HEAD,
-        POST,
-        DELETE
-    };
     short _method;
     std::string _requestTarget;
     std::pair<short, short> _version;
@@ -55,8 +48,6 @@ public:
     const RequestLine &getRequestLine() const;
     const std::multimap<std::string, std::string> &getHeaderFields() const;
     const std::string &getMessageBody() const;
-
-    inline bool closed() const;
 };
 
 class HttpRequestHandler
@@ -96,6 +87,13 @@ private:
     void _push_err_request();
 
 public:
+    enum
+    {
+        GET,
+        HEAD,
+        POST,
+        DELETE
+    };
     HttpRequestHandler();
 
     void recvHttpRequest(int fd, size_t size);

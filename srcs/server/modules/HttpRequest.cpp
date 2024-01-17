@@ -1,6 +1,6 @@
 #include "HttpRequestModule.hpp"
 
-HttpRequest::HttpRequest(int fd) : _fd(fd) {}
+HttpRequest::HttpRequest() {}
 
 HttpRequest::HttpRequest(RequestLine &requestLine, \
         std::multimap<std::string, std::string> &headerFields, std::string &messageBody) 
