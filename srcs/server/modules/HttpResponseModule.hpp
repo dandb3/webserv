@@ -1,35 +1,35 @@
 #ifndef HTTP_RESPONSE_MODULE_HPP
-# define HTTP_RESPONSE_MODULE_HPP
+#define HTTP_RESPONSE_MODULE_HPP
 
-# include <string>
-# include <map>
-# include <utility>
-# include <sys/stat.h>
-# include <ctime>
-# include <iomanip>
-# include <fcntl.h>
-# include <unistd.h>
-# include "CgiResponseModule.hpp"
-# include "HttpRequestModule.hpp"
-# include "../cycle/NetConfig.hpp"
-# include "../utils/utils.hpp"
+#include <string>
+#include <map>
+#include <utility>
+#include <sys/stat.h>
+#include <ctime>
+#include <iomanip>
+#include <fcntl.h>
+#include <unistd.h>
+#include "CgiResponseModule.hpp"
+#include "HttpRequestModule.hpp"
+#include "../cycle/ConfigInfo.hpp"
+#include "../utils/utils.hpp"
 
-# define CRLF "\r\n"
+#define CRLF "\r\n"
 
 class StatusLine
 {
 private:
-    std::pair<short, short> _version;
-    short _code;
-    std::string _text;
+	std::pair<short, short> _version;
+	short _code;
+	std::string _text;
 
 public:
-    StatusLine& operator=(const StatusLine& ref);
+	StatusLine &operator=(const StatusLine &ref);
 
 	// setter
-    void setVersion(std::pair<short, short> version);
-    void setCode(short code);
-    void setText(std::string &text);
+	void setVersion(std::pair<short, short> version);
+	void setCode(short code);
+	void setText(std::string &text);
 
 	// getter
 	const std::pair<short, short> &getVersion() const;
@@ -74,25 +74,25 @@ private:
 	void _setConnection(std::multimap<std::string, std::string> &headerFields);
 
 	void _makeStatusLine(StatusLine &statusLine, short code);
-	void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, NetConfig &netConfig);
+	void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &netConfig);
 
-	void _makeGETResponse(HttpRequest &httpRequest, NetConfig &netConfig, bool isGET);
-	void _makeHEADResponse(HttpRequest &httpRequest, NetConfig &netConfig);
-	void _makePOSTResponse(HttpRequest &httpRequest, NetConfig &netConfig);
-	void _makeDELETEResponse(HttpRequest &httpRequest, NetConfig &netConfig);
-	
+	void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &netConfig, bool isGET);
+	void _makeHEADResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
+	void _makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
+	void _makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
+
 	void _statusLineToString();
 	void _headerFieldsToString();
 	void _httpResponseToString();
 
 public:
-    enum
-    {
-        GET,
-        HEAD,
-        POST,
-        DELETE
-    };
+	enum
+	{
+		GET,
+		HEAD,
+		POST,
+		DELETE
+	};
 	enum
 	{
 		RES_IDLE,
@@ -101,7 +101,7 @@ public:
 	};
 	HttpResponseHandler();
 
-	void makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig);
+	void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
 	void sendHttpResponse(int fd, size_t size);
 };
 

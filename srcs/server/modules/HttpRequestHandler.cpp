@@ -16,7 +16,7 @@ void HttpRequestHandler::_inputRequestLine()
     start = 0;
     if ((end = _remain.find(CRLF, start)) == std::string::npos)
         return;
- 
+
     _lineV.push_back(_remain.substr(start, end));
     _remain = _remain.substr(end + 2);
     _parseRequestLine();
@@ -24,9 +24,9 @@ void HttpRequestHandler::_inputRequestLine()
 
 bool HttpRequestHandler::_parseRequestLine()
 {
-    std::string requestLine = _lineV[0];
+    std::string requestLineStr = _lineV[0];
 
-    std::istringstream iss(requestLine);
+    std::istringstream iss(requestLineStr);
     std::vector<std::string> tokens;
 
     std::string token;
@@ -60,7 +60,7 @@ bool HttpRequestHandler::_parseRequestLine()
     if (token.substr(0, 5) != "HTTP/" || token.length() != 8)
         return FAILURE;
 
-    requestLine.setVersion(make_pair(atoi(token[5]), atoi(token[7])));
+    requestLine.setVersion(std::make_pair(atoi(token[5]), atoi(token[7])));
 
     _httpRequest.setRequestLine(requestLine);
     _status = INPUT_HEADER_FIELD;

@@ -3,10 +3,10 @@
 std::map<std::pair<serv_ip_t, serv_port_t>, Cycle> Cycle::_cycleStorage;
 
 Cycle::Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
-: _netConfig(), _ip(ip), _port(port), _httpSockfd(httpSockfd), _closed(false)
+    : _configInfo(), _ip(ip), _port(port), _httpSockfd(httpSockfd), _closed(false)
 {}
 
-Cycle* Cycle::newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
+Cycle *Cycle::newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
 {
     std::pair<serv_ip_t, serv_port_t> key = std::make_pair(ip, port);
 
@@ -14,7 +14,7 @@ Cycle* Cycle::newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
     return &_cycleStorage.at(key);
 }
 
-void Cycle::deleteCycle(Cycle* cycle)
+void Cycle::deleteCycle(Cycle *cycle)
 {
     _cycleStorage.erase(std::make_pair(cycle->getIp(), cycle->getPort()));
 }
@@ -49,34 +49,34 @@ bool Cycle::closed() const
     return _closed;
 }
 
-HttpRequestHandler& Cycle::getHttpRequestHandler() const
+HttpRequestHandler &Cycle::getHttpRequestHandler() const
 {
     return _httpRequestHandler;
 }
 
-HttpResponseHandler& Cycle::getHttpResponseHandler() const
+HttpResponseHandler &Cycle::getHttpResponseHandler() const
 {
     return _httpResponseHandler;
 }
 
-CgiRequestHandler& Cycle::getCgiRequestHandler() const
+CgiRequestHandler &Cycle::getCgiRequestHandler() const
 {
     return _cgiRequestHandler;
 }
 
-CgiResponseHandler& Cycle::getCgiResponseHandler() const
+CgiResponseHandler &Cycle::getCgiResponseHandler() const
 {
     return _cgiResponseHandler;
 }
 
-std::queue<HttpRequest>& Cycle::getHttpRequestQueue() const
+std::queue<HttpRequest> &Cycle::getHttpRequestQueue() const
 {
     return _httpRequestQueue;
 }
 
 void Cycle::resetCycle()
 {
-    _netConfig = NetConfig();
+    _configInfo = ConfigInfo(); // 맞나?
     // _httpRequestHandler = HttpRequestHandler();
     // _httpResponseHandler = HttpResponseHandler();
     _cgiRequestHandler = CgiRequestHandler();

@@ -74,7 +74,7 @@ private:
     void _inputStart();
 
     void _inputRequestLine();
-    void _parseRequestLine();
+    bool _parseRequestLine();
 
     void _inputHeaderField();
     void _parseHeaderField();

@@ -48,8 +48,8 @@ char EventHandler::_getEventType(const struct kevent &kev)
 //     hreqQueue.pop();
 //     /**
 //      * Server block, Location block 선택
-//      * NetConfig 객체 생성
-//      * NetConfig, HttpRequest를 통해 CgiRequest를 만드는 것인지, HttpResponse를 만드는 것인지 선택
+//      * ConfigInfo 객체 생성
+//      * ConfigInfo, HttpRequest를 통해 CgiRequest를 만드는 것인지, HttpResponse를 만드는 것인지 선택
 //      * - CgiRequest인 경우
 //      *   creqHandler.makeCgiRequest(hreqHandler.getHttpRequest());
 //      *   creqHandler.callCgiScript();

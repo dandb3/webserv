@@ -4,7 +4,7 @@
 #include <map>
 #include <queue>
 #include "../../webserv.hpp"
-#include "NetConfig.hpp"
+#include "ConfigInfo.hpp"
 #include "../modules/HttpRequestModule.hpp"
 #include "../modules/HttpResponseModule.hpp"
 #include "../modules/CgiRequestModule.hpp"
@@ -22,7 +22,7 @@ class Cycle
 private:
     static std::map<std::pair<serv_ip_t, serv_port_t>, Cycle> _cycleStorage;
 
-    NetConfig _netConfig;
+    ConfigInfo _configInfo;
     serv_ip_t _ip;
     serv_port_t _port;
     int _httpSockfd;

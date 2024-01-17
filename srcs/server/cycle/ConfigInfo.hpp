@@ -10,13 +10,15 @@ typedef std::map<std::string, std::vector<std::string>> t_directives;
 class ConfigInfo
 {
 private:
-	static const std::string DEFAULT_INDEX; // index.html
-	static const std::string DEFAULT_ROOT;	// /var/www/html
+	static const std::string DEFAULT_INDEX;		 // index.html
+	static const std::string DEFAULT_ROOT;		 // /var/www/html
+	static const std::string DEFAULT_ERROR_PAGE; // /confTest/error/defaultError.html
 
 	std::string _root;	   // root
 	std::string _path;	   // root + uri
 	bool _allowMethods[4]; // GET, HEAD, POST, DELETE
 	std::string _index;
+	std::string _errorPage;
 	// std::map<std::string, std::string> _errorPage;
 	bool _autoIndex;
 	t_directives _info;
@@ -36,8 +38,16 @@ public:
 	~ConfigInfo();
 
 	void initConfigInfo(in_addr_t ip, in_port_t port, std::string uri);
-	void setRoot(std::string root);
 	void printConfigInfo();
+
+	// getter
+	std::string getRoot() const;
+	std::string getPath() const;
+	bool getAllowMethods(int index) const;
+	std::string getIndex() const;
+	std::string getErrorPage() const;
+	bool getAutoIndex() const;
+	t_directives getInfo() const;
 };
 
 #endif

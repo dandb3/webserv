@@ -131,6 +131,9 @@ void ServerManager::operate()
 {
     struct EventInfo
     {
+        in_addr_t ip;
+        in_port_t port;
+        std::string uri;
         int sockfd;
         std::string type;
         std::string data;
@@ -186,6 +189,8 @@ void ServerManager::operate()
                     }
                     else {
                         buf[n] = '\0';
+                        // 요청메세지에서 uri만 따로 빼오기
+
                         EventInfo *curEventInfo = new EventInfo;
                         curEventInfo->sockfd = sockfd;
                         curEventInfo->type = (type == _kqueue_handler.SOCKET_LISTEN) ? "listen" : "client";
@@ -215,7 +220,6 @@ void ServerManager::operate()
                     else { // udata 삭제
                         delete (EventInfo *)curEvent.udata;
                     }
-
                 }
             }
         }

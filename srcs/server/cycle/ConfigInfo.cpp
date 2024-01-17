@@ -2,6 +2,7 @@
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html";
+const std::string ConfigInfo::DEFAULT_ERROR_PAGE = "/confTest/error/defaultError.html";
 
 /// @brief ip, port를 보고 matchedServer,
 ///        uri를 보고 matchedLocation을 찾아서 ConfigInfo 생성
@@ -12,6 +13,7 @@ ConfigInfo::ConfigInfo()
     for (size_t i = 0; i < 4; i++)
         _allowMethods[i] = false;
     _index = DEFAULT_INDEX;
+    _errorPage = DEFAULT_ERROR_PAGE;
     _autoIndex = false;
     _info.clear();
     _path = "";
@@ -153,3 +155,56 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
     else
         _path = _root + locationUri;
 }
+
+void ConfigInfo::printConfigInfo() {
+    std::cout << "root: " << _root << std::endl;
+    std::cout << "path: " << _path << std::endl;
+    std::string allowMethods[4] = { "GET", "HEAD", "POST", "DELETE" };
+    std::cout << "allow_methods: ";
+    for (size_t i = 0; i < 4; i++) {
+        if (_allowMethods[i])
+            std::cout << allowMethods[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "index: " << _index << std::endl;
+    std::cout << "error_page: " << _errorPage << std::endl;
+    std::cout << "autoindex: " << _autoIndex << std::endl;
+    std::cout << "info: " << std::endl;
+    for (t_directives::iterator it = _info.begin(); it != _info.end(); it++) {
+        std::cout << it->first << ": ";
+        for (size_t i = 0; i < it->second.size(); i++) {
+            std::cout << it->second[i] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+// getter
+std::string ConfigInfo::getRoot() const {
+    return _root;
+}
+
+std::string ConfigInfo::getPath() const {
+    return _path;
+}
+
+bool ConfigInfo::getAllowMethods(int index) const {
+    return _allowMethods[index];
+}
+
+std::string ConfigInfo::getIndex() const {
+    return _index;
+}
+
+std::string ConfigInfo::getErrorPage() const {
+    return _errorPage;
+}
+
+bool ConfigInfo::getAutoIndex() const {
+    return _autoIndex;
+}
+
+t_directives ConfigInfo::getInfo() const {
+    return _info;
+}
+
