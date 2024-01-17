@@ -2,10 +2,10 @@
 #define HTTP_REQUEST_MODULE_HPP
 
 #include <string>
+#include <unistd.h>
 #include <vector>
 #include <queue>
 #include <map>
-#include <unistd.h>
 #include "../../webserv.hpp"
 
 #define BUF_SIZE 1024
@@ -22,7 +22,7 @@ public:
 
     void setMethod(short method);
     void setRequestTarget(std::string &requestTarget);
-    void setVersion(std::pair<short, short> &version);
+    void setVersion(std::pair<short, short> version);
 
     const short getMethod() const;
     const std::string &getRequestTarget() const;
@@ -46,8 +46,8 @@ public:
     void setMessageBody(std::string &messageBody);
 
     const RequestLine &getRequestLine() const;
-    const std::multimap<std::string, std::string> &getHeaderFields() const;
-    const std::string &getMessageBody() const;
+    std::multimap<std::string, std::string> &getHeaderFields() const;
+    std::string &getMessageBody() const;
 };
 
 class HttpRequestHandler
@@ -77,14 +77,14 @@ private:
     bool _parseRequestLine();
 
     void _inputHeaderField();
-    void _parseHeaderField();
+    bool _parseHeaderField();
 
     void _inputMessageBody();
     void _inputDefaultBody(int content_length_count, int transfer_encoding_count);
     void _inputChunkedBody(int transfer_encoding_count);
 
-    void _push_request();
-    void _push_err_request();
+    void _push_request(std::queue<HttpRequest> &httpRequestQ);
+    void _push_err_request(std::queue<HttpRequest> &httpRequestQ);
 
 public:
     enum

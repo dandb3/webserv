@@ -31,12 +31,12 @@ const RequestLine& HttpRequest::getRequestLine() const
     return _requestLine;
 }
 
-const std::multimap<std::string, std::string>& HttpRequest::getHeaderFields() const
+std::multimap<std::string, std::string>& HttpRequest::getHeaderFields() const
 {
     return _headerFields;
 }
 
-const std::string& HttpRequest::getMessageBody() const
+const std::string HttpRequest::getMessageBody() const
 {
     return _messageBody;
 }

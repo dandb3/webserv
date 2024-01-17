@@ -20,7 +20,7 @@ void RequestLine::setRequestTarget(std::string &requestTarget)
     _requestTarget = requestTarget;
 }
 
-void RequestLine::setVersion(std::pair<short, short> &version)
+void RequestLine::setVersion(std::pair<short, short> version)
 {
     _version = version;
 }
