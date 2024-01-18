@@ -202,7 +202,7 @@ void HttpResponseHandler::_httpResponseToString()
     std::cout << "final result: " << _response << '\n';
 }
 
-void HttpResponseHandler::g(HttpRequest &httpRequest, ConfigInfo &configInfo)
+void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
     const short method = httpRequest.getRequestLine().getMethod();
 
