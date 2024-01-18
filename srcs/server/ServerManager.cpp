@@ -139,7 +139,6 @@ std::string getUriFromRequest(const std::string &httpRequest) {
     return uri;
 }
 
-
 /*
 ** 서버 동작 함수
 ** 임시로 에코 서버 구현
