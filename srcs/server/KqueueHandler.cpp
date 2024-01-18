@@ -45,7 +45,7 @@ void KqueueHandler::addEvent(uintptr_t ident, int16_t filter, void *udata)
     _eventsToAdd.push_back(kev);
 }
 
-void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = NULL)
+void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void *udata)
 {
     struct kevent kev;
 
@@ -53,7 +53,7 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void* udata = N
     _eventsToAdd.push_back(kev);
 }
 
-void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, void* udata = NULL)
+void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, void *udata)
 {
     struct kevent kev;
 
@@ -74,12 +74,11 @@ void KqueueHandler::eventCatch()
 
 char KqueueHandler::getEventType(int ident)
 {
-    char type = _type[ident];
-    if (type == 0) {
+    if (_type.find(ident) == _type.end()) {
         std::cerr << "[getEventType] : there is no such event" << std::endl;
         return -1;
     }
-    return type;
+    return _type[ident];
 }
 
 void KqueueHandler::setEventType(int ident, char type)
@@ -97,9 +96,9 @@ void KqueueHandler::deleteEventType(int ident)
     _type.erase(it);
 }
 
-struct kevent* KqueueHandler::getEventList() const
+struct kevent *KqueueHandler::getEventList() const
 {
-    return (struct kevent*)_eventList;
+    return (struct kevent *)_eventList;
 }
 
 int KqueueHandler::getNevents() const

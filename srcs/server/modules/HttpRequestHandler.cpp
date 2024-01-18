@@ -16,7 +16,7 @@ void HttpRequestHandler::_inputRequestLine()
     start = 0;
     if ((end = _remain.find(CRLF, start)) == std::string::npos)
         return;
- 
+
     _lineV.push_back(_remain.substr(start, end));
     _remain = _remain.substr(end + 2);
     _parseRequestLine();
@@ -218,8 +218,7 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 
     while (size > 0) {
         if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
-            std::cout << "throw err_syscall in recvHttpRequest\n";
-            //throw err_syscall();
+            throw std::runtime_error("recvHttpRequest에서 read 실패");
         size -= read_len;
         _remain.append(_buf, static_cast<size_t>(read_len));
     }

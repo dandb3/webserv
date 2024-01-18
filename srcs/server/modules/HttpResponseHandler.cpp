@@ -10,38 +10,38 @@ void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
     statusLine.setCode(code);
 
     switch (code) {
-        case 100:
-            text = "Continue";
-            break;
-        case 101:
-            text = "Switching Protocol";
-            break;
-        case 102:
-            text = "Processing";
-            break;
-        case 200:
-            text = "OK";
-            break;
-        case 201:
-            text = "Created";
-            break;
-        case 202:
-            text = "Accepted";
-            break;
-        case 203:
-            text = "Non-Authoritative Information";
-            break;
-        case 204:
-            text = "No Content";
-            break;
-        case 404:
-            text = "Not Found";
-            break;
-        case 503:
-            text = "Service Unavailable";
-            break;
-        default:
-            text = "Not Yet Setted\n";
+    case 100:
+        text = "Continue";
+        break;
+    case 101:
+        text = "Switching Protocol";
+        break;
+    case 102:
+        text = "Processing";
+        break;
+    case 200:
+        text = "OK";
+        break;
+    case 201:
+        text = "Created";
+        break;
+    case 202:
+        text = "Accepted";
+        break;
+    case 203:
+        text = "Non-Authoritative Information";
+        break;
+    case 204:
+        text = "No Content";
+        break;
+    case 404:
+        text = "Not Found";
+        break;
+    case 503:
+        text = "Service Unavailable";
+        break;
+    default:
+        text = "Not Yet Setted\n";
     }
 
     statusLine.setText(text);
@@ -51,14 +51,14 @@ void HttpResponseHandler::_setFileTime(std::multimap<std::string, std::string> &
 {
     struct stat fileInfo;
     char buffer[100];
-    
+
     if (path == "")
         return;
 
     stat(path, &fileInfo);
     std::time_t lastModifiedTime = fileInfo.st_mtime;
-    std::tm* timeInfo = std::gmtime(&lastModifiedTime);
-    
+    std::tm *timeInfo = std::gmtime(&lastModifiedTime);
+
     std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
     headerFields.insert(std::make_pair("Last-Modified", std::string(buffer)));
 }
@@ -66,7 +66,7 @@ void HttpResponseHandler::_setFileTime(std::multimap<std::string, std::string> &
 void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &headerFields)
 {
     std::time_t currentDate = std::time(nullptr);
-    std::tm* timeInfo = std::gmtime(&currentDate);
+    std::tm *timeInfo = std::gmtime(&currentDate);
     char buffer[100];
 
     std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
@@ -90,34 +90,33 @@ void HttpResponseHandler::_setConnection(std::multimap<std::string, std::string>
 {
     if (1)
         headerFields.insert(std::make_pair("Connection", "keep-alive"));
-    else    
+    else
         headerFields.insert(std::make_pair("Connection", "close"));
 }
 
-void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::string> &headerFields, NetConfig &netConfig)
+void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo)
 {
     _setDate(headerFields);
     _setContentType(headerFields);
     _setConnection(headerFields);
     _setContentLength(headerFields);
-    // _setFileTime(headerFields, netConfig.getPath());
+    // _setFileTime(headerFields, configInfo.getPath());
 }
 
-void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, NetConfig &netConfig, bool isGET)
+void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET)
 {
-    int fileFd = open(netConfig.getPath());
+    int fileFd = open(configInfo.getPath().c_str(), O_RDONLY);
     StatusLine statusLine;
     std::multimap<std::string, std::string> headerFields;
     std::string messageBody;
 
     if (fileFd == -1) {
         _makeStatusLine(statusLine, 404);
-        fileFd = open(netConfig.getErrorPath());
+        fileFd = open(configInfo.getErrorPage().c_str(), O_RDONLY);
 
         // 404 Not Found 페이지가 없는 경우
         if (fileFd == -1)
-            std::cout << "throw err sys call in makeGETResponse\n";
-            throw err_syscall();
+            throw std::runtime_error("404 Not Found 페이지가 없습니다.");
     }
     else {
         _makeStatusLine(statusLine, 200);
@@ -134,7 +133,7 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, NetConfig &
     }
 
     // Header Field들을 세팅해준다.
-    _makeHeaderFields(headerFields, netConfig);
+    _makeHeaderFields(headerFields, configInfo);
 
     _httpResponse.setStatusLine(statusLine);
     _httpResponse.setHeaderFields(headerFields);
@@ -143,22 +142,22 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, NetConfig &
     close(fileFd);
 }
 
-void HttpResponseHandler::_makeHEADResponse(HttpRequest &httpRequest, NetConfig &netConfig)
+void HttpResponseHandler::_makeHEADResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
     (void)httpRequest;
-    (void)netConfig;
+    (void)configInfo;
 }
 
-void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, NetConfig &netConfig)
+void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
     (void)httpRequest;
-    (void)netConfig;
+    (void)configInfo;
 }
 
-void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, NetConfig &netConfig)
+void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
     (void)httpRequest;
-    (void)netConfig;
+    (void)configInfo;
 }
 
 void HttpResponseHandler::_statusLineToString()
@@ -182,7 +181,7 @@ void HttpResponseHandler::_headerFieldsToString()
 {
     std::multimap<std::string, std::string> headerFields = _httpResponse.getHeaderFields();
     std::multimap<std::string, std::string>::iterator it;
-    
+
     for (it = headerFields.begin(); it != headerFields.end(); it++) {
         _response += it->first + ": " + it->second + CRLF;
     }
@@ -196,19 +195,19 @@ void HttpResponseHandler::_httpResponseToString()
     _response += _httpResponse.getMessageBody();
 }
 
-void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, NetConfig &netConfig)
+void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
     const short method = httpRequest.getRequestLine().getMethod();
 
     // if else -> switch?
     if (method == GET || method == HEAD) {
-        _makeGETResponse(httpRequest, netConfig, (method == GET));
+        _makeGETResponse(httpRequest, configInfo, (method == GET));
     }
     else if (method == POST) {
-        _makePOSTResponse(httpRequest, netConfig);
+        _makePOSTResponse(httpRequest, configInfo);
     }
     else if (method == DELETE) {
-        _makeDELETEResponse(httpRequest, netConfig);
+        _makeDELETEResponse(httpRequest, configInfo);
     }
     else {
         std::cout << "??";
@@ -223,8 +222,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
 
     writeLen = std::min(_response.size() - _pos, size);
     if (write(fd, _response.c_str() + _pos, writeLen) == FAILURE)
-        std::cout << "throw err syscall in sendHttpResponse\n";
-        // throw err_syscall();
+        throw std::runtime_error("sendHttpResponse에서 write 실패");
     _pos += writeLen;
     if (_pos == size) {
         _status = RES_IDLE;

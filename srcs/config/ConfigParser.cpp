@@ -83,7 +83,6 @@ void ConfigParser::parseServer(std::string const &fileContent, size_t &i, Config
     std::string key;
     while (fileContent[i] != '}') {
         key = getKey(fileContent, i);
-        std::cout << key << std::endl;
         if (i == std::string::npos || ConfigParser::SERVER_KEY_SET.find(key) == ConfigParser::SERVER_KEY_SET.end())
             throw std::runtime_error("config 파일 파싱 중 에러 발생");
         if (key == "location") {
