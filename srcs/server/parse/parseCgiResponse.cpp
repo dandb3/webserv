@@ -41,6 +41,11 @@ bool isLocalLocation(const pair_t& p)
     return (isCaseInsensitiveSame(p.first, "Location") && isLocalPathquery(p.second));
 }
 
+bool isClientLocation(const pair_t& p)
+{
+    return (isCaseInsensitiveSame(p.first, "Location") && isFragmentURI(p.second));
+}
+
 void parseCgiResponse(CgiResponse& cgiResponse, const std::string& raw, char& type)
 {
     std::vector<std::string> lineV;
@@ -60,12 +65,16 @@ void parseCgiResponse(CgiResponse& cgiResponse, const std::string& raw, char& ty
         parseLocalRedirResponse(cgiResponse, pairV, messageBody);
         type = CgiResponseHandler::LOCAL_REDIR_RES;
     }
-    else if (pairV.size() == 1) {
-        parseClientRedirResponse(cgiResponse, pairV, messageBody);
-        type = CgiResponseHandler::CLIENT_REDIR_RES;
+    else if (isClientLocation(pairV[0])) {
+        if (pairV.size() == 1) {
+            parseClientRedirResponse(cgiResponse, pairV, messageBody);
+            type = CgiResponseHandler::CLIENT_REDIR_RES;
+        }
+        else {
+            parseClientRedirdocResponse(cgiResponse, pairV, messageBody);
+            type = CgiResponseHandler::CLIENT_REDIR_DOC_RES;
+        }
     }
-    else {
-        parseClientRedirdocResponse(cgiResponse, pairV, messageBody);
-        type = CgiResponseHandler::CLIENT_REDIR_DOC_RES;
-    }
+    else
+        throw 501; // ERROR;
 }

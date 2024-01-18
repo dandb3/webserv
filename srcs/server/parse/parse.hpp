@@ -26,5 +26,6 @@ bool isCaseInsensitiveSame(const std::string& str1, const std::string& str2);
 void eatOWS(const std::string& str, size_t& pos);
 bool isMediaType(const std::string& str);
 bool isLocalPathquery(const std::string& str);
+bool isFragmentURI(const std::string& str);
 
 #endif
