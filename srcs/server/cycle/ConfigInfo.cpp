@@ -104,15 +104,30 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
     std::map<std::string, LocationConfig> &locationMap = matchedServer.getLocationList();
     std::string dir = uri;
     while (locationMap.find(dir) == locationMap.end()) {
+        std::cout << "============================\n";
+        std::cout << "dir: " << dir << std::endl;
+        std::cout << "============================\n";
         if (dir == "/")
             break;
         size_t pos = dir.find_last_of('/');
         dir = pos == 0 ? "/" : uri.substr(0, pos);
     }
+    std::cout << "============================\n";
+    std::cout << "dir: " << dir << std::endl;
+    std::cout << "dir_size: " << dir.size() << std::endl;
+    std::cout << "uri: " << uri << std::endl;
+    std::cout << "uri_size: " << uri.size() << std::endl;
+    std::cout << "============================\n";
     if (locationMap.find(dir) == locationMap.end())
         throw std::runtime_error("ConfigInfo 생성자에서 location 찾기 실패");
     // dir 뒷부분
-    std::string locationUri = (dir == "/") ? uri : uri.substr(dir.size());
+    std::string locationUri;
+    if (dir.size() == uri.size())
+        locationUri = "";
+    else
+        locationUri = uri.substr(dir.size());
+    // std::string locationUri = (dir == "/") ? uri : uri.substr(dir.size());
+    std::cout << "locationUri: " << locationUri << std::endl;
     LocationConfig matchedLocation = locationMap[dir];
     t_directives &locationInfo = matchedLocation.getLocationInfo();
     for (t_directives::iterator it = locationInfo.begin(); it != locationInfo.end(); it++) {
@@ -152,7 +167,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
         }
     }
     if (_root[_root.size() - 1] == '/')
-        _path = _root + locationUri.substr(1);
+        _path = _root.substr(0, _root.size() - 1) + locationUri;
     else
         _path = _root + locationUri;
 }
