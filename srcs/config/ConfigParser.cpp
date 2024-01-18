@@ -124,6 +124,8 @@ void ConfigParser::parseLocation(std::string const &fileContent, size_t &i, Serv
     std::string path = getValue(fileContent, i, '{');
     if (i == std::string::npos)
         throw std::runtime_error("config 파일 파싱 중 에러 발생");
+    if (path[path.size() - 1] != '/')
+        path += '/';
     while (fileContent[i] != '}') {
         std::string key = getKey(fileContent, i);
         if (i == std::string::npos)
