@@ -11,13 +11,12 @@ void HttpRequestHandler::_inputStart()
 
 void HttpRequestHandler::_inputRequestLine()
 {
-    size_t start, end;
+    size_t end;
 
-    start = 0;
-    if ((end = _remain.find(CRLF, start)) == std::string::npos)
+    if ((end = _remain.find(CRLF)) == std::string::npos)
         return;
 
-    _lineV.push_back(_remain.substr(start, end));
+    _lineV.push_back(_remain.substr(0, end));
     _remain = _remain.substr(end + 2);
     _parseRequestLine();
 }
@@ -72,23 +71,21 @@ void HttpRequestHandler::_inputHeaderField()
 {
     const std::string whitespace = WHITESPACE;
     size_t start, end;
+    bool lastWhitespace;
     bool crlfFound = false;
 
     start = 0;
     _lineV.clear();
     while ((end = _remain.find(CRLF, start)) != std::string::npos) {
-        crlfFound = true;
-
-        _lineV.push_back(_remain.substr(start, end - (whitespace.find(_remain[end - 1]) != std::string::npos))); // remove last OWS
-        start = end + 2;
-
-        // if CRLF CRLF comes
-        if (_lineV.rbegin()->empty())
+        if (start == end)
             break;
+        lastWhitespace = (whitespace.find(_remain[end - 1]) != std::string::npos);
+        crlfFound = true;
+        _lineV.push_back(_remain.substr(start, end - start + 1 - lastWhitespace));
+        start = end + 2;
     }
     if (crlfFound)
-        _remain = _remain.substr(start);
-
+        _remain = _remain.substr(start + 2);
     _parseHeaderField();
 }
 
@@ -106,7 +103,7 @@ bool HttpRequestHandler::_parseHeaderField()
             return FAILURE; // 400 ERROR
 
         key = _lineV[i].substr(0, pos);
-        pos = pos + 1 + (whitespace.find(_lineV[i][pos]) != std::string::npos);
+        pos = pos + 1 + (whitespace.find(_lineV[i][pos + 1]) != std::string::npos);
         value = _lineV[i].substr(pos, _lineV[i].length() - pos);
         headerFields.insert(make_pair(key, value));
     }
@@ -120,8 +117,8 @@ bool HttpRequestHandler::_parseHeaderField()
 Case of the messsage body
 1. content-length O, transfer-encoding X -> message body 그대로
 2. content-length X, transfer-encoding X -> request message가 payload body를 가지고 있지 않고, method가 body에 의미를 두지 않은 경우
-3. content-length X, transfer-encoding: chunked
-4. content-length X, transfer-encoding: gzip
+3. content-length X, transfer-encoding: chunked -> chunked 처리
+4. content-length X, transfer-encoding: gzip -> 에러로 간주하기
 5. content-length O, transfer-encoding O -> sender MUST NOT
 6. content-length가 여러개 있거나 list형태로 오는 경우
 */
@@ -132,8 +129,10 @@ void HttpRequestHandler::_inputMessageBody()
 
     if (contentLengthCount > 0)
         _inputDefaultBody(contentLengthCount, transferEncodingCount);
-    else
+    else if (transferEncodingCount > 0)
         _inputChunkedBody(transferEncodingCount);
+    else
+        _status = PARSE_FINISHED;
 }
 
 void HttpRequestHandler::_inputDefaultBody(int contentLengthCount, int transferEncodingCount)
@@ -174,20 +173,14 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
     long long length;
     short mode = LENGTH;
 
-    if (transferEncodingCount == 0) {
-        _status = PARSE_FINISHED;
+    if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") // chunked가 아닌 경우 error로 간주하기
         return;
-    }
-
-    if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") { // chunked가 아닌 경우 error로 간주하기
-        return;
-    }
 
     start = 0;
     _lineV.clear();
     while ((end = _remain.find(CRLF, start)) != std::string::npos) {
         if (mode == LENGTH) {
-            length = strtol(_remain.substr(start, end).c_str(), NULL, 10);
+            length = strtol(_remain.substr(start, end - start).c_str(), NULL, 10);
             mode = STRING;
         }
         else {
@@ -242,4 +235,6 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
         if (_status == PARSE_FINISHED)
             _push_request(httpRequestQ);
     } while (_status == INPUT_READY);
+
+    std::cout << "in parseHttpRequest, " << _httpRequest.getRequestLine().getRequestTarget() << '\n';
 }

@@ -12,8 +12,8 @@
 #include <map>
 #include <string>
 #include <stdexcept>
-#include "./srcs/server/modules/HttpRequestModule.hpp"
-#include "./srcs/server/modules/HttpResponseModule.hpp"
+// #include "./srcs/server/modules/HttpRequestModule.hpp"
+// #include "./srcs/server/modules/HttpResponseModule.hpp"
 #include <cstring>
 #include <cstdlib>
 #include <unistd.h>
@@ -43,7 +43,7 @@ int main(int ac, char **av) {
     }
 
     // 서버로 메시지 전송
-    int fd = open("test2.txt", O_RDONLY);
+    int fd = open("test1.txt", O_RDONLY);
     char message[1024];
     memset(message, 0, 1024);
     std::cout << read(fd, message, 1024) << '\n';

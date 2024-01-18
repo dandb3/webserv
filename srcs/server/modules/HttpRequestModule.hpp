@@ -46,8 +46,8 @@ public:
     void setMessageBody(std::string &messageBody);
 
     const RequestLine &getRequestLine() const;
-    std::multimap<std::string, std::string> &getHeaderFields() const;
-    std::string &getMessageBody() const;
+    std::multimap<std::string, std::string> &getHeaderFields();
+    std::string getMessageBody() const;
 };
 
 class HttpRequestHandler
@@ -63,7 +63,7 @@ private:
         INPUT_CLOSED,
     };
 
-    static char _buf[BUF_SIZE];
+    char _buf[BUF_SIZE];
     char _status;
 
     std::string _remain;

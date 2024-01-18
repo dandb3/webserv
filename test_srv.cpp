@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include "./srcs/server/modules/HttpRequestModule.hpp"
 #include "./srcs/server/modules/HttpResponseModule.hpp"
+#include "./srcs/server/cycle/ConfigInfo.hpp"
 using namespace std;
 
 int main(int ac, char **av) {
@@ -46,8 +47,6 @@ int main(int ac, char **av) {
         return 1;
     }
 
-    std::cout << "Server listening on port " << port << "..." << std::endl;
-
     // 클라이언트 연결 수락
     int clientSocket = accept(serverSocket, NULL, NULL);
     if (clientSocket == -1) {
@@ -59,9 +58,17 @@ int main(int ac, char **av) {
     // 클라이언트로부터 메시지 수신
     std::queue<HttpRequest> que;
     char buffer[1024];
-    HttpRequestHandler requestHandler();
-    // requestHandler.recvHttpRequest(clientSocket, 93);
-    // requestHandler.parseHttpRequest(0, que);
+
+    HttpRequestHandler requestHandler;
+
+    requestHandler.recvHttpRequest(clientSocket, 96);
+    requestHandler.parseHttpRequest(0, que);
+
+    HttpResponseHandler responseHandler;
+    ConfigInfo configInfo;
+
+    responseHandler.makeHttpResponse(que.front(), configInfo);
+
     // std::cout << que.size() << '\n';
     // ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
     // if (bytesRead == -1) {
