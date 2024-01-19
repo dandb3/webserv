@@ -1,3 +1,8 @@
 .vscode
 a.out
 settings.json
+a
+client
+.gitignore
+*.o
+srv

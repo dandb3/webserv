@@ -3,7 +3,7 @@
 
 #include <netinet/in.h>
 #include "../../config/Config.hpp"
-typedef std::map<std::string, std::vector<std::string>> t_directives;
+typedef std::map<std::string, std::vector<std::string> > t_directives;
 
 class ConfigInfo
 {
