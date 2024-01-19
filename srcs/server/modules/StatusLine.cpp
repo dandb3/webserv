@@ -2,11 +2,9 @@
 
 StatusLine& StatusLine::operator=(const StatusLine& ref)
 {
-    if (this != ref) {
-        _version = ref._version;
-        _code = ref._code;
-        _text = ref._text;
-    }
+    _version = ref._version;
+    _code = ref._code;
+    _text = ref._text;
     return *this;
 }
 

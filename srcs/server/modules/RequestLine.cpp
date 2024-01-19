@@ -20,6 +20,11 @@ void RequestLine::setRequestTarget(std::string &requestTarget)
     _requestTarget = requestTarget;
 }
 
+void RequestLine::setQuery(std::string &query)
+{
+    _query = query;
+}
+
 void RequestLine::setVersion(std::pair<short, short> version)
 {
     _version = version;
@@ -33,6 +38,11 @@ const short RequestLine::getMethod() const
 const std::string &RequestLine::getRequestTarget() const
 {
     return _requestTarget;
+}
+
+const std::string &RequestLine::getQuery() const
+{
+    return _query;
 }
 
 const std::pair<short, short> &RequestLine::getVersion() const

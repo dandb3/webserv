@@ -52,7 +52,7 @@ void HttpResponseHandler::_setFileTime(std::multimap<std::string, std::string> &
     struct stat fileInfo;
     char buffer[100];
 
-    if (path == "")
+    if (path == std::string(""))
         return;
 
     stat(path, &fileInfo);
@@ -126,10 +126,16 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
     // std::string에 append 혹은 push_back을 통해서 body를 만든다.(C++ version 확인)
     // HTTPresponse의 messagebody에 할당해준다.
     // method가 HEAD인 경우에 body를 세팅하지 않는다.
+    std::cout << "isGET: " << isGET << '\n';
     if (isGET) {
         char buffer[1024];
-        while (read(fileFd, buffer, 1024) > 0)
+        memset(buffer, 0, 1024);
+        while (read(fileFd, buffer, 1024) > 0) {
             messageBody.append(buffer);
+            memset(buffer, 0, 1024);
+        }
+        messageBody.push_back('\0');
+        std::cout << "messageBody: " << messageBody << '\n';
     }
 
     // Header Field들을 세팅해준다.
@@ -193,6 +199,7 @@ void HttpResponseHandler::_httpResponseToString()
     _statusLineToString();
     _headerFieldsToString();
     _response += _httpResponse.getMessageBody();
+    std::cout << "final result: " << _response << '\n';
 }
 
 void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)

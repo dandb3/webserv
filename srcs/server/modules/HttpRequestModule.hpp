@@ -15,6 +15,7 @@ class RequestLine
 private:
     short _method;
     std::string _requestTarget;
+    std::string _query;
     std::pair<short, short> _version;
 
 public:
@@ -22,10 +23,12 @@ public:
 
     void setMethod(short method);
     void setRequestTarget(std::string &requestTarget);
+    void setQuery(std::string &query);
     void setVersion(std::pair<short, short> version);
 
     const short getMethod() const;
     const std::string &getRequestTarget() const;
+    const std::string &getQuery() const;
     const std::pair<short, short> &getVersion() const;
 };
 
@@ -46,8 +49,8 @@ public:
     void setMessageBody(std::string &messageBody);
 
     const RequestLine &getRequestLine() const;
-    std::multimap<std::string, std::string> &getHeaderFields() const;
-    std::string &getMessageBody() const;
+    std::multimap<std::string, std::string> &getHeaderFields();
+    std::string getMessageBody() const;
 };
 
 class HttpRequestHandler
@@ -63,7 +66,7 @@ private:
         INPUT_CLOSED,
     };
 
-    static char _buf[BUF_SIZE];
+    char _buf[BUF_SIZE];
     char _status;
 
     std::string _remain;
