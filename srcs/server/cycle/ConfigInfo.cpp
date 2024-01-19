@@ -1,4 +1,5 @@
 #include "ConfigInfo.hpp"
+#include <sstream>
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
