@@ -624,3 +624,45 @@ void eatReasonPhrase(const std::string& str, size_t& pos)
         if (!isText(str[pos++]))
             break;
 }
+
+static bool eatFieldName(const std::string& str, size_t& pos)
+{
+    return eatToken(str, pos);
+}
+
+static void eatFieldContent(const std::string& str, size_t& pos)
+{
+    while (pos < str.size()) {
+        if (isSeparator(str[pos])) {
+            ++pos;
+            continue;
+        }
+        if (!eatToken(str, pos) && !eatQuotedString(str, pos))
+            break;
+    }
+}
+
+static void eatFieldValue(const std::string& str, size_t& pos)
+{
+    while (pos < str.size()) {
+        eatFieldContent(str, pos);
+        if (pos >= str.size() || !isLWSP(str[pos]))
+            break;
+        ++pos;
+    }
+}
+
+bool isGenericField(const std::string& str)
+{
+    size_t pos = 0;
+
+    if (!eatFieldName(str, pos))
+        return false;
+    if (pos >= str.size() || str[pos] != ':')
+        return false;
+    ++pos;
+    eatFieldValue(str, pos);
+    if (pos < str.size())
+        return false;
+    return true;
+}

@@ -7,7 +7,7 @@
 
 /**
  * singleton으로 구성.
- * 접
+ * parseCgiResponse를 통해서 내부적으로 이 singleton에 접근할 수 있다.
 */
 class CgiResponseParser
 {
@@ -38,11 +38,11 @@ private:
     void _init();
     void _readLines(const std::string& raw);
     void _parseLines();
-    void _insertType(char& type);
+    char _determineType();
     void _insertResponse(CgiResponse& cgiResponse);
 
 public:
-    static void parseCgiResponse(CgiResponse& cgiResponse, const std::string& raw, char& type);
+    static void parseCgiResponse(CgiResponse& cgiResponse, const std::string& raw);
 
 };
 

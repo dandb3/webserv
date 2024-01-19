@@ -11,8 +11,9 @@ CgiResponse& CgiResponse::operator=(const CgiResponse& cgiResponse)
     if (this == &cgiResponse)
         return *this;
 
-    // copy header-fields
-    // copy message-body
+    _headerFields = cgiResponse._headerFields;
+    _messageBody = cgiResponse._messageBody;
+    _type = cgiResponse._type;
     return *this;
 }
 
@@ -26,6 +27,11 @@ void CgiResponse::setMessageBody(const std::string& messageBody)
     _messageBody = messageBody;
 }
 
+void CgiResponse::setType(char type)
+{
+    _type = type;
+}
+
 const std::map<std::string, std::string>& CgiResponse::getHeaderFields() const
 {
     return _headerFields;
@@ -34,4 +40,9 @@ const std::map<std::string, std::string>& CgiResponse::getHeaderFields() const
 const std::string& CgiResponse::getMessageBody() const
 {
     return _messageBody;
+}
+
+char CgiResponse::getType() const
+{
+    return _type;
 }

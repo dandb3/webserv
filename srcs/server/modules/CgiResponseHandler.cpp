@@ -36,7 +36,7 @@ void CgiResponseHandler::recvCgiResponse(struct kevent& kev)
 
 void CgiResponseHandler::makeCgiResponse()
 {
-    CgiResponseParser::parseCgiResponse(_cgiResponse, _rawCgiResponse, _type);
+    CgiResponseParser::parseCgiResponse(_cgiResponse, _rawCgiResponse);
 }
 
 const CgiResponse& CgiResponseHandler::getCgiResponse() const

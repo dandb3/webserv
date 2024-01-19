@@ -2,11 +2,47 @@
 #include "parse.hpp"
 #include "CgiResponseParser.hpp"
 
-static bool isContentType(const pair_t& p);
-static bool isLocalLocation(const pair_t& p);
-static bool isClientLocation(const pair_t& p);
-static bool isStatus(const pair_t& p);
-static bool isExtension(const pair_t& p);
+static bool isContentType(const pair_t& p)
+{
+    return (isCaseInsensitiveSame(p.first, "Content-Type") && isMediaType(p.second));
+}
+
+static bool isLocalLocation(const pair_t& p)
+{
+    return (isCaseInsensitiveSame(p.first, "Location") && isLocalPathquery(p.second));
+}
+
+static bool isClientLocation(const pair_t& p)
+{
+    return (isCaseInsensitiveSame(p.first, "Location") && isFragmentURI(p.second));
+}
+
+static bool isStatus(const pair_t& p)
+{
+    const std::string& value = p.second;
+    size_t pos = 0;
+
+    if (!isCaseInsensitiveSame(p.first, "Status"))
+        return false;
+    if (!isStatusCode(value, pos))
+        return false;
+    pos += 3;
+    if (pos >= value.size())
+        return false;
+    if (value[pos++] != ' ')
+        return false;
+    eatReasonPhrase(value, pos);
+    if (pos < value.size())
+        return false;
+    return true;
+}
+
+static bool isExtension(const pair_t& p)
+{
+    if (p.first.find("X-CGI-") == 0)
+        return true;
+    return false;
+}
 
 CgiResponseParser CgiResponseParser::_cgiResponseParser;
 
@@ -60,8 +96,9 @@ void CgiResponseParser::_parseLines()
     size_t fieldNameEnd, fieldValueStart;
 
     for (size_t i = 0; i + 1 < _lineV.size(); ++i) {
-        if ((fieldNameEnd = _lineV[i].find(':')) == std::string::npos)
+        if (!isGenericField(_lineV[i]))
             throw 123123; // ERROR;
+        fieldNameEnd = _lineV[i].find(':');
         fieldValueStart = fieldNameEnd + 1;
         eatOWS(_lineV[i], fieldValueStart);
         _pairV.push_back(std::make_pair(_lineV[i].substr(0, fieldNameEnd), _lineV[i].substr(fieldValueStart)));
@@ -70,7 +107,7 @@ void CgiResponseParser::_parseLines()
         throw 123123; // ERROR;
 }
 
-void CgiResponseParser::_insertType(char& type)
+char CgiResponseParser::_determineType()
 {
     for (size_t i = 0; i < _pairV.size(); ++i) {
         if (isContentType(_pairV[i]))
@@ -88,79 +125,37 @@ void CgiResponseParser::_insertType(char& type)
     }
     if (_fieldCnt[HDR_CONTENT_TYPE] == 1 && _fieldCnt[HDR_LOCAL_LOCATION] == 0 \
         && _fieldCnt[HDR_CLIENT_LOCATION] == 0 && _fieldCnt[HDR_STATUS] <= 1)
-        type = CgiResponseHandler::DOCUMENT_RES;
+        return CgiResponse::DOCUMENT_RES;
     else if (_fieldCnt[HDR_CONTENT_TYPE] == 0 && _fieldCnt[HDR_LOCAL_LOCATION] == 1 \
         && _fieldCnt[HDR_CLIENT_LOCATION] == 0 && _fieldCnt[HDR_STATUS] == 0 \
         && _fieldCnt[HDR_PROTOCOL] == 0 && _fieldCnt[HDR_EXTENSION] == 0 \
         && _messageBody.empty())
-        type = CgiResponseHandler::LOCAL_REDIR_RES;
+        return CgiResponse::LOCAL_REDIR_RES;
     else if (_fieldCnt[HDR_CONTENT_TYPE] == 0 && _fieldCnt[HDR_LOCAL_LOCATION] == 0 \
         && _fieldCnt[HDR_CLIENT_LOCATION] == 1 && _fieldCnt[HDR_STATUS] == 0 \
         && _fieldCnt[HDR_PROTOCOL] == 0 && _messageBody.empty())
-        type = CgiResponseHandler::CLIENT_REDIR_RES;
+        return CgiResponse::CLIENT_REDIR_RES;
     else if (_fieldCnt[HDR_CONTENT_TYPE] == 1 && _fieldCnt[HDR_LOCAL_LOCATION] == 0 \
         && _fieldCnt[HDR_CLIENT_LOCATION] == 1 && _fieldCnt[HDR_STATUS] == 1)
-        type = CgiResponseHandler::CLIENT_REDIR_DOC_RES;
+        return CgiResponse::CLIENT_REDIR_DOC_RES;
     else
-        type = CgiResponseHandler::ERROR;
+        return CgiResponse::ERROR;
 }
 
 void CgiResponseParser::_insertResponse(CgiResponse& cgiResponse)
 {
+    cgiResponse.setType(_determineType());
     for (size_t i = 0; i < _pairV.size(); ++i)
         cgiResponse.addHeaderField(_pairV[i]);
     cgiResponse.setMessageBody(_messageBody);
 }
 
-void CgiResponseParser::parseCgiResponse(CgiResponse& cgiResponse, const std::string& raw, char& type)
+void CgiResponseParser::parseCgiResponse(CgiResponse& cgiResponse, const std::string& raw)
 {
     CgiResponseParser& parser = _getInstance();
 
     parser._init();
     parser._readLines(raw);
     parser._parseLines();
-    parser._insertType(type);
     parser._insertResponse(cgiResponse);
-}
-
-static bool isContentType(const pair_t& p)
-{
-    return (isCaseInsensitiveSame(p.first, "Content-Type") && isMediaType(p.second));
-}
-
-static bool isLocalLocation(const pair_t& p)
-{
-    return (isCaseInsensitiveSame(p.first, "Location") && isLocalPathquery(p.second));
-}
-
-static bool isClientLocation(const pair_t& p)
-{
-    return (isCaseInsensitiveSame(p.first, "Location") && isFragmentURI(p.second));
-}
-
-static bool isStatus(const pair_t& p)
-{
-    const std::string& value = p.second;
-    size_t pos = 0;
-
-    if (!isCaseInsensitiveSame(p.first, "Status"))
-        return false;
-    if (!isStatusCode(value, pos))
-        return false;
-    pos += 3;
-    if (pos >= value.size())
-        return false;
-    if (value[pos++] != ' ')
-        return false;
-    eatReasonPhrase(value, pos);
-    if (pos < value.size())
-        return false;
-    return true;
-}
-
-static bool isExtension(const pair_t& p)
-{
-    if (p.first.find("X-CGI-") == 0)
-        return true;
-    return false;
 }

@@ -9,25 +9,6 @@
 
 class CgiResponse
 {
-private:
-    std::map<std::string, std::string> _headerFields;
-    std::string _messageBody;
-
-public:
-    CgiResponse();
-    CgiResponse(const std::string& rawCgiResponse);
-    CgiResponse& operator=(const CgiResponse& cgiResponse);
-
-    void addHeaderField(const pair_t& p);
-    void setMessageBody(const std::string& messageBody);
-
-    const std::map<std::string, std::string>& getHeaderFields() const;
-    const std::string& getMessageBody() const;
-
-};
-
-class CgiResponseHandler
-{
 public:
 	enum
 	{
@@ -39,11 +20,32 @@ public:
 	};
 
 private:
+    std::map<std::string, std::string> _headerFields;
+    std::string _messageBody;
+    char _type;
+
+public:
+    CgiResponse();
+    CgiResponse(const std::string& rawCgiResponse);
+    CgiResponse& operator=(const CgiResponse& cgiResponse);
+
+    void addHeaderField(const pair_t& p);
+    void setMessageBody(const std::string& messageBody);
+    void setType(char type);
+
+    const std::map<std::string, std::string>& getHeaderFields() const;
+    const std::string& getMessageBody() const;
+    char getType() const;
+
+};
+
+class CgiResponseHandler
+{
+private:
     static char _buf[BUF_SIZE];
 
     CgiResponse _cgiResponse;
     std::string _rawCgiResponse;
-	char _type;
     bool _eof;
 
 public:
