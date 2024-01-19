@@ -204,3 +204,32 @@ std::string ConfigInfo::getPrintableConfigInfo() {
     // 문자열로 변환된 결과 반환
     return result.str();
 }
+
+// getter
+std::string ConfigInfo::getRoot() const {
+    return _root;
+}
+
+std::string ConfigInfo::getPath() const {
+    return _path;
+}
+
+bool ConfigInfo::getAllowMethods(int index) const {
+    return _allowMethods[index];
+}
+
+std::string ConfigInfo::getIndex() const {
+    return _index;
+}
+
+std::string ConfigInfo::getErrorPage() const {
+    return _errorPage;
+}
+
+bool ConfigInfo::getAutoIndex() const {
+    return _autoIndex;
+}
+
+t_directives ConfigInfo::getInfo() const {
+    return _info;
+}
