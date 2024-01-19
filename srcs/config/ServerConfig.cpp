@@ -2,7 +2,7 @@
 
 #include "ServerConfig.hpp"
 
-std::vector<int> ServerConfig::portsWithINADDR_ANY;
+std::vector<int> ServerConfig::globalPortList;
 
 ServerConfig::ServerConfig() {
 }
@@ -25,11 +25,11 @@ ServerConfig &ServerConfig::operator=(ServerConfig const &ref) {
     return *this;
 }
 
-// add int to portsWithINADDR_ANY
+// add int to globalPortList
 void ServerConfig::addPort(int port) {
-    std::vector<int>::iterator it = std::find(ServerConfig::portsWithINADDR_ANY.begin(), ServerConfig::portsWithINADDR_ANY.end(), port);
-    if (it == ServerConfig::portsWithINADDR_ANY.end())
-        ServerConfig::portsWithINADDR_ANY.push_back(port);
+    std::vector<int>::iterator it = std::find(ServerConfig::globalPortList.begin(), ServerConfig::globalPortList.end(), port);
+    if (it == ServerConfig::globalPortList.end())
+        ServerConfig::globalPortList.push_back(port);
 }
 
 // getter

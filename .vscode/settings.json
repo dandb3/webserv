@@ -89,6 +89,8 @@
 		"iomanip": "cpp",
 		"stack": "cpp",
 		"filesystem": "cpp",
-		"queue": "cpp"
+		"queue": "cpp",
+		"ios": "cpp",
+		"locale": "cpp"
 	}
 }

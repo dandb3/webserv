@@ -2,7 +2,7 @@
 
 int main() {
     std::cout << "======================" << std::endl;
-    Config &config2 = Config::getInstance("test.txt");
+    Config &config2 = Config::getInstance("confTest/default.conf");
     Config &config = Config::getInstance();
     std::cout << "======================" << std::endl;
     for (auto it = config.getHttpInfo().begin(); it != config.getHttpInfo().end(); it++) {

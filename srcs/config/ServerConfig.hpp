@@ -22,7 +22,7 @@ private:
     std::map<std::string, LocationConfig> _locationMap;
 
 public:
-    static std::vector<int> portsWithINADDR_ANY;
+    static std::vector<int> globalPortList;
 
     ServerConfig();
     ServerConfig(const ServerConfig &ref);
@@ -30,7 +30,7 @@ public:
 
     ServerConfig &operator=(const ServerConfig &ref);
 
-    // add int to portsWithINADDR_ANY
+    // add int to globalPortList
     static void addPort(int port);
 
     // getter

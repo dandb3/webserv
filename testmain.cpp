@@ -1,5 +1,5 @@
-#include "config_parsing/Config.hpp"
-#include "server_mingkang/ServerManager.hpp"
+#include "srcs/config/Config.hpp"
+#include "srcs/server/ServerManager.hpp"
 
 int main() {
     // Config::getInstance();
