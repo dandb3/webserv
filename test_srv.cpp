@@ -34,7 +34,7 @@ int main(int ac, char **av) {
     serverAddress.sin_port = htons(port);
 
     // 소켓을 주소에 바인딩
-    if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) {
+    if (bind(serverSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) == -1) {
         std::cerr << "Error binding server socket." << std::endl;
         close(serverSocket);
         return 1;
@@ -61,11 +61,26 @@ int main(int ac, char **av) {
 
     HttpRequestHandler requestHandler;
 
-    requestHandler.recvHttpRequest(clientSocket, 96);
+    requestHandler.recvHttpRequest(clientSocket, 86);
     requestHandler.parseHttpRequest(0, que);
+    HttpRequest httpRequest = que.front(); que.pop();
+    std::string uri = httpRequest.getRequestLine().getRequestTarget(); // uri
+    struct sockaddr_in servaddr;
+    socklen_t servLen = sizeof(servaddr);
+    if (getsockname(clientSocket, (struct sockaddr *) &servaddr, &servLen) == -1) {
+        std::cerr << "Error getting server socket name." << std::endl;
+        close(clientSocket);
+        close(serverSocket);
+        return 1;
+    }
+    // 연결된 서버의 port 구하기
+    int requestPort = ntohs(servaddr.sin_port); // port
+
+    in_addr_t ip = servaddr.sin_addr.s_addr; // ip
+    ConfigInfo configInfo(ip, requestPort, uri);
+    // configInfo.printConfigInfo();
 
     HttpResponseHandler responseHandler;
-    ConfigInfo configInfo;
 
     responseHandler.makeHttpResponse(que.front(), configInfo);
 
