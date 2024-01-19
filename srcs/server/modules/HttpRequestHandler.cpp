@@ -51,8 +51,16 @@ bool HttpRequestHandler::_parseRequestLine()
     else // 처리하지 않을 header -> 501 Not Implemented
         return FAILURE;
 
-    // set uri
-    requestLine.setRequestTarget(tokens[1]);
+    // set uri & query
+    size_t pos = tokens[1].find('?');
+    if (pos == std::string::npos)
+        requestLine.setRequestTarget(tokens[1]);
+    else {
+        std::string uri = tokens[1].substr(0, pos - 1);
+        std::string query = tokens[1].substr(pos + 1);
+        requestLine.setRequestTarget(uri);
+        requestLine.setQuery(query);
+    }
 
     // set HTTP version
     token = tokens[2];
