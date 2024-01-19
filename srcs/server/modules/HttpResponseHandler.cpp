@@ -126,7 +126,8 @@ void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::stri
 
 void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET)
 {
-    int fileFd = open(configInfo.getPath().c_str(), O_RDONLY);
+    std::string path = "." + configInfo.getPath() + "index.html";
+    int fileFd = open(path.c_str(), O_RDONLY);
     StatusLine statusLine;
     std::multimap<std::string, std::string> headerFields;
     std::string messageBody;
@@ -134,7 +135,6 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
     if (fileFd == -1) {
         _makeStatusLine(statusLine, 404);
         fileFd = open(configInfo.getErrorPage().c_str(), O_RDONLY);
-
         // 404 Not Found 페이지가 없는 경우
         if (fileFd == -1)
             throw std::runtime_error("404 Not Found 페이지가 없습니다.");
