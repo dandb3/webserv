@@ -223,6 +223,11 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
         size -= read_len;
         _remain.append(_buf, static_cast<size_t>(read_len));
     }
+    // if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
+    //     throw std::runtime_error("recvHttpRequest에서 read 실패");
+    // }
+    // size -= read_len;
+    // _remain.append(_buf, static_cast<size_t>(read_len));
 }
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)

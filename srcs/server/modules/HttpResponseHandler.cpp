@@ -47,36 +47,57 @@ void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
     statusLine.setText(text);
 }
 
-void HttpResponseHandler::_setFileTime(std::multimap<std::string, std::string> &headerFields, const char *path)
+void HttpResponseHandler::_setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path)
 {
     struct stat fileInfo;
-    char buffer[100];
 
     if (path == std::string(""))
         return;
-
-    stat(path, &fileInfo);
+    if (stat(path, &fileInfo) == -1)
+        return;
     std::time_t lastModifiedTime = fileInfo.st_mtime;
+    if (lastModifiedTime == -1)
+        return;
     std::tm *timeInfo = std::gmtime(&lastModifiedTime);
+    if (timeInfo == NULL)
+        return;
 
-    std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Last-Modified", std::string(buffer)));
+    char buf[100];
+    std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
+    headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
 }
 
 void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &headerFields)
 {
-    std::time_t currentDate = std::time(nullptr);
+    std::time_t currentDate = std::time(NULL);
+    if (currentDate == -1)
+        return;
     std::tm *timeInfo = std::gmtime(&currentDate);
-    char buffer[100];
+    if (timeInfo == NULL)
+        return;
 
-    std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Date", std::string(buffer)));
+    char buf[100];
+    std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
+    headerFields.insert(std::make_pair("Date", std::string(buf)));
 }
 
 // 수정 필요
 void HttpResponseHandler::_setContentType(std::multimap<std::string, std::string> &headerFields)
 {
-    headerFields.insert(std::make_pair("Content-Type", "text/html"));
+    std::string type;
+
+    if (1)
+        type = "text/html";
+    else if (1)
+        type = "text/plain"
+    else if (1)
+        type = "image/jpeg";
+    else if (1)
+        type = "image/png";
+    else
+        type = "application/json";
+
+    headerFields.insert(std::make_pair("Content-Type", type));
 }
 
 void HttpResponseHandler::_setContentLength(std::multimap<std::string, std::string> &headerFields)
@@ -96,11 +117,11 @@ void HttpResponseHandler::_setConnection(std::multimap<std::string, std::string>
 
 void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo)
 {
-    _setDate(headerFields);
-    _setContentType(headerFields);
     _setConnection(headerFields);
     _setContentLength(headerFields);
-    // _setFileTime(headerFields, configInfo.getPath());
+    _setContentType(headerFields);
+    _setDate(headerFields);
+    _setLastModified(headerFields, configInfo.getPath().c_str());
 }
 
 void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET)
@@ -121,6 +142,7 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
     else {
         _makeStatusLine(statusLine, 200);
     }
+    _httpResponse.setStatusLine(statusLine);
 
     // fileFd로부터 해당 파일을 읽어온다.
     // std::string에 append 혹은 push_back을 통해서 body를 만든다.(C++ version 확인)
@@ -136,22 +158,14 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
         }
         messageBody.push_back('\0');
         std::cout << "messageBody: " << messageBody << '\n';
+        _httpResponse.setMessageBody(messageBody);
     }
 
     // Header Field들을 세팅해준다.
     _makeHeaderFields(headerFields, configInfo);
-
-    _httpResponse.setStatusLine(statusLine);
     _httpResponse.setHeaderFields(headerFields);
-    _httpResponse.setMessageBody(messageBody);
 
     close(fileFd);
-}
-
-void HttpResponseHandler::_makeHEADResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
-{
-    (void)httpRequest;
-    (void)configInfo;
 }
 
 void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
@@ -207,8 +221,11 @@ void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo 
     const short method = httpRequest.getRequestLine().getMethod();
 
     // if else -> switch?
-    if (method == GET || method == HEAD) {
-        _makeGETResponse(httpRequest, configInfo, (method == GET));
+    if (method == GET) {
+        _makeGETResponse(httpRequest, configInfo, true);
+    }
+    else if (method == HEAD) {
+        _makeGETResponse(httpRequest, configInfo, false);
     }
     else if (method == POST) {
         _makePOSTResponse(httpRequest, configInfo);

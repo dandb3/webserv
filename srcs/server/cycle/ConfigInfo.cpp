@@ -116,13 +116,7 @@ void ConfigInfo::transferInfo(t_directives &directives) {
 
 // uri로 location 찾기
 LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap, std::string &path) {
-    if (uri.find('.') != std::string::npos) {
-        size_t pos = uri.find_last_of('/');
-        if (uri.find('.') < pos)
-            throw std::runtime_error("경로내에 .이 있습니다.");
-        path = uri.substr(0, uri.find_last_of('/') + 1);
-    }
-    else if (uri[uri.size() - 1] == '/')
+    if (uri[uri.size() - 1] == '/')
         path = uri;
     else
         path = uri + '/';
