@@ -41,11 +41,11 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
 {
     HttpResponseHandler& hrspHandler = cycle->getCgiResponseHandler();
     CgiRequestHandler& creqHandler = cycle->getCgiRequestHandler();
-    std::queue<HttpRequest>& hreqQueue = cycle->getHttpRequestQueue();
+    std::queue<HttpRequest>& hreqQ = cycle->getHttpRequestQueue();
 
-    hrspHandler.setStatus(RES_BUSY);
-    hreqHandler.setHttpRequest(hreqQueue.front());
-    hreqQueue.pop();
+    hrspHandler.setStatus(HttpResponseHandler::RES_BUSY);
+    hreqHandler.setHttpRequest(hreqQ.front());
+    hreqQ.pop();
     /**
      * Server block, Location block 선택
      * NetConfig 객체 생성
@@ -195,6 +195,7 @@ void EventHandler::operate()
                 break;
             case EVENT_SIGCHLD:
                 _servSigchld(eventList[i]);
+                break;
             default:
                 _servError(eventList[i]);
                 break;
