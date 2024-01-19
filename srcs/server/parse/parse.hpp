@@ -27,5 +27,7 @@ void eatOWS(const std::string& str, size_t& pos);
 bool isMediaType(const std::string& str);
 bool isLocalPathquery(const std::string& str);
 bool isFragmentURI(const std::string& str);
+bool isStatusCode(const std::string& str, size_t pos);
+void eatReasonPhrase(const std::string& str, size_t& pos);
 
 #endif

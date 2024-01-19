@@ -16,7 +16,7 @@ CgiResponse& CgiResponse::operator=(const CgiResponse& cgiResponse)
     return *this;
 }
 
-void CgiResponse::addHeaderField(const std::pair<std::string, std::string>& p)
+void CgiResponse::addHeaderField(const pair_t& p)
 {
     _headerFields.insert(p);
 }

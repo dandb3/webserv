@@ -3,6 +3,7 @@
 
 # include <map>
 # include <string>
+# include "../parse/CgiResponseParser.hpp"
 
 # define BUF_SIZE 1024
 
@@ -30,10 +31,11 @@ class CgiResponseHandler
 public:
 	enum
 	{
-		DOCUMENT_RES,
+		DOCUMENT_RES = 0,
 		LOCAL_REDIR_RES,
 		CLIENT_REDIR_RES,
-		CLIENT_REDIR_DOC_RES
+		CLIENT_REDIR_DOC_RES,
+        ERROR
 	};
 
 private:
