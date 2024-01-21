@@ -16,7 +16,7 @@ public:
 		LOCAL_REDIR_RES,
 		CLIENT_REDIR_RES,
 		CLIENT_REDIR_DOC_RES,
-        ERROR
+        CGI_RESPONSE_ERROR
 	};
 
 private:

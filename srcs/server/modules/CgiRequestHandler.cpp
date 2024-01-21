@@ -22,8 +22,6 @@ static void setPathTranslated(CgiRequest& cgiRequest, const RequestLine& request
 static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 static void setRemoteAddr(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 static void setRemoteHost(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setRemoteIdent(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setRemoteUser(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 static void setScriptName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 static void setServerName(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
@@ -47,30 +45,28 @@ CgiRequestHandler& CgiRequestHandler::operator=(const CgiRequestHandler& cgiRequ
     return *this;
 }
 
-void CgiRequestHandler::_setMetaVariables(HttpRequest& httpRequest)
+void CgiRequestHandler::_setMetaVariables(Cycle* cycle, HttpRequest& httpRequest)
 {
     const RequestLine& requestLine = httpRequest.getRequestLine();
     const std::string& messageBody = httpRequest.getMessageBody();
     const std::multimap<std::string, std::string>& headerFields = httpRequest.getHeaderFields();
 
-    setAuthType(cgiRequest, requestLine, headerFields, messageBody);
-    setContentLength(cgiRequest, requestLine, headerFields, messageBody);
-    setContentType(cgiRequest, requestLine, headerFields, messageBody);
-    setGatewayInterface(cgiRequest, requestLine, headerFields, messageBody);
-    setPathInfo(cgiRequest, requestLine, headerFields, messageBody);
-    setPathTranslated(cgiRequest, requestLine, headerFields, messageBody);
-    setQueryString(cgiRequest, requestLine, headerFields, messageBody);
-    setRemoteAddr(cgiRequest, requestLine, headerFields, messageBody);
-    setRemoteHost(cgiRequest, requestLine, headerFields, messageBody);
-    setRemoteIdent(cgiRequest, requestLine, headerFields, messageBody);
-    setRemoteUser(cgiRequest, requestLine, headerFields, messageBody);
-    setRequestMethod(cgiRequest, requestLine, headerFields, messageBody);
-    setScriptName(cgiRequest, requestLine, headerFields, messageBody);
-    setServerName(cgiRequest, requestLine, headerFields, messageBody);
-    setServerPort(cgiRequest, requestLine, headerFields, messageBody);
-    setServerProtocol(cgiRequest, requestLine, headerFields, messageBody);
-    setServerSoftware(cgiRequest, requestLine, headerFields, messageBody);
-    setProtocolSpecific(cgiRequest, requestLine, headerFields, messageBody);
+    setAuthType(_cgiRequest, requestLine, headerFields, messageBody);
+    setContentLength(_cgiRequest, requestLine, headerFields, messageBody);
+    setContentType(_cgiRequest, requestLine, headerFields, messageBody);
+    setGatewayInterface(_cgiRequest, requestLine, headerFields, messageBody);
+    setPathInfo(_cgiRequest, requestLine, headerFields, messageBody);
+    setPathTranslated(_cgiRequest, requestLine, headerFields, messageBody);
+    setQueryString(_cgiRequest, requestLine, headerFields, messageBody);
+    setRemoteAddr(_cgiRequest, requestLine, headerFields, messageBody);
+    setRemoteHost(_cgiRequest, requestLine, headerFields, messageBody);
+    setRequestMethod(_cgiRequest, requestLine, headerFields, messageBody);
+    setScriptName(_cgiRequest, requestLine, headerFields, messageBody);
+    setServerName(_cgiRequest, requestLine, headerFields, messageBody);
+    setServerPort(_cgiRequest, requestLine, headerFields, messageBody);
+    setServerProtocol(_cgiRequest, requestLine, headerFields, messageBody);
+    setServerSoftware(_cgiRequest, requestLine, headerFields, messageBody);
+    setProtocolSpecific(_cgiRequest, requestLine, headerFields, messageBody);
 }
 
 char** CgiRequestHandler::_makeArgv() const
@@ -85,7 +81,7 @@ char** CgiRequestHandler::_makeArgv() const
 
 char** CgiRequestHandler::_makeEnvp() const
 {
-    std::vector<std::string>& metaVariables = _cgiRequest.getMetaVariables();
+    const std::vector<std::string>& metaVariables = _cgiRequest.getMetaVariables();
     char** result = new char*[metaVariables.size() + 1];
 
     for (size_t i = 0; i < metaVariables.size(); ++i) {
@@ -126,15 +122,15 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
  * -> 파싱부에서 헤더필드를 다 읽어온 다음에 각 항목별로 Syntax Check를 해 주어야 한다.
 */
 
-void CgiRequestHandler::makeCgiRequest(HttpRequest& httpRequest)
+void CgiRequestHandler::makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest)
 {
-    _setMetaVariables(httpRequest);
+    _setMetaVariables(cycle, httpRequest);
     _cgiRequest.setMessageBody(httpRequest.getMessageBody());
 }
 
 void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
 {
-    const std::string& messageBody = _cgiRequst.getMessageBody();
+    const std::string& messageBody = _cgiRequest.getMessageBody();
     size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
 
     remainSize = messageBody.size() - _pos;
@@ -221,8 +217,6 @@ static void setRemoteHost(CgiRequest& cgiRequest, in_addr_t addr)
     cgiRequest.addMetaVariable("REMOTE_HOST", ft_inet_ntoa(addr));
 }
 
-static void setRemoteIdent(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
-static void setRemoteUser(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody);
 static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestLine)
 {
 /**
@@ -245,11 +239,9 @@ static void setServerName(CgiRequest& cgiRequest, const RequestLine& requestLine
 */
 }
 
-static void setServerPort(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+static void setServerPort(CgiRequest& cgiRequest, Cycle* cycle)
 {
-/**
- * http request가 수신된 서버소켓의 포트값.
-*/
+    cgiRequest.addMetaVariable("SERVER_PORT", ft_itoa(static_cast<int>(cycle->getPort())));
 }
 
 static void setServerProtocol(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)

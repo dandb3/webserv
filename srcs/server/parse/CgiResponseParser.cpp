@@ -139,7 +139,7 @@ char CgiResponseParser::_determineType()
         && _fieldCnt[HDR_CLIENT_LOCATION] == 1 && _fieldCnt[HDR_STATUS] == 1)
         return CgiResponse::CLIENT_REDIR_DOC_RES;
     else
-        return CgiResponse::ERROR;
+        return CgiResponse::CGI_RESPONSE_ERROR;
 }
 
 void CgiResponseParser::_insertResponse(CgiResponse& cgiResponse)

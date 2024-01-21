@@ -4,6 +4,7 @@
 # include <vector>
 # include <string>
 # include "../../webserv.hpp"
+# include "../cycle/Cycle.hpp"
 # include "HttpRequestModule.hpp"
 
 # define CGI_PATH "undefined"
@@ -33,7 +34,7 @@ private:
 	size_t _pos;
 	bool _eof;
 
-	void _setMetaVariables(HttpRequest& httpRequest);
+	void _setMetaVariables(Cycle* cycle, HttpRequest& httpRequest);
 	char** _makeArgv() const;
 	char** _makeEnvp() const;
 	void _parentProcess(int* servToCgi, int* cgiToServ) const;
@@ -43,7 +44,7 @@ public:
 	CgiRequestHandler();
 	CgiRequestHandler& operator=(const CgiRequestHandler& cgiRequestHandler);
 
-	void makeCgiRequest(HttpRequest& httpRequest);
+	void makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest);
 	void sendCgiRequest(const struct kevent& kev);
 	void callCgiScript(int& cgiSendFd, int& cgiRecvFd) const;
 
