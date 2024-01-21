@@ -44,7 +44,7 @@ public:
 	CgiRequestHandler& operator=(const CgiRequestHandler& cgiRequestHandler);
 
 	void makeCgiRequest(HttpRequest& httpRequest);
-	void sendCgiRequest(struct kevent& kev);
+	void sendCgiRequest(const struct kevent& kev);
 	void callCgiScript(int& cgiSendFd, int& cgiRecvFd) const;
 
 	bool eof() const;

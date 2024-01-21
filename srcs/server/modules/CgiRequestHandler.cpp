@@ -105,7 +105,7 @@ void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ) const
 
 void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
 {
-    char** argv, envp;
+    char **argv, **envp;
 
     if (dup2(servToCgi[0], STDIN_FILENO) == FAILURE \
         || dup2(cgiToServ[1], STDOUT_FILENO) == FAILURE)
@@ -132,7 +132,7 @@ void CgiRequestHandler::makeCgiRequest(HttpRequest& httpRequest)
     _cgiRequest.setMessageBody(httpRequest.getMessageBody());
 }
 
-void CgiRequestHandler::sendCgiRequest(struct kevent& kev)
+void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
 {
     const std::string& messageBody = _cgiRequst.getMessageBody();
     size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);

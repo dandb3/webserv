@@ -19,7 +19,7 @@ CgiResponseHandler& CgiResponseHandler::operator=(const CgiResponseHandler& cgiR
     return *this;
 }
 
-void CgiResponseHandler::recvCgiResponse(struct kevent& kev)
+void CgiResponseHandler::recvCgiResponse(const struct kevent& kev)
 {
     size_t recvLen, totalSize = static_cast<size_t>(kev.data);
 

@@ -52,7 +52,7 @@ public:
     CgiResponseHandler();
     CgiResponseHandler& operator=(const CgiResponseHandler& cgiResponseHandler);
 
-    void recvCgiResponse(struct kevent& kev);
+    void recvCgiResponse(const struct kevent& kev);
     void makeCgiResponse();
 
     const CgiResponse& getCgiResponse() const;
