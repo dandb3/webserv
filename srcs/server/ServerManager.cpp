@@ -1,6 +1,9 @@
 #include <iostream>
 #include "ServerManager.hpp"
 
+// test
+#include "cycle/ConfigInfo.hpp"
+
 ServerManager::ServerManager()
 {
     Config::getInstance();
@@ -26,7 +29,7 @@ void ServerManager::initServer()
     Config &config = Config::getInstance();
     std::vector<ServerConfig> &server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
-    std::set<std::pair<struct in_addr, int> > server_set;
+    std::set<std::pair<in_addr_t, int> > server_set;
     std::vector<int> listenFds;
 
     for (; it != server_v.end(); it++) {
@@ -36,12 +39,12 @@ void ServerManager::initServer()
         int sockfd;
         struct sockaddr_in servaddr;
         // 해당 port의 "0.0.0.0" ip가 있는 경우 -> 서버 생성하지 않고 넘어가기
-        if (std::find(it->portsWithINADDR_ANY.begin(), it->portsWithINADDR_ANY.end(), it->getPort()) != it->portsWithINADDR_ANY.end() && \
+        if (std::find(it->globalPortList.begin(), it->globalPortList.end(), it->getPort()) != it->globalPortList.end() && \
             it->getIp().s_addr != INADDR_ANY)
             continue;
 
         // 이미 해당 ip, port로 서버가 생성된 경우 -> 서버 생성하지 않고 넘어가기
-        if (server_set.find(std::make_pair(it->getIp(), it->getPort())) != server_set.end())
+        if (server_set.find(std::make_pair(it->getIp().s_addr, it->getPort())) != server_set.end())
             continue;
 
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,10 +68,75 @@ void ServerManager::initServer()
             throw std::runtime_error("listen error");
         if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
             throw std::runtime_error("fcntl error");
-        server_set.insert(std::make_pair(it->getIp(), it->getPort()));
+        server_set.insert(std::make_pair(it->getIp().s_addr, it->getPort()));
         listenFds.push_back(sockfd);
     }
     _eventHandler.initEvent(listenFds);
+}
+
+std::string createHttpRequestPage(const std::string &httpRequest, const std::string &msg) {
+    // HTTP 요청 헤더와 본문을 추출
+    std::string headers;
+    std::string body;
+
+    size_t pos = httpRequest.find("\r\n\r\n");
+    if (pos != std::string::npos) {
+        headers = httpRequest.substr(0, pos);
+        body = httpRequest.substr(pos + 4);
+    }
+
+    // HTML 페이지 생성
+    std::string htmlContent = R"(
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>HTTP Request Page</title>
+        </head>
+        <body>
+            <header>
+                <h1>HTTP Request Content</h1>
+            </header>
+            <section>
+                <h2>Request Headers</h2>
+                <pre>)" + headers + R"(</pre>
+                <h2>Request Body</h2>
+                <pre>)" + body + R"(</pre>
+                <h2>Config Info</h2>
+                <pre>)" + msg + R"(</pre>
+            </section>
+            <footer>
+                <p>&copy; 2024 My Website. All rights reserved.</p>
+            </footer>
+        </body>
+        </html>
+    )";
+
+    // HTTP 헤더
+    std::string httpResponse;
+    httpResponse += "HTTP/1.1 200 OK\r\n";
+    httpResponse += "Content-Type: text/html\r\n";
+    httpResponse += "Content-Length: " + std::to_string(htmlContent.length()) + "\r\n";
+    httpResponse += "\r\n"; // 헤더와 본문을 구분하는 빈 줄
+
+    // HTTP 본문
+    httpResponse += htmlContent;
+
+    return httpResponse;
+}
+
+std::string getUriFromRequest(const std::string &httpRequest) {
+    // Find the start position of the URI
+    size_t uriStart = httpRequest.find(' ') + 1;
+
+    // Find the end position of the URI
+    size_t uriEnd = httpRequest.find(' ', uriStart);
+
+    // Extract the URI substring
+    std::string uri = httpRequest.substr(uriStart, uriEnd - uriStart);
+
+    return uri;
 }
 
 /*
@@ -81,11 +149,14 @@ void ServerManager::operate()
 {
     struct EventInfo
     {
+        in_addr_t ip;
+        in_port_t port;
+        std::string uri;
         int sockfd;
         std::string type;
         std::string data;
     };
-
+    KqueueHandler _kqueue_handler = _eventHandler.getKqueueHandler();
     while (true) {
         _kqueue_handler.eventCatch();
         int nevents = _kqueue_handler.getNevents();
@@ -96,7 +167,6 @@ void ServerManager::operate()
             int sockfd = curEvent.ident;
             std::cout << "ident: " << sockfd << std::endl;
             char type = _kqueue_handler.getEventType(sockfd);
-            std::cout << "type: " << static_cast<int>(type) << std::endl;
             if (curEvent.flags & EV_ERROR) {
                 std::cerr << "EV_ERROR" << std::endl;
                 if (_kqueue_handler.getEventType(sockfd) == SOCKET_LISTEN) {
@@ -112,18 +182,21 @@ void ServerManager::operate()
             }
             else if (curEvent.filter == EVFILT_READ) {
                 std::cout << "EVFILT_READ" << std::endl;
-                if (type == SOCKET_LISTEN) {
+                if (type == _kqueue_handler.SOCKET_LISTEN) {
+                    std::cout << "SOCKET_LISTEN" << std::endl;
                     struct sockaddr_in cliaddr;
+
                     socklen_t cliLen = sizeof(cliaddr);
                     int clientSocket = accept(sockfd, (struct sockaddr *)&cliaddr, &cliLen);
                     if (clientSocket == -1)
                         throw std::runtime_error("accept error");
                     if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) == -1)
                         throw std::runtime_error("fcntl error");
+
                     _kqueue_handler.addEvent(clientSocket, EVFILT_READ, (void *)"");
-                    _kqueue_handler.setEventType(clientSocket, SOCKET_CLIENT);
+                    _kqueue_handler.setEventType(clientSocket, _kqueue_handler.SOCKET_CLIENT);
                 }
-                else if (type == SOCKET_CLIENT) {
+                else if (type == _kqueue_handler.SOCKET_CLIENT) {
                     char buf[1024];
                     int n = read(sockfd, buf, 1024);
                     if (n == -1) {
@@ -136,25 +209,34 @@ void ServerManager::operate()
                     }
                     else {
                         buf[n] = '\0';
+                        // 요청메세지에서 uri만 따로 빼오기
+                        struct sockaddr_in servaddr;
+                        socklen_t servLen = sizeof(servaddr);
                         EventInfo *curEventInfo = new EventInfo;
+                        if (getsockname(sockfd, (struct sockaddr *)&servaddr, &servLen) == -1)
+                            throw std::runtime_error("getsockname error");
+                        curEventInfo->ip = servaddr.sin_addr.s_addr;
+                        curEventInfo->port = 8100;
+                        std::string uri = getUriFromRequest(buf);
+                        curEventInfo->uri = uri;
                         curEventInfo->sockfd = sockfd;
-                        curEventInfo->type = (type == SOCKET_LISTEN) ? "listen" : "client";
+                        curEventInfo->type = "client";
                         curEventInfo->data = curEventInfo->data + buf;
                         curEvent.udata = (void *)curEventInfo;
                         _kqueue_handler.changeEvent(sockfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, curEvent.udata);
-                        // write(sockfd, buf, n);
                     }
                 }
             }
             else if (curEvent.filter == EVFILT_WRITE) {
                 std::cout << "EVFILT_WRITE" << std::endl;
-                if (type == SOCKET_CLIENT) {
+                if (type == _kqueue_handler.SOCKET_CLIENT) {
                     EventInfo *data = (EventInfo *)curEvent.udata;
                     // EventInfo에 대한 fd string으로 변환
                     std::string fd = std::to_string(data->sockfd);
-
-                    std::string msg = "fd: " + fd + ", type: " + data->type + ", data: " + data->data;
-                    int n = write(sockfd, msg.c_str(), msg.length());
+                    ConfigInfo configInfo(data->ip, data->port, data->uri);
+                    std::string msg = configInfo.getPrintableConfigInfo();
+                    std::string msg2 = createHttpRequestPage(data->data, msg);
+                    int n = write(sockfd, msg2.c_str(), msg2.length());
                     if (n == -1) {
                         std::cerr << "write error" << std::endl;
                         std::cerr << "clients disconnected" << std::endl;
@@ -166,7 +248,6 @@ void ServerManager::operate()
                     else { // udata 삭제
                         delete (EventInfo *)curEvent.udata;
                     }
-
                 }
             }
         }

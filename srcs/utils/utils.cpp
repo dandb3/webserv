@@ -25,9 +25,9 @@ std::string ft_inet_ntoa(in_addr_t addr)
 {
     std::stringstream ss;
     in_addr_t hAddr = ntohl(addr);
-    u_char* addrP;
+    u_char *addrP;
 
-    addrP = reinterpret_cast<u_char*>(&hAddr);
+    addrP = reinterpret_cast<u_char *>(&hAddr);
     for (int i = 0; i < 4; ++i) {
         ss << addrP[i];
         if (i != 3)
@@ -131,11 +131,11 @@ int ft_inet_aton(const char *str, struct in_addr *addr) {
 
 void printParsedServer(ServerConfig &server) {
     std::cout << "======================" << std::endl;
-    std::cout << "[parseServer] " << "portsWithINADDR_ANY: ";
-    for (std::vector<int>::iterator it = ServerConfig::portsWithINADDR_ANY.begin(); it != ServerConfig::portsWithINADDR_ANY.end(); it++)
+    std::cout << "[parseServer] " << "globalPortList: ";
+    for (std::vector<int>::iterator it = ServerConfig::globalPortList.begin(); it != ServerConfig::globalPortList.end(); it++)
         std::cout << *it << " ";
     std::cout << std::endl;
     std::cout << "[parseServer] " << "ip: " << server.getIp().s_addr << std::endl;
     std::cout << "[parseServer] " << "port: " << server.getPort() << std::endl;
-    std::cout << "======================" << std::endl;
+    std::cout << "[parseServer] " << "serverName: " << server.getServerName() << std::endl;
 }

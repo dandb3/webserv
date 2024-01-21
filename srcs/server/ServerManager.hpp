@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <set>
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -23,11 +24,10 @@ private:
 	EventHandler _eventHandler;
 	enum SocketType_e
 	{
-		SOCKET_LISTEN = 1,
+		SOCKET_LISTEN,
 		SOCKET_CLIENT,
 		SOCKET_CGI
 	};
-	KqueueHandler _kqueue_handler;
 
 public:
 	ServerManager();						// 생성자, 만들면서 config 파일 읽어서 파싱

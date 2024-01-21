@@ -5,7 +5,7 @@
 EventHandler::EventHandler()
 {}
 
-char EventHandler::_getEventType(const struct kevent& kev)
+char EventHandler::_getEventType(const struct kevent &kev)
 {
     if (kev.flags & EV_ERROR)
         return EVENT_ERROR;
@@ -61,16 +61,18 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
     */
 }
 
-void EventHandler::_servListen(const struct kevent& kev)
+void EventHandler::_servListen(const struct kevent &kev)
 {
-    Cycle* cycle;
+    Cycle *cycle;
     int sockfd;
     struct sockaddr_in sin;
     socklen_t len = sizeof(struct sockaddr_in);
 
     if ((sockfd = accept(kev.ident, NULL, NULL)) == FAILURE)
         throw ERROR;
-    if (getsockname(sockfd, reinterpret_cast<struct sockaddr*>(&sin), &len) == FAILURE)
+    if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == FAILURE)
+        throw ERROR;
+    if (getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&sin), &len) == FAILURE)
         throw ERROR;
     cycle = Cycle::newCycle(sin.sin_addr.s_addr, sin.sin_port, sockfd);
     _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
@@ -149,19 +151,19 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
  * (완전히 최적화되지는 않는다는 뜻)
 */
 
-void EventHandler::_servSigchld(const struct kevent& kev)
+void EventHandler::_servSigchld(const struct kevent &kev)
 {
     for (intptr_t i = 0; i < kev.data; ++i)
-        if (waitpid(-1, NULL, WNOHANG) == FAILURE)
-            throw ERROR;
+        if (waitpid(-1, NULL, WNOHANG) == -1)
+            throw 1;
 }
 
-void EventHandler::_servError(const struct kevent& kev)
+void EventHandler::_servError(const struct kevent &kev)
 {
 
 }
 
-void EventHandler::initEvent(const std::vector<int>& listenFds)
+void EventHandler::initEvent(const std::vector<int> &listenFds)
 {
     _kqueueHandler.addEvent(SIGCHLD, EVFILT_SIGNAL);
     for (size_t i = 0; i < listenFds.size(); ++i) {
@@ -172,7 +174,7 @@ void EventHandler::initEvent(const std::vector<int>& listenFds)
 
 void EventHandler::operate()
 {
-    struct kevent* eventList = _kqueueHandler.getEventList();
+    struct kevent *eventList = _kqueueHandler.getEventList();
 
     while (true) {
         _kqueueHandler.eventCatch();
@@ -203,3 +205,4 @@ void EventHandler::operate()
         }
     }
 }
+

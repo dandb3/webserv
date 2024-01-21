@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <map>
 #include <set>
 #include <string>
@@ -20,5 +21,12 @@ std::string sizeToStr(size_t size);
 std::string ft_itoa(int num);
 std::string ft_inet_ntoa(in_addr_t addr);
 int ft_inet_aton(const char *str, struct in_addr *addr);
+
+template <typename T>
+std::string toString(const T& val) {
+    std::ostringstream oss;
+    oss << val;
+    return oss.str();
+}
 
 void printParsedServer(ServerConfig &server);
