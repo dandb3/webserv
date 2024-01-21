@@ -37,108 +37,108 @@ char EventHandler::_getEventType(const struct kevent &kev)
     }
 }
 
-// void EventHandler::_processHttpRequest(Cycle* cycle)
-// {
-//     HttpResponseHandler& hrspHandler = cycle->getCgiResponseHandler();
-//     CgiRequestHandler& creqHandler = cycle->getCgiRequestHandler();
-//     std::queue<HttpRequest>& hreqQueue = cycle->getHttpRequestQueue();
+void EventHandler::_processHttpRequest(Cycle* cycle)
+{
+    HttpResponseHandler& hrspHandler = cycle->getCgiResponseHandler();
+    CgiRequestHandler& creqHandler = cycle->getCgiRequestHandler();
+    std::queue<HttpRequest>& hreqQ = cycle->getHttpRequestQueue();
 
-//     hrspHandler.setStatus(RES_BUSY);
-//     hreqHandler.setHttpRequest(hreqQueue.front());
-//     hreqQueue.pop();
-//     /**
-//      * Server block, Location block 선택
-//      * ConfigInfo 객체 생성
-//      * ConfigInfo, HttpRequest를 통해 CgiRequest를 만드는 것인지, HttpResponse를 만드는 것인지 선택
-//      * - CgiRequest인 경우
-//      *   creqHandler.makeCgiRequest(hreqHandler.getHttpRequest());
-//      *   creqHandler.callCgiScript();
-//      *   _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
-//      *   _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
-//      * - HttpResponse인 경우
-//      *   hrspHandler.makeHttpResponse(hreqHandler.getHttpRequest());
-//      *   _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-//     */
-// }
+    hrspHandler.setStatus(HttpResponseHandler::RES_BUSY);
+    hreqHandler.setHttpRequest(hreqQ.front());
+    hreqQ.pop();
+    /**
+     * Server block, Location block 선택
+     * NetConfig 객체 생성
+     * NetConfig, HttpRequest를 통해 CgiRequest를 만드는 것인지, HttpResponse를 만드는 것인지 선택
+     * - CgiRequest인 경우
+     *   creqHandler.makeCgiRequest(hreqHandler.getHttpRequest());
+     *   creqHandler.callCgiScript();
+     *   _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
+     *   _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
+     * - HttpResponse인 경우
+     *   hrspHandler.makeHttpResponse(hreqHandler.getHttpRequest());
+     *   _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+    */
+}
 
-// void EventHandler::_servListen(const struct kevent &kev)
-// {
-//     Cycle *cycle;
-//     int sockfd;
-//     struct sockaddr_in sin;
-//     socklen_t len = sizeof(struct sockaddr_in);
+void EventHandler::_servListen(const struct kevent &kev)
+{
+    Cycle *cycle;
+    int sockfd;
+    struct sockaddr_in sin;
+    socklen_t len = sizeof(struct sockaddr_in);
 
-//     if ((sockfd = accept(kev.ident, NULL, NULL)) == FAILURE)
-//         throw ERROR;
-//     if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == FAILURE)
-//         throw ERROR;
-//     if (getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&sin), &len) == FAILURE)
-//         throw ERROR;
-//     cycle = Cycle::newCycle(sin.sin_addr.s_addr, sin.sin_port, sockfd);
-//     _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
-//     _kqueueHandler.setEventType(sockfd, KqueueHandler::SOCKET_CLIENT);
-// }
+    if ((sockfd = accept(kev.ident, NULL, NULL)) == FAILURE)
+        throw ERROR;
+    if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == FAILURE)
+        throw ERROR;
+    if (getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&sin), &len) == FAILURE)
+        throw ERROR;
+    cycle = Cycle::newCycle(sin.sin_addr.s_addr, sin.sin_port, sockfd);
+    _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
+    _kqueueHandler.setEventType(sockfd, KqueueHandler::SOCKET_CLIENT);
+}
 
-// void EventHandler::_servHttpRequest(struct kevent& kev)
-// {
-//     Cycle* cycle = kev.udata;
-//     HttpRequestHandler& hreqHandler = cycle->getHttpRequestHandler();
+void EventHandler::_servHttpRequest(const struct kevent& kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    HttpRequestHandler& hreqHandler = cycle->getHttpRequestHandler();
 
-//     /**
-//      * hreqHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
-//      * hreqHandler.parseHttpRequest(kev.flags & EV_EOF, cycle->getHttpRequestQueue());
-//      * if (queue가 비어있지 않으면서 httpresponsehandler가 IDLE 상태라면)
-//      *     _processHttpRequest(cycle);
-//     */
-// }
+    /**
+     * hreqHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
+     * hreqHandler.parseHttpRequest(kev.flags & EV_EOF, cycle->getHttpRequestQueue());
+     * if (queue가 비어있지 않으면서 httpresponsehandler가 IDLE 상태라면)
+     *     _processHttpRequest(cycle);
+    */
+}
 
-// void EventHandler::_servHttpResponse(struct kevent& kev)
-// {
-//     /**
-//      * sendHttpResponse();
-//      * if eof()라면? (전송이 다 끝난다면)
+void EventHandler::_servHttpResponse(const struct kevent& kev)
+{
+    /**
+     * sendHttpResponse();
+     * if eof()라면? (전송이 다 끝난다면)
 
-//      *     cycle 초기화 (httpResponseHandler의 status를 IDLE로 바꿈. 도 포함)
-//      *     deleteEvent(); (혹은 disable?)
+     *     cycle 초기화 (httpResponseHandler의 status를 IDLE로 바꿈. 도 포함)
+     *     deleteEvent(); (혹은 disable?)
 
-//      *     if queue가 비어있지 않다면?
-//      *         _processHttpRequest(cycle);
-//      *     else if Cycle이 closed상태라면?
-//      *         cycle 할당 해제
-//      *         모두 다 없앤다.
-//      *
-//     */
-// }
+     *     if queue가 비어있지 않다면?
+     *         _processHttpRequest(cycle);
+     *     else if Cycle이 closed상태라면?
+     *         cycle 할당 해제
+     *         모두 다 없앤다.
+     *         
+    */
+}
 
-// void EventHandler::_servCgiRequest(const struct kevent& kev)
-// {
-//     Cycle* cycle = static_cast<Cycle*>(kev.udata);
-//     CgiRequestHandler& cgiRequestHandler = cycle->getCgiRequestHandler();
+void EventHandler::_servCgiRequest(const struct kevent& kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    CgiRequestHandler& cgiRequestHandler = cycle->getCgiRequestHandler();
 
-//     cgiRequestHandler.sendCgiRequest(kev.ident, static_cast<size_t>(kev.data));
-//     if (cgiRequestHandler.eof()) {
-//         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
-//         _kqueueHandler.deleteEventType(kev.ident);
-//         _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
-//         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
-//     }
-// }
+    cgiRequestHandler.sendCgiRequest(kev);
+    if (cgiRequestHandler.eof()) {
+        close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
+        _kqueueHandler.deleteEventType(kev.ident);
+        _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
+        _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
+    }
+}
 
-// void EventHandler::_servCgiResponse(struct kevent& kev)
-// {
-//     Cycle* cycle = kev.udata;
-//     CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
-//     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+void EventHandler::_servCgiResponse(const struct kevent& kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
 
-//     cgiResponseHandler.recvCgiResponse(kev.ident, static_cast<size_t>(kev.data));
-//     if (cgiResponseHandler.eof()) {
-//         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
-//         _kqueueHandler.deleteEventType(kev.ident);
-//         cgiResponseHandler.parseCgiResponse();
-//         // httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
-//         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-//     }
-// }
+    cgiResponseHandler.recvCgiResponse(kev);
+    if (cgiResponseHandler.eof()) {
+        close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
+        _kqueueHandler.deleteEventType(kev.ident);
+        cgiResponseHandler.makeCgiResponse();
+        // httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
+        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+    }
+}
 
 /**
  * kevent에 의하면 kev.data 개수만큼 있는데 0이 리턴되는 경우도 말이 안 된다.
@@ -154,8 +154,6 @@ char EventHandler::_getEventType(const struct kevent &kev)
 void EventHandler::_servSigchld(const struct kevent &kev)
 {
     for (intptr_t i = 0; i < kev.data; ++i)
-        // if (waitpid(-1, NULL, WNOHANG) == FAILURE)
-        //     throw ERROR;
         if (waitpid(-1, NULL, WNOHANG) == -1)
             throw 1;
 }
@@ -174,104 +172,37 @@ void EventHandler::initEvent(const std::vector<int> &listenFds)
     }
 }
 
-KqueueHandler &EventHandler::getKqueueHandler()
+void EventHandler::operate()
 {
-    return _kqueueHandler;
+    struct kevent *eventList = _kqueueHandler.getEventList();
+
+    while (true) {
+        _kqueueHandler.eventCatch();
+        for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
+            switch (_getEventType(eventList[i])) {
+            case EVENT_LISTEN:
+                _servListen(eventList[i]);
+                break;
+            case EVENT_HTTP_REQ:
+                _servHttpRequest(eventList[i]);
+                break;
+            case EVENT_HTTP_RES:
+                _servHttpResponse(eventList[i]);
+                break;
+            case EVENT_CGI_REQ:
+                _servCgiRequest(eventList[i]);
+                break;
+            case EVENT_CGI_RES:
+                _servCgiResponse(eventList[i]);
+                break;
+            case EVENT_SIGCHLD:
+                _servSigchld(eventList[i]);
+                break;
+            default:
+                _servError(eventList[i]);
+                break;
+            }
+        }
+    }
 }
 
-// void EventHandler::operate()
-// {
-//     struct kevent *eventList = _kqueueHandler.getEventList();
-
-//     while (true) {
-//         _kqueueHandler.eventCatch();
-//         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
-//             switch (_getEventType(eventList[i])) {
-//             case EVENT_LISTEN:
-//                 _servListen(eventList[i]);
-//                 break;
-//             case EVENT_HTTP_REQ:
-//                 _servHttpRequest(eventList[i]);
-//                 break;
-//             case EVENT_HTTP_RES:
-//                 _servHttpResponse(eventList[i]);
-//                 break;
-//             case EVENT_CGI_REQ:
-//                 _servCgiRequest(eventList[i]);
-//                 break;
-//             case EVENT_CGI_RES:
-//                 _servCgiResponse(eventList[i]);
-//                 break;
-//             case EVENT_SIGCHLD:
-//                 _servSigchld(eventList[i]);
-//             default:
-//                 _servError(eventList[i]);
-//                 break;
-//             }
-//         }
-//     }
-// }
-
-// void EventHandler::tmpHttpRequest(const struct kevent &kev) {
-//     char buf[1024];
-//     int n = read(kev.ident, buf, 1024);
-//     if (n == -1) {
-//         throw std::runtime_error("read error");
-//     }
-//     else if (n == 0) {
-//         std::cerr << "clients disconnected" << std::endl;
-//         _kqueueHandler.deleteEventType(kev.ident);
-//         close(kev.ident);
-//     }
-//     else {
-//         buf[n] = '\0';
-//         Cycle *curEventInfo = (Cycle *)kev.udata;
-//         curEventInfo->
-//         curEventInfo->data = curEventInfo->data + buf;
-//         kev.udata = (void *)curEventInfo;
-//         _kqueueHandler.changeEvent(kev.ident, EVFILT_WRITE, EV_ADD | EV_ONESHOT, curEvent.udata);
-//     }
-// }
-
-// void EventHandler::operate()
-// {
-//     struct kevent *eventList = _kqueueHandler.getEventList();
-
-//     while (true) {
-//         _kqueueHandler.eventCatch();
-//         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
-//             switch (_getEventType(eventList[i])) {
-//             case EVENT_LISTEN:
-//                 _servListen(eventList[i]);
-//                 break;
-//             case EVENT_HTTP_REQ:
-//                 _servHttpRequest(eventList[i]);
-//                 break;
-//             case EVENT_HTTP_RES:
-//                 _servHttpResponse(eventList[i]);
-//                 break;
-//             case EVENT_CGI_REQ:
-//                 _servCgiRequest(eventList[i]);
-//                 break;
-//             case EVENT_CGI_RES:
-//                 _servCgiResponse(eventList[i]);
-//                 break;
-//             case EVENT_SIGCHLD:
-//                 _servSigchld(eventList[i]);
-//             default:
-//                 std::cerr << "EV_ERROR" << std::endl;
-//                 if (_kqueueHandler.getEventType(eventList[i].ident) == KqueueHandler::SOCKET_LISTEN) {
-//                     std::cerr << "listen error" << std::endl;
-//                     _kqueueHandler.deleteEventType(eventList[i].ident);
-//                     close(eventList[i].ident);
-//                 }
-//                 else {
-//                     std::cerr << "client error" << std::endl;
-//                     _kqueueHandler.deleteEventType(eventList[i].ident);
-//                     close(eventList[i].ident);
-//                 }
-//                 break;
-//             }
-//         }
-//     }
-// }

@@ -2,8 +2,6 @@
 #include "webserv.hpp"
 #include "CgiResponseModule.hpp"
 
-void parseCgiResponse(CgiResponse& cgiResponse, const std::string& rawCgiResponse);
-
 char CgiResponseHandler::_buf[BUF_SIZE];
 
 CgiResponseHandler::CgiResponseHandler()
@@ -21,7 +19,7 @@ CgiResponseHandler& CgiResponseHandler::operator=(const CgiResponseHandler& cgiR
     return *this;
 }
 
-void CgiResponseHandler::recvCgiResponse(struct kevent& kev)
+void CgiResponseHandler::recvCgiResponse(const struct kevent& kev)
 {
     size_t recvLen, totalSize = static_cast<size_t>(kev.data);
 
@@ -38,7 +36,7 @@ void CgiResponseHandler::recvCgiResponse(struct kevent& kev)
 
 void CgiResponseHandler::makeCgiResponse()
 {
-    parseCgiResponse(_cgiResponse, _rawCgiResponse, _type);
+    CgiResponseParser::parseCgiResponse(_cgiResponse, _rawCgiResponse);
 }
 
 const CgiResponse& CgiResponseHandler::getCgiResponse() const

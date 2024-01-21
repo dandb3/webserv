@@ -11,6 +11,16 @@ std::string sizeToStr(size_t size)
     return result;
 }
 
+std::string ft_itoa(int num)
+{
+    std::stringstream ss;
+    std::string result;
+
+    ss << num;
+    ss >> result;
+    return result;
+}
+
 std::string ft_inet_ntoa(in_addr_t addr)
 {
     std::stringstream ss;

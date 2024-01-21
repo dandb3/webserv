@@ -3,16 +3,26 @@
 
 # include <map>
 # include <string>
+# include "../parse/CgiResponseParser.hpp"
 
 # define BUF_SIZE 1024
 
-typedef std::pair<std::string, std::string> pair_t;
-
 class CgiResponse
 {
+public:
+	enum
+	{
+		DOCUMENT_RES = 0,
+		LOCAL_REDIR_RES,
+		CLIENT_REDIR_RES,
+		CLIENT_REDIR_DOC_RES,
+        CGI_RESPONSE_ERROR
+	};
+
 private:
     std::map<std::string, std::string> _headerFields;
     std::string _messageBody;
+    char _type;
 
 public:
     CgiResponse();
@@ -21,36 +31,28 @@ public:
 
     void addHeaderField(const pair_t& p);
     void setMessageBody(const std::string& messageBody);
+    void setType(char type);
 
     const std::map<std::string, std::string>& getHeaderFields() const;
     const std::string& getMessageBody() const;
+    char getType() const;
 
 };
 
 class CgiResponseHandler
 {
-public:
-	enum
-	{
-		DOCUMENT_RES,
-		LOCAL_REDIR_RES,
-		CLIENT_REDIR_RES,
-		CLIENT_REDIR_DOC_RES
-	};
-
 private:
     static char _buf[BUF_SIZE];
 
     CgiResponse _cgiResponse;
     std::string _rawCgiResponse;
-	char _type;
     bool _eof;
 
 public:
     CgiResponseHandler();
     CgiResponseHandler& operator=(const CgiResponseHandler& cgiResponseHandler);
 
-    void recvCgiResponse(struct kevent& kev);
+    void recvCgiResponse(const struct kevent& kev);
     void makeCgiResponse();
 
     const CgiResponse& getCgiResponse() const;

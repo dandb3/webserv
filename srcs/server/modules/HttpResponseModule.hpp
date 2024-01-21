@@ -96,8 +96,8 @@ public:
 	enum
 	{
 		RES_IDLE,
-		RES_PROCESSING,
-		RES_READY,
+		RES_BUSY,
+		RES_READY
 	};
 	HttpResponseHandler();
 
