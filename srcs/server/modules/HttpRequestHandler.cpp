@@ -21,6 +21,28 @@ void HttpRequestHandler::_inputRequestLine()
     _parseRequestLine();
 }
 
+std::vector<std::pair<std::string, std::string> > &HttpRequestHandler::_parseQuery(std::string &query)
+{
+    std::vector<std::pair<std::string, std::string> > queryV;
+    std::string key, value;
+    size_t equalPos, amperPos, start = 0;
+
+    while (start != query.length()) {
+        if ((equalPos = key.find('=', start + 1)) == std::string::npos)
+            return; // GET 요청에 문법 오류(error 발생)
+
+        if ((amperPos = query.find('&', equalPos + 1)) == std::string::npos)
+            amperPos = query.length();
+
+        key = query.substr(start + 1, equalPos - start - 1);
+        value = query.substr(equalPos + 1, amperPos - equalPos - 1);
+        queryV.push_back(std::make_pair(key, value));
+
+        start = amperPos;
+    }
+    return queryV;
+}
+
 bool HttpRequestHandler::_parseRequestLine()
 {
     std::string requestLineStr = _lineV[0];
@@ -29,9 +51,8 @@ bool HttpRequestHandler::_parseRequestLine()
     std::vector<std::string> tokens;
 
     std::string token;
-    while (iss >> token) {
+    while (iss >> token)
         tokens.push_back(token);
-    }
 
     if (tokens.size() != 3) // 400 ERROR
         return FAILURE;
@@ -40,26 +61,30 @@ bool HttpRequestHandler::_parseRequestLine()
 
     // set method
     token = tokens[0];
+    short method;
     if (token == "GET")
-        requestLine.setMethod(GET);
+        method = GET;
     else if (token == "HEAD")
-        requestLine.setMethod(HEAD);
+        method = HEAD;
     else if (token == "POST")
-        requestLine.setMethod(POST);
+        method = POST;
     else if (token == "DELETE")
-        requestLine.setMethod(DELETE);
+        method = DELETE;
     else // 처리하지 않을 header -> 501 Not Implemented
         return FAILURE;
+    requestLine.setMethod(method);
 
     // set uri & query
+    std::vector<std::pair<std::string, std::string> > queryV;
     size_t pos = tokens[1].find('?');
-    if (pos == std::string::npos)
+    if (pos == std::string::npos) 
         requestLine.setRequestTarget(tokens[1]);
     else {
-        std::string uri = tokens[1].substr(0, pos - 1);
-        std::string query = tokens[1].substr(pos + 1);
+        std::string uri = tokens[1].substr(0, pos);
+        std::string queries = tokens[1].substr(pos + 1);
         requestLine.setRequestTarget(uri);
-        requestLine.setQuery(query);
+        queryV = _parseQuery(queries);
+        requestLine.setQuery(queryV);
     }
 
     // set HTTP version
@@ -162,8 +187,15 @@ void HttpRequestHandler::_inputDefaultBody(int contentLengthCount, int transferE
                 return;
         }
     }
-    if (lengthStr.find(',') != std::string::npos) // content-length가 x, y 형태로 들어온 경우 -> 오류로 취급
-        return;
+
+    std::vector<std::string> lengthV = _splitByComma(lengthStr);
+    if (lengthV.size() != 1) {
+        for (size_t i = 1; i < lengthV.size(); i++) {
+            if (lengthV[0] != lengthV[i]) // 404 error
+                return;
+        }
+        lengthStr = lengthV[0];
+    }
     length = strtol(lengthStr.c_str(), NULL, 10);
 
     _httpRequest.getMessageBody().append(_remain.substr(0, length));
@@ -181,7 +213,7 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
     long long length;
     short mode = LENGTH;
 
-    if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") // chunked가 아닌 경우 error로 간주하기
+    if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") // chunked가 아님 -> 400 ERROR
         return;
 
     start = 0;
@@ -195,8 +227,9 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
             _httpRequest.getMessageBody().append(_remain.substr(start, length));
             mode = LENGTH;
         }
-        start += 2;
+        start = end + 2;
     }
+    _httpRequest.getMessageBody().append("\0");
     _status = PARSE_FINISHED;
 }
 
@@ -223,6 +256,7 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
         size -= read_len;
         _remain.append(_buf, static_cast<size_t>(read_len));
     }
+    // configuration의 client-body size도 고려해야 함
     // if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
     //     throw std::runtime_error("recvHttpRequest에서 read 실패");
     // }
@@ -233,8 +267,6 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
 {
     do {
-        // 사실 여기서 status 값으로 PARSE_* 애들은 빼도 될 것 같음.
-        // 그냥 _input_*함수 내부로 집어넣어도 전혀 상관 없을듯.
         if (_status == INPUT_READY)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
@@ -248,6 +280,19 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
         if (_status == PARSE_FINISHED)
             _push_request(httpRequestQ);
     } while (_status == INPUT_READY);
+}
 
-    std::cout << "in parseHttpRequest, " << _httpRequest.getRequestLine().getRequestTarget() << '\n';
+std::vector<std::string> HttpRequestHandler::_splitByComma(std::string &str)
+{
+    std::vector<std::string> ret;
+    std::string token;
+    std::istringstream iss(str);
+
+    while (std::getline(iss, token, ',')) {
+        if (token[0] == ' ')
+            ret.push_back(token.substr(1));
+        else
+            ret.push_back(token);
+    }
+    return ret;
 }

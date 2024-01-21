@@ -15,7 +15,7 @@ class RequestLine
 private:
     short _method;
     std::string _requestTarget;
-    std::string _query;
+    std::vector<std::pair<std::string, std::string> > _query;
     std::pair<short, short> _version;
 
 public:
@@ -23,12 +23,12 @@ public:
 
     void setMethod(short method);
     void setRequestTarget(std::string &requestTarget);
-    void setQuery(std::string &query);
+    void setQuery(std::vector<std::pair<std::string, std::string> > &query);
     void setVersion(std::pair<short, short> version);
 
     const short getMethod() const;
     const std::string &getRequestTarget() const;
-    const std::string &getQuery() const;
+    const std::vector<std::pair<std::string, std::string> > &getQuery() const;
     const std::pair<short, short> &getVersion() const;
 };
 
@@ -48,7 +48,7 @@ public:
     void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
     void setMessageBody(std::string &messageBody);
 
-    const RequestLine &getRequestLine() const;
+    RequestLine &getRequestLine();
     std::multimap<std::string, std::string> &getHeaderFields();
     std::string getMessageBody() const;
 };
@@ -80,6 +80,7 @@ private:
     bool _parseRequestLine();
 
     void _inputHeaderField();
+    std::vector<std::pair<std::string, std::string> > &_parseQuery(std::string &query);
     bool _parseHeaderField();
 
     void _inputMessageBody();
@@ -89,6 +90,7 @@ private:
     void _push_request(std::queue<HttpRequest> &httpRequestQ);
     void _push_err_request(std::queue<HttpRequest> &httpRequestQ);
 
+    std::vector<std::string> _splitByComma(std::string &str);
 public:
     enum
     {

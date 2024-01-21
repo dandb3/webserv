@@ -20,7 +20,7 @@ void RequestLine::setRequestTarget(std::string &requestTarget)
     _requestTarget = requestTarget;
 }
 
-void RequestLine::setQuery(std::string &query)
+void RequestLine::setQuery(std::string> &query)
 {
     _query = query;
 }
@@ -40,7 +40,7 @@ const std::string &RequestLine::getRequestTarget() const
     return _requestTarget;
 }
 
-const std::string &RequestLine::getQuery() const
+const std::vector<std::pair<std::string, std::string> > &getQuery() const
 {
     return _query;
 }

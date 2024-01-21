@@ -89,7 +89,7 @@ void HttpResponseHandler::_setContentType(std::multimap<std::string, std::string
     if (1)
         type = "text/html";
     else if (1)
-        type = "text/plain"
+        type = "text/plain";
     else if (1)
         type = "image/jpeg";
     else if (1)
@@ -144,11 +144,6 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
     }
     _httpResponse.setStatusLine(statusLine);
 
-    // fileFd로부터 해당 파일을 읽어온다.
-    // std::string에 append 혹은 push_back을 통해서 body를 만든다.(C++ version 확인)
-    // HTTPresponse의 messagebody에 할당해준다.
-    // method가 HEAD인 경우에 body를 세팅하지 않는다.
-    std::cout << "isGET: " << isGET << '\n';
     if (isGET) {
         char buffer[1024];
         memset(buffer, 0, 1024);
@@ -157,7 +152,6 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
             memset(buffer, 0, 1024);
         }
         messageBody.push_back('\0');
-        std::cout << "messageBody: " << messageBody << '\n';
         _httpResponse.setMessageBody(messageBody);
     }
 
@@ -234,7 +228,8 @@ void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo 
         _makeDELETEResponse(httpRequest, configInfo);
     }
     else {
-        std::cout << "??";
+        return;
+        // 400 Bad Request
     }
 
     _httpResponseToString();
