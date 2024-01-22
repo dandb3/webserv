@@ -23,8 +23,9 @@ private:
     static std::map<int, Cycle> _cycleStorage;
 
     ConfigInfo _configInfo;
-    serv_ip_t _ip;
-    serv_port_t _port;
+    in_addr_t _localIp;
+    in_port_t _localPort;
+    in_addr_t _remoteIp;
     int _httpSockfd;
     int _cgiSendfd;
     int _cgiRecvfd;
@@ -38,14 +39,15 @@ private:
     std::queue<HttpRequest> _httpRequestQueue;
 
 public:
-    static Cycle *newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
+    static Cycle *newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
     static void deleteCycle(Cycle *cycle);
 
-    Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
+    Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
 
     const ConfigInfo& getConfigInfo() const;
-    serv_ip_t getIp() const;
-    serv_port_t getPort() const;
+    in_addr_t getLocalIp() const;
+    in_port_t getLocalPort() const;
+    in_addr_t getRemoteIp() const;
     int getHttpSockfd() const;
     int getCgiSendfd() const;
     int getCgiRecvfd() const;

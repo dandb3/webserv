@@ -10,9 +10,6 @@
 #define CRLF "\r\n"
 #define WHITESPACE " \t\n\r\f\v"
 
-typedef in_addr_t serv_ip_t;
-typedef in_port_t serv_port_t;
-
 // #include "Exception.hpp"
 #define ERROR 1
 

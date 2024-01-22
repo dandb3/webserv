@@ -2,13 +2,13 @@
 
 std::map<int, Cycle> Cycle::_cycleStorage;
 
-Cycle::Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
-    : _configInfo(), _ip(ip), _port(port), _httpSockfd(httpSockfd), _closed(false)
+Cycle::Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
+    : _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _closed(false)
 {}
 
-Cycle *Cycle::newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
+Cycle *Cycle::newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
 {
-    _cycleStorage.insert(std::make_pair(httpSockfd, Cycle(ip, port, httpSockfd)));
+    _cycleStorage.insert(std::make_pair(httpSockfd, Cycle(localIp, localPort, remoteIp, httpSockfd)));
     return &_cycleStorage.at(httpSockfd);
 }
 
@@ -22,14 +22,19 @@ const ConfigInfo& Cycle::getConfigInfo() const
     return _configInfo;
 }
 
-serv_ip_t Cycle::getIp() const
+in_addr_t Cycle::getLocalIp() const
 {
-    return _ip;
+    return _localIp;
 }
 
-serv_port_t Cycle::getPort() const
+in_port_t Cycle::getLocalPort() const
 {
-    return _port;
+    return _localPort;
+}
+
+in_addr_t Cycle::getRemoteIp() const
+{
+    return _remoteIp;
 }
 
 int Cycle::getHttpSockfd() const

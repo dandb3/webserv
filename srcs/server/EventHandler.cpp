@@ -1,3 +1,4 @@
+#include <cstring>
 #include <sys/event.h>
 #include <sys/wait.h>
 #include "EventHandler.hpp"
@@ -65,16 +66,19 @@ void EventHandler::_servListen(const struct kevent &kev)
 {
     Cycle *cycle;
     int sockfd;
-    struct sockaddr_in sin;
-    socklen_t len = sizeof(struct sockaddr_in);
+    struct sockaddr_in localSin, remoteSin;
+    socklen_t localLen = sizeof(struct sockaddr_in);
+    socklen_t remoteLen = sizeof(struct sockaddr_in);
 
-    if ((sockfd = accept(kev.ident, NULL, NULL)) == FAILURE)
+    memset(&localSin, 0, localLen);
+    memset(&remoteSin, 0, remoteLen);
+    if ((sockfd = accept(kev.ident, &remoteSin, &remoteLen)) == FAILURE)
         throw ERROR;
     if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == FAILURE)
         throw ERROR;
-    if (getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&sin), &len) == FAILURE)
+    if (getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&localSin), &localLen) == FAILURE)
         throw ERROR;
-    cycle = Cycle::newCycle(sin.sin_addr.s_addr, sin.sin_port, sockfd);
+    cycle = Cycle::newCycle(localSin.sin_addr.s_addr, localSin.sin_port, remoteSin.sin_addr.s_addr, sockfd);
     _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
     _kqueueHandler.setEventType(sockfd, KqueueHandler::SOCKET_CLIENT);
 }

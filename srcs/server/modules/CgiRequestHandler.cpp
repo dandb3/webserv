@@ -199,7 +199,7 @@ static void setContentType(CgiRequest& cgiRequest, __attribute__((unused)) const
         cgiRequest.addMetaVariable("CONTENT_TYPE", "application/octet-stream");
 }
 
-static void setGatewayInterface(CgiRequest& cgiRequest, __attribute__((unused)) const RequestLine& requestLine, __attribute__((unused)) const std::multimap<std::string, std::string>& headerFields, __attribute__((unused)) const std::string& messageBody)
+static void setGatewayInterface(CgiRequest& cgiRequest)
 {
     cgiRequest.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 }
@@ -248,20 +248,25 @@ static void setScriptName(CgiRequest& cgiRequest)
 
 static void setServerName(CgiRequest& cgiRequest, Cycle* cycle)
 {
-    if (cycle->getConfigInfo())
+    const std::string& serverName = cycle->getConfigInfo().getServerName();
+
+    if (!serverName.empty())
+        cgiRequest.addMetaVariable("SERVER_NAME", serverName);
+    else
+        cgiRequest.addMetaVariable("SERVER_NAME", ft_inet_ntoa(cycle->getLocalIp()));
 }
 
 static void setServerPort(CgiRequest& cgiRequest, Cycle* cycle)
 {
-    cgiRequest.addMetaVariable("SERVER_PORT", ft_itoa(static_cast<int>(cycle->getPort())));
+    cgiRequest.addMetaVariable("SERVER_PORT", ft_itoa(static_cast<int>(cycle->getLocalPort())));
 }
 
-static void setServerProtocol(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+static void setServerProtocol(CgiRequest& cgiRequest)
 {
     cgiRequest.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");
 }
 
-static void setServerSoftware(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
+static void setServerSoftware(CgiRequest& cgiRequest)
 {
     cgiRequest.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
 }
