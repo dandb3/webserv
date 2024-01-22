@@ -53,7 +53,7 @@ static void setPathInfo(CgiRequest& cgiRequest, const RequestLine& requestLine)
 
 static void setPathTranslated(CgiRequest& cgiRequest, Cycle* cycle, const RequestLine& requestLine)
 {
-    cgiRequest.addMetaVariable("PATH_TRANSLATED", cycle->getConfigInfo().getRoot() + requestLine.getRequestTarget());
+    cgiRequest.addMetaVariable("PATH_TRANSLATED", cycle->getConfigInfo().getPath());
 }
 
 static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLine)
