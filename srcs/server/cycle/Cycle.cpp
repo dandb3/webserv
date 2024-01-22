@@ -1,6 +1,6 @@
 #include "Cycle.hpp"
 
-std::map<std::pair<serv_ip_t, serv_port_t>, Cycle> Cycle::_cycleStorage;
+std::map<int, Cycle> Cycle::_cycleStorage;
 
 Cycle::Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
     : _configInfo(), _ip(ip), _port(port), _httpSockfd(httpSockfd), _closed(false)
@@ -8,15 +8,18 @@ Cycle::Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
 
 Cycle *Cycle::newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
 {
-    std::pair<serv_ip_t, serv_port_t> key = std::make_pair(ip, port);
-
-    _cycleStorage.insert(key, Cycle(ip, port, httpSockfd));
-    return &_cycleStorage.at(key);
+    _cycleStorage.insert(std::make_pair(httpSockfd, Cycle(ip, port, httpSockfd)));
+    return &_cycleStorage.at(httpSockfd);
 }
 
 void Cycle::deleteCycle(Cycle *cycle)
 {
-    _cycleStorage.erase(std::make_pair(cycle->getIp(), cycle->getPort()));
+    _cycleStorage.erase(cycle->getHttpSockfd());
+}
+
+const ConfigInfo& Cycle::getConfigInfo() const
+{
+    return _configInfo;
 }
 
 serv_ip_t Cycle::getIp() const
@@ -49,27 +52,27 @@ bool Cycle::closed() const
     return _closed;
 }
 
-HttpRequestHandler &Cycle::getHttpRequestHandler() const
+HttpRequestHandler &Cycle::getHttpRequestHandler()
 {
     return _httpRequestHandler;
 }
 
-HttpResponseHandler &Cycle::getHttpResponseHandler() const
+HttpResponseHandler &Cycle::getHttpResponseHandler()
 {
     return _httpResponseHandler;
 }
 
-CgiRequestHandler &Cycle::getCgiRequestHandler() const
+CgiRequestHandler &Cycle::getCgiRequestHandler()
 {
     return _cgiRequestHandler;
 }
 
-CgiResponseHandler &Cycle::getCgiResponseHandler() const
+CgiResponseHandler &Cycle::getCgiResponseHandler()
 {
     return _cgiResponseHandler;
 }
 
-std::queue<HttpRequest> &Cycle::getHttpRequestQueue() const
+std::queue<HttpRequest> &Cycle::getHttpRequestQueue()
 {
     return _httpRequestQueue;
 }

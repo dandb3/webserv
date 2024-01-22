@@ -20,7 +20,7 @@
 class Cycle
 {
 private:
-    static std::map<std::pair<serv_ip_t, serv_port_t>, Cycle> _cycleStorage;
+    static std::map<int, Cycle> _cycleStorage;
 
     ConfigInfo _configInfo;
     serv_ip_t _ip;
@@ -43,6 +43,7 @@ public:
 
     Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
 
+    const ConfigInfo& getConfigInfo() const;
     serv_ip_t getIp() const;
     serv_port_t getPort() const;
     int getHttpSockfd() const;
@@ -50,11 +51,11 @@ public:
     int getCgiRecvfd() const;
     bool closed() const;
 
-    HttpRequestHandler &getHttpRequestHandler() const;
-    HttpResponseHandler &getHttpResponseHandler() const;
-    CgiRequestHandler &getCgiRequestHandler() const;
-    CgiResponseHandler &getCgiResponseHandler() const;
-    std::queue<HttpRequest> &getHttpRequestQueue() const;
+    HttpRequestHandler &getHttpRequestHandler();
+    HttpResponseHandler &getHttpResponseHandler();
+    CgiRequestHandler &getCgiRequestHandler();
+    CgiResponseHandler &getCgiResponseHandler();
+    std::queue<HttpRequest> &getHttpRequestQueue();
 
     void resetCycle();
 };
