@@ -80,7 +80,7 @@ private:
     bool _parseRequestLine();
 
     void _inputHeaderField();
-    std::vector<std::pair<std::string, std::string> > &_parseQuery(std::string &query);
+    void _parseQuery(RequestLine &requestLine, std::string &query);
     bool _parseHeaderField();
 
     void _inputMessageBody();

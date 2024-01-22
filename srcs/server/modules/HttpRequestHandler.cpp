@@ -21,7 +21,7 @@ void HttpRequestHandler::_inputRequestLine()
     _parseRequestLine();
 }
 
-std::vector<std::pair<std::string, std::string> > &HttpRequestHandler::_parseQuery(std::string &query)
+void HttpRequestHandler::_parseQuery(RequestLine &requestLine, std::string &query)
 {
     std::vector<std::pair<std::string, std::string> > queryV;
     std::string key, value;
@@ -40,7 +40,8 @@ std::vector<std::pair<std::string, std::string> > &HttpRequestHandler::_parseQue
 
         start = amperPos;
     }
-    return queryV;
+
+    requestLine.setQuery(queryV);
 }
 
 bool HttpRequestHandler::_parseRequestLine()
@@ -75,6 +76,7 @@ bool HttpRequestHandler::_parseRequestLine()
     requestLine.setMethod(method);
 
     // set uri & query
+    // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
     std::vector<std::pair<std::string, std::string> > queryV;
     size_t pos = tokens[1].find('?');
     if (pos == std::string::npos) 
@@ -83,13 +85,12 @@ bool HttpRequestHandler::_parseRequestLine()
         std::string uri = tokens[1].substr(0, pos);
         std::string queries = tokens[1].substr(pos + 1);
         requestLine.setRequestTarget(uri);
-        queryV = _parseQuery(queries);
-        requestLine.setQuery(queryV);
+        _parseQuery(requestLine, queries);
     }
 
     // set HTTP version
     token = tokens[2];
-    if (token.substr(0, 5) != "HTTP/" || token.length() != 8)
+    if (token.substr(0, 5) != "HTTP/" || token.length() != 8) // 정의되어있지 않음(내가 못찾은 거일수도) -> 400 error?
         return FAILURE;
 
     requestLine.setVersion(std::make_pair(static_cast<short>(token[5] - '0'), static_cast<short>(token[7] - '0')));
