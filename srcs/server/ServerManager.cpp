@@ -1,4 +1,5 @@
 #include <iostream>
+#include <csignal>
 #include "ServerManager.hpp"
 
 // test
@@ -21,6 +22,7 @@ ServerManager::ServerManager(std::string config_path)
  *    - 소켓을 리스닝 모드로 설정합니다.
  *    - 소켓을 논블로킹 모드로 설정하고 이벤트 핸들러에 이벤트를 추가합니다.
  *    - 서버 소켓 타입을 설정합니다.
+ *    - SIGPIPE 시그널 발생 시 SIG_IGN으로 설정한다.
  * @throws std::runtime_error 소켓 생성, 주소 바인딩, 논블로킹 설정, 이벤트 추가 등의 과정에서 오류 발생 시 예외 처리
  *      예외 처리는 나중에 구현할 예정입니다.
  */
@@ -72,6 +74,8 @@ void ServerManager::initServer()
         listenFds.push_back(sockfd);
     }
     _eventHandler.initEvent(listenFds);
+    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+        throw 123123123231;
 }
 
 std::string createHttpRequestPage(const std::string &httpRequest, const std::string &msg) {
