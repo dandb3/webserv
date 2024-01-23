@@ -44,6 +44,11 @@ const CgiResponse& CgiResponseHandler::getCgiResponse() const
     return _cgiResponse;
 }
 
+char CgiResponseHandler::getResponseType() const
+{
+    return _cgiResponse.getType();
+}
+
 bool CgiResponseHandler::eof() const
 {
     return _eof;

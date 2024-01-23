@@ -56,6 +56,7 @@ public:
     void makeCgiResponse();
 
     const CgiResponse& getCgiResponse() const;
+    char getResponseType() const;
     bool eof() const;
 
 };
