@@ -241,7 +241,7 @@ void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
         _eof = true;
 }
 
-void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
+void CgiRequestHandler::callCgiScript(Cycle* cycle)
 {
     int servToCgi[2], cgiToServ[2];
     pid_t pid;
@@ -252,8 +252,8 @@ void CgiRequestHandler::callCgiScript(int& cgiSendFd, int& cgiRecvFd) const
     if (fcntl(servToCgi[1], F_SETFL, O_NONBLOCK) == FAILURE \
         || fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK) == FAILURE)
         throw ERROR;
-    cgiSendFd = servToCgi[1];
-    cgiRecvFd = cgiToServ[0];
+    cycle->setCgiSendfd(servToCgi[1]);
+    cycle->setCgiRecvfd(cgiToServ[0]);
     if ((pid = fork()) == FAILURE)
         throw ERROR;
     if (pid == 0)

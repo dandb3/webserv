@@ -59,6 +59,9 @@ public:
     CgiResponseHandler &getCgiResponseHandler();
     std::queue<HttpRequest> &getHttpRequestQueue();
 
+    void setCgiSendfd(int fd);
+    void setCgiRecvfd(int fd);
+
     void resetCycle();
 };
 

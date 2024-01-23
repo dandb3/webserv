@@ -51,10 +51,22 @@ void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
 
 void EventHandler::_processHttpRequest(Cycle* cycle)
 {
+    ConfigInfo& configInfo = cycle->getConfigInfo();
+    HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
+
+    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), cycle);
+    switch (configInfo.requestType()) {
+    case ConfigInfo::CGI_REQUEST:
+        CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
+
+        creqHdlr.makeCgiRequest(cycle, httpRequest);
+        creqHdlr.callCgiScript(cycle);
+        _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
+        break;
+    case ConfigInfo::HTTP_RESPONSE:
+        break;
+    }
     /**
-     * Server block, Location block 선택
-     * NetConfig 객체 생성
-     * NetConfig, HttpRequest를 통해 CgiRequest를 만드는 것인지, HttpResponse를 만드는 것인지 선택
      * - CgiRequest인 경우
      *   creqHandler.makeCgiRequest(hreqHandler.getHttpRequest());
      *   creqHandler.callCgiScript();
@@ -145,23 +157,19 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
         _kqueueHandler.deleteEventType(kev.ident);
         cgiResponseHandler.makeCgiResponse();
         switch (cgiResponseHandler.getResponseType()) {
-        case CgiResponse::DOCUMENT_RES:
-            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-            break;
         case CgiResponse::LOCAL_REDIR_RES:
             httpRequestHandler.setURI(); // 구현해야 함.
             _processHttpRequest(cycle);
             break;
+        case CgiResponse::DOCUMENT_RES:
         case CgiResponse::CLIENT_REDIR_RES:
-            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-            break;
         case CgiResponse::CLIENT_REDIRDOC_RES:
             _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+            httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
             break;
         default:    /* in case of an error */
             break;
         }
-        // httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
     }
 }
 

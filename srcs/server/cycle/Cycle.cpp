@@ -82,6 +82,16 @@ std::queue<HttpRequest> &Cycle::getHttpRequestQueue()
     return _httpRequestQueue;
 }
 
+void Cycle::setCgiSendfd(int fd)
+{
+    _cgiSendfd = fd;
+}
+
+void Cycle::setCgiRecvfd(int fd)
+{
+    _cgiRecvfd = fd;
+}
+
 void Cycle::resetCycle()
 {
     _configInfo = ConfigInfo(); // 맞나?
