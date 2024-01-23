@@ -38,7 +38,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     }
 }
 
-void EventHandler::_processHttpRequest(Cycle* cycle)
+void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
 {
     HttpResponseHandler& hrspHandler = cycle->getCgiResponseHandler();
     CgiRequestHandler& creqHandler = cycle->getCgiRequestHandler();
@@ -47,6 +47,10 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
     hrspHandler.setStatus(HttpResponseHandler::RES_BUSY);
     hreqHandler.setHttpRequest(hreqQ.front());
     hreqQ.pop();
+}
+
+void EventHandler::_processHttpRequest(Cycle* cycle)
+{
     /**
      * Server block, Location block 선택
      * NetConfig 객체 생성
@@ -131,16 +135,33 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
 void EventHandler::_servCgiResponse(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
+    HttpRequestHandler& httpRequestHandler = cycle->getHttpRequestHandler();
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
     cgiResponseHandler.recvCgiResponse(kev);
     if (cgiResponseHandler.eof()) {
-        close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
+        close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
         cgiResponseHandler.makeCgiResponse();
+        switch (cgiResponseHandler.getResponseType()) {
+        case CgiResponse::DOCUMENT_RES:
+            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+            break;
+        case CgiResponse::LOCAL_REDIR_RES:
+            httpRequestHandler.setURI(); // 구현해야 함.
+            _processHttpRequest(cycle);
+            break;
+        case CgiResponse::CLIENT_REDIR_RES:
+            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+            break;
+        case CgiResponse::CLIENT_REDIR_DOC_RES:
+            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+            break;
+        default:    /* in case of an error */
+            break;
+        }
         // httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
-        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
     }
 }
 
