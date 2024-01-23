@@ -78,9 +78,9 @@ void CgiResponseParser::_readLines(const std::string& raw)
     size_t start = 0, end;
     bool error = true;
 
-    while ((end = raw.find(CRLF)) != std::string::npos) {
+    while ((end = raw.find('\n', start)) != std::string::npos) {
         _lineV.push_back(raw.substr(start, end - start));
-        start = end + 2;
+        start = end + 1;
         if (_lineV.back().size() == 0) {
             error = false;
             break;
