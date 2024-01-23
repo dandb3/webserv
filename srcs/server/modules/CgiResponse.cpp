@@ -17,6 +17,16 @@ CgiResponse& CgiResponse::operator=(const CgiResponse& cgiResponse)
     return *this;
 }
 
+void CgiResponse::setStatusCode(unsigned short statusCode)
+{
+    _statusCode = statusCode;
+}
+
+void CgiResponse::setReasonPhrase(const std::string& reasonPhrase)
+{
+    _reasonPhrase = reasonPhrase;
+}
+
 void CgiResponse::addHeaderField(const pair_t& p)
 {
     _headerFields.insert(p);
@@ -30,6 +40,16 @@ void CgiResponse::setMessageBody(const std::string& messageBody)
 void CgiResponse::setType(char type)
 {
     _type = type;
+}
+
+unsigned short CgiResponse::getStatusCode() const
+{
+    return _statusCode;
+}
+
+const std::string& CgiResponse::getReasonPhrase() const
+{
+    return _reasonPhrase;
 }
 
 const std::map<std::string, std::string>& CgiResponse::getHeaderFields() const

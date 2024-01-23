@@ -1,6 +1,7 @@
 #include <vector>
 #include "parse.hpp"
 #include "CgiResponseParser.hpp"
+#include "../../utils/utils.hpp"
 
 static bool isContentType(const pair_t& p)
 {
@@ -137,14 +138,41 @@ char CgiResponseParser::_determineType()
         return CgiResponse::CLIENT_REDIR_RES;
     else if (_fieldCnt[HDR_CONTENT_TYPE] == 1 && _fieldCnt[HDR_LOCAL_LOCATION] == 0 \
         && _fieldCnt[HDR_CLIENT_LOCATION] == 1 && _fieldCnt[HDR_STATUS] == 1)
-        return CgiResponse::CLIENT_REDIR_DOC_RES;
+        return CgiResponse::CLIENT_REDIRDOC_RES;
     else
         return CgiResponse::CGI_RESPONSE_ERROR;
 }
 
 void CgiResponseParser::_insertResponse(CgiResponse& cgiResponse)
 {
+    std::vector<pair_t>::iterator it;
+
+    for (it = _pairV.begin(); it != _pairV.end(); ++it)
+        if (isCaseInsensitiveSame(it->first, "Status"))
+            break;
     cgiResponse.setType(_determineType());
+    switch (cgiResponse.getType()) {
+    case CgiResponse::DOCUMENT_RES:
+        if (it == _pairV.end()) {
+            cgiResponse.setStatusCode(200);
+            cgiResponse.setReasonPhrase("OK");
+            break;
+        }
+        /* fall-through */
+    case CgiResponse::CLIENT_REDIR_RES:
+        if (it == _pairV.end()) {
+            cgiResponse.setStatusCode(302);
+            cgiResponse.setReasonPhrase("Found");
+            break;
+        }
+        /* fall-through */
+    case CgiResponse::CLIENT_REDIRDOC_RES:
+        cgiResponse.setStatusCode(stringToType<unsigned short>(it->second.substr(0, 3)));
+        cgiResponse.setReasonPhrase(it->second.substr(4));
+        break;
+    }
+    if (it != _pairV.end())
+        _pairV.erase(it);
     for (size_t i = 0; i < _pairV.size(); ++i)
         cgiResponse.addHeaderField(_pairV[i]);
     cgiResponse.setMessageBody(_messageBody);

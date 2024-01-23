@@ -15,11 +15,13 @@ public:
 		DOCUMENT_RES = 0,
 		LOCAL_REDIR_RES,
 		CLIENT_REDIR_RES,
-		CLIENT_REDIR_DOC_RES,
+		CLIENT_REDIRDOC_RES,
         CGI_RESPONSE_ERROR
 	};
 
 private:
+    unsigned short _statusCode;
+    std::string _reasonPhrase;
     std::map<std::string, std::string> _headerFields;
     std::string _messageBody;
     char _type;
@@ -29,10 +31,14 @@ public:
     CgiResponse(const std::string& rawCgiResponse);
     CgiResponse& operator=(const CgiResponse& cgiResponse);
 
+    void setStatusCode(unsigned short statusCode);
+    void setReasonPhrase(const std::string& reasonPhrase);
     void addHeaderField(const pair_t& p);
     void setMessageBody(const std::string& messageBody);
     void setType(char type);
 
+    unsigned short getStatusCode() const;
+    const std::string& getReasonPhrase() const;
     const std::map<std::string, std::string>& getHeaderFields() const;
     const std::string& getMessageBody() const;
     char getType() const;

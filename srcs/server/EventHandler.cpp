@@ -155,7 +155,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
         case CgiResponse::CLIENT_REDIR_RES:
             _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
             break;
-        case CgiResponse::CLIENT_REDIR_DOC_RES:
+        case CgiResponse::CLIENT_REDIRDOC_RES:
             _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
             break;
         default:    /* in case of an error */
