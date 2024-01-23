@@ -152,17 +152,14 @@ void CgiResponseParser::_insertResponse(CgiResponse& cgiResponse)
             break;
     cgiResponse.setType(_determineType());
     switch (cgiResponse.getType()) {
+    case CgiResponse::CLIENT_REDIR_RES:
+        cgiResponse.setStatusCode(302);
+        cgiResponse.setReasonPhrase("Found");
+        break;
     case CgiResponse::DOCUMENT_RES:
         if (it == _pairV.end()) {
             cgiResponse.setStatusCode(200);
             cgiResponse.setReasonPhrase("OK");
-            break;
-        }
-        /* fall-through */
-    case CgiResponse::CLIENT_REDIR_RES:
-        if (it == _pairV.end()) {
-            cgiResponse.setStatusCode(302);
-            cgiResponse.setReasonPhrase("Found");
             break;
         }
         /* fall-through */
