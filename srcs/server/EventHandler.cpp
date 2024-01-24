@@ -62,20 +62,15 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         creqHdlr.makeCgiRequest(cycle, httpRequest);
         creqHdlr.callCgiScript(cycle);
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
+        _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
         break;
     case ConfigInfo::HTTP_RESPONSE:
+        HttpResponseHandler& hrspHdlr = cycle->getHttpResponseHandler();
+
+        hrspHdlr.makeHttpResponse(); // 수정 필요. 인자 들어가는거 맞춰서.
+        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
         break;
     }
-    /**
-     * - CgiRequest인 경우
-     *   creqHandler.makeCgiRequest(hreqHandler.getHttpRequest());
-     *   creqHandler.callCgiScript();
-     *   _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
-     *   _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
-     * - HttpResponse인 경우
-     *   hrspHandler.makeHttpResponse(hreqHandler.getHttpRequest());
-     *   _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-    */
 }
 
 void EventHandler::_servListen(const struct kevent &kev)
@@ -102,11 +97,12 @@ void EventHandler::_servListen(const struct kevent &kev)
 void EventHandler::_servHttpRequest(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpRequestHandler& hreqHandler = cycle->getHttpRequestHandler();
+    HttpRequestHandler& hreqHdlr = cycle->getHttpRequestHandler();
 
     /**
-     * hreqHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
-     * hreqHandler.parseHttpRequest(kev.flags & EV_EOF, cycle->getHttpRequestQueue());
+     * HttpRequestHandler가 완전히 완성되면 작업 시작.
+     * hreqHdlr.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
+     * hreqHdlr.parseHttpRequest(kev.flags & EV_EOF, cycle->getHttpRequestQueue());
      * if (queue가 비어있지 않으면서 httpresponsehandler가 IDLE 상태라면)
      *     _processHttpRequest(cycle);
     */
@@ -238,4 +234,3 @@ void EventHandler::operate()
         }
     }
 }
-
