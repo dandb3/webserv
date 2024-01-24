@@ -29,7 +29,7 @@ void CgiResponse::setReasonPhrase(const std::string& reasonPhrase)
 
 void CgiResponse::addHeaderField(const pair_t& p)
 {
-    _headerFields.insert(p);
+    _headerFields.push_back(p);
 }
 
 void CgiResponse::setMessageBody(const std::string& messageBody)

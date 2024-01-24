@@ -22,7 +22,7 @@ public:
 private:
     unsigned short _statusCode;
     std::string _reasonPhrase;
-    std::map<std::string, std::string> _headerFields;
+    std::vector<pair_t> _headerFields;
     std::string _messageBody;
     char _type;
 
@@ -39,7 +39,7 @@ public:
 
     unsigned short getStatusCode() const;
     const std::string& getReasonPhrase() const;
-    const std::map<std::string, std::string>& getHeaderFields() const;
+    const std::vector<pair_t>& getHeaderFields() const;
     const std::string& getMessageBody() const;
     char getType() const;
 

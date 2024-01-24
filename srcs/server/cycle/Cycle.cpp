@@ -94,7 +94,6 @@ void Cycle::setCgiRecvfd(int fd)
 
 void Cycle::resetCycle()
 {
-    _configInfo = ConfigInfo(); // 맞나?
     // _httpRequestHandler = HttpRequestHandler();
     // _httpResponseHandler = HttpResponseHandler();
     _cgiRequestHandler = CgiRequestHandler();
