@@ -258,8 +258,10 @@ void CgiRequestHandler::callCgiScript(Cycle* cycle)
         throw ERROR;
     if (pid == 0)
         _childProcess(servToCgi, cgiToServ);
-    else
+    else {
+        cycle->setCgiScriptPid(pid);
         _parentProcess(servToCgi, cgiToServ);
+    }
 }
 
 bool CgiRequestHandler::eof() const

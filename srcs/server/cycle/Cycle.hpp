@@ -29,6 +29,7 @@ private:
     int _httpSockfd;
     int _cgiSendfd;
     int _cgiRecvfd;
+    pid_t _cgiScriptPid;
     bool _closed;
 
     HttpRequestHandler _httpRequestHandler;
@@ -51,6 +52,7 @@ public:
     int getHttpSockfd() const;
     int getCgiSendfd() const;
     int getCgiRecvfd() const;
+    pid_t getCgiScriptPid() const;
     bool closed() const;
 
     HttpRequestHandler &getHttpRequestHandler();
@@ -61,6 +63,7 @@ public:
 
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);
+    void setCgiScriptPid(pid_t pid);
 
     void resetCycle();
 };

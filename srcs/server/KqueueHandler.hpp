@@ -49,6 +49,7 @@ public:
     void addEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void deleteEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, void *udata = NULL);
+    void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, u_int fflags, void *udata = NULL);
     void eventCatch();
     // void enableEvent(/* args */);
     // void disableEvent(/* args */);

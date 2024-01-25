@@ -31,8 +31,8 @@ char EventHandler::_getEventType(const struct kevent &kev)
         default:
             return EVENT_ERROR;
         }
-    case EVFILT_SIGNAL:
-        return EVENT_SIGCHLD;
+    case EVFILT_PROC:
+        return EVENT_PROC;
     default:
         return EVENT_ERROR;
     }
@@ -61,6 +61,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
         creqHdlr.callCgiScript(cycle);
+        _kqueueHandler.changeEvent(cycle->getCgiScriptPid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
         _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
         break;
@@ -169,22 +170,11 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     }
 }
 
-/**
- * kevent에 의하면 kev.data 개수만큼 있는데 0이 리턴되는 경우도 말이 안 된다.
- * 라고 생각했었는데,
- * SIGCHLD가 발생하는 경우를 찾아보니, 자식 프로세스가 종료되는 경우 뿐만 아니라
- * stopped 되거나 continue 되거나 되게 다양한 상황이 존재한다.
- * 그러므로 waitpid() 호출 후 0이 리턴되는 경우도 존재할 수 있다.
- * 다만, SIGCHLD 발생 시 마다 waitpid()를 호출하는 경우가 실제 자식프로세스의
- * 종료되는 횟수보다 많거나 같다는 점은 알고 있어야 한다.
- * (완전히 최적화되지는 않는다는 뜻)
-*/
-
-void EventHandler::_servSigchld(const struct kevent &kev)
+void EventHandler::_servProc(const struct kevent &kev)
 {
-    for (intptr_t i = 0; i < kev.data; ++i)
-        if (waitpid(-1, NULL, WNOHANG) == -1)
-            throw 1;
+    if (waitpid(kev.ident, NULL, WNOHANG) == -1)
+        throw 1;
+    _kqueueHandler.deleteEvent(kev.ident, kev.filter);
 }
 
 void EventHandler::_servError(const struct kevent &kev)
@@ -194,7 +184,6 @@ void EventHandler::_servError(const struct kevent &kev)
 
 void EventHandler::initEvent(const std::vector<int> &listenFds)
 {
-    _kqueueHandler.addEvent(SIGCHLD, EVFILT_SIGNAL);
     for (size_t i = 0; i < listenFds.size(); ++i) {
         _kqueueHandler.addEvent(listenFds[i], EVFILT_READ);
         _kqueueHandler.setEventType(listenFds[i], KqueueHandler::SOCKET_LISTEN);
@@ -224,8 +213,8 @@ void EventHandler::operate()
             case EVENT_CGI_RES:
                 _servCgiResponse(eventList[i]);
                 break;
-            case EVENT_SIGCHLD:
-                _servSigchld(eventList[i]);
+            case EVENT_PROC:
+                _servProc(eventList[i]);
                 break;
             default:
                 _servError(eventList[i]);

@@ -16,7 +16,7 @@ private:
         EVENT_HTTP_RES,
         EVENT_CGI_REQ,
         EVENT_CGI_RES,
-        EVENT_SIGCHLD,
+        EVENT_PROC,
         EVENT_ERROR
     };
 
@@ -31,7 +31,7 @@ private:
     void _servHttpResponse(const struct kevent& kev);
     void _servCgiRequest(const struct kevent& kev);
     void _servCgiResponse(const struct kevent& kev);
-    void _servSigchld(const struct kevent &kev);
+    void _servProc(const struct kevent &kev);
     void _servError(const struct kevent &kev);
 
 public:

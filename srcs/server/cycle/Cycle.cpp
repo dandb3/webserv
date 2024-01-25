@@ -52,6 +52,11 @@ int Cycle::getCgiRecvfd() const
     return _cgiRecvfd;
 }
 
+pid_t Cycle::getCgiScriptPid() const
+{
+    return _cgiScriptPid;
+}
+
 bool Cycle::closed() const
 {
     return _closed;
@@ -90,6 +95,11 @@ void Cycle::setCgiSendfd(int fd)
 void Cycle::setCgiRecvfd(int fd)
 {
     _cgiRecvfd = fd;
+}
+
+void Cycle::setCgiScriptPid(pid_t pid)
+{
+    _cgiScriptPid = pid;
 }
 
 void Cycle::resetCycle()
