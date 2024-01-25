@@ -64,7 +64,7 @@ int main(int ac, char **av) {
     requestHandler.recvHttpRequest(clientSocket, 86);
     requestHandler.parseHttpRequest(0, que);
     HttpRequest httpRequest = que.front(); que.pop();
-    std::string uri = httpRequest.getRequestLine().getRequestTarget(); // uri
+    std::string uri = httpRequest.getRequestLine().getUri(); // uri
     struct sockaddr_in servaddr;
     socklen_t servLen = sizeof(servaddr);
     if (getsockname(clientSocket, (struct sockaddr *) &servaddr, &servLen) == -1) {

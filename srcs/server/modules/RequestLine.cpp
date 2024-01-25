@@ -4,7 +4,7 @@ RequestLine &RequestLine::operator=(const RequestLine &ref)
 {
     if (this != &ref) {
         _method = ref._method;
-        _requestTarget = ref._requestTarget;
+        _uri = ref._uri;
         _version = ref._version;
     }
     return *this;
@@ -15,9 +15,9 @@ void RequestLine::setMethod(short method)
     _method = method;
 }
 
-void RequestLine::setRequestTarget(std::string &requestTarget)
+void RequestLine::setUri(std::string &uri)
 {
-    _requestTarget = requestTarget;
+    _uri = uri;
 }
 
 void RequestLine::setQuery(std::vector<std::pair<std::string, std::string> > &query)
@@ -35,9 +35,9 @@ const short RequestLine::getMethod() const
     return _method;
 }
 
-const std::string &RequestLine::getRequestTarget() const
+const std::string &RequestLine::getUri() const
 {
-    return _requestTarget;
+    return _uri;
 }
 
 const std::vector<std::pair<std::string, std::string> > &RequestLine::getQuery() const

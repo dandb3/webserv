@@ -80,11 +80,11 @@ bool HttpRequestHandler::_parseRequestLine()
     std::vector<std::pair<std::string, std::string> > queryV;
     size_t pos = tokens[1].find('?');
     if (pos == std::string::npos) 
-        requestLine.setRequestTarget(tokens[1]);
+        requestLine.setUri(tokens[1]);
     else {
         std::string uri = tokens[1].substr(0, pos);
         std::string queries = tokens[1].substr(pos + 1);
-        requestLine.setRequestTarget(uri);
+        requestLine.setUri(uri);
         _parseQuery(requestLine, queries);
     }
 

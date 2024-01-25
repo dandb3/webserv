@@ -14,7 +14,7 @@ class RequestLine
 {
 private:
     short _method;
-    std::string _requestTarget;
+    std::string _uri;
     std::vector<std::pair<std::string, std::string> > _query;
     std::pair<short, short> _version;
 
@@ -22,12 +22,12 @@ public:
     RequestLine &operator=(const RequestLine &ref);
 
     void setMethod(short method);
-    void setRequestTarget(std::string &requestTarget);
+    void setUri(std::string &uri);
     void setQuery(std::vector<std::pair<std::string, std::string> > &query);
     void setVersion(std::pair<short, short> version);
 
     const short getMethod() const;
-    const std::string &getRequestTarget() const;
+    const std::string &getUri() const;
     const std::vector<std::pair<std::string, std::string> > &getQuery() const;
     const std::pair<short, short> &getVersion() const;
 };
