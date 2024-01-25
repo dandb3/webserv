@@ -44,6 +44,29 @@ void HttpRequestHandler::_parseQuery(RequestLine &requestLine, std::string &quer
     requestLine.setQuery(queryV);
 }
 
+std::string HttpRequestHandler::_decodeUrl(std::string &str)
+{
+    std::ostringstream decoded;
+
+    for (size_t i = 0; i < str.length(); i++) {
+        if (str[i] == '%') {
+            if (i + 2 < str.length() && isxdigit(str[i + 1]) && isxdigit(str[i + 2])) {
+                char decodedChar = static_cast<char>(std::strtol(str.substr(i + 1, 2), nullptr, 16));
+                decoded << decodedChar;
+                i += 2;
+            }
+            else
+                decoded << str[i];
+        }
+        else if (str[i] == '+')
+            decoded << ' ';
+        else
+            decoded << str[i];
+    }
+
+    return decoded.str();
+}
+
 bool HttpRequestHandler::_parseRequestLine()
 {
     std::string requestLineStr = _lineV[0];
@@ -77,13 +100,14 @@ bool HttpRequestHandler::_parseRequestLine()
 
     // set uri & query
     // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
+    token = decodeUrl(tokens[1]);
     std::vector<std::pair<std::string, std::string> > queryV;
-    size_t pos = tokens[1].find('?');
+    size_t pos = token.find('?');
     if (pos == std::string::npos) 
-        requestLine.setUri(tokens[1]);
+        requestLine.setUri(token);
     else {
-        std::string uri = tokens[1].substr(0, pos);
-        std::string queries = tokens[1].substr(pos + 1);
+        std::string uri = token.substr(0, pos);
+        std::string queries = token.substr(pos + 1);
         requestLine.setUri(uri);
         _parseQuery(requestLine, queries);
     }

@@ -77,6 +77,7 @@ private:
     void _inputStart();
 
     void _inputRequestLine();
+    std::string _decodeUrl(std::string &str);
     bool _parseRequestLine();
 
     void _inputHeaderField();
