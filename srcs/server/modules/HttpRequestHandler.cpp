@@ -28,12 +28,14 @@ void HttpRequestHandler::_parseQuery(RequestLine &requestLine, std::string &quer
     size_t equalPos, amperPos, start = 0;
 
     while (start != query.length()) {
-        if ((equalPos = key.find('=', start + 1)) == std::string::npos)
+        if ((equalPos = query.find('=', start + 1)) == std::string::npos)
             return; // GET 요청에 문법 오류(error 발생)
 
         if ((amperPos = query.find('&', equalPos + 1)) == std::string::npos)
             amperPos = query.length();
 
+        if (start == 0)
+            --start;
         key = query.substr(start + 1, equalPos - start - 1);
         value = query.substr(equalPos + 1, amperPos - equalPos - 1);
         queryV.push_back(std::make_pair(key, value));
@@ -51,15 +53,15 @@ std::string HttpRequestHandler::_decodeUrl(std::string &str)
     for (size_t i = 0; i < str.length(); i++) {
         if (str[i] == '%') {
             if (i + 2 < str.length() && isxdigit(str[i + 1]) && isxdigit(str[i + 2])) {
-                char decodedChar = static_cast<char>(std::strtol(str.substr(i + 1, 2), nullptr, 16));
+                const std::string hexStrTemp = str.substr(i + 1, 2);
+                const char *hexStr = hexStrTemp.c_str();
+                char decodedChar = static_cast<char>(strtol(hexStr, nullptr, 16));
                 decoded << decodedChar;
                 i += 2;
             }
             else
                 decoded << str[i];
         }
-        else if (str[i] == '+')
-            decoded << ' ';
         else
             decoded << str[i];
     }
