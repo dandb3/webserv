@@ -40,8 +40,8 @@ char EventHandler::_getEventType(const struct kevent &kev)
 
 void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
 {
-    HttpResponseHandler& hrspHandler = cycle->getCgiResponseHandler();
-    CgiRequestHandler& creqHandler = cycle->getCgiRequestHandler();
+    HttpResponseHandler& hrspHandler = cycle->getHttpResponseHandler();
+    HttpRequestHandler& hreqHandler = cycle->getHttpRequestHandler();
     std::queue<HttpRequest>& hreqQ = cycle->getHttpRequestQueue();
 
     hrspHandler.setStatus(HttpResponseHandler::RES_BUSY);
@@ -61,7 +61,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
         creqHdlr.callCgiScript(cycle);
-        _kqueueHandler.changeEvent(cycle->getCgiScriptPid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
+        _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
         _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
         break;
@@ -84,7 +84,7 @@ void EventHandler::_servListen(const struct kevent &kev)
 
     memset(&localSin, 0, localLen);
     memset(&remoteSin, 0, remoteLen);
-    if ((sockfd = accept(kev.ident, &remoteSin, &remoteLen)) == FAILURE)
+    if ((sockfd = accept(kev.ident, reinterpret_cast<struct sockaddr*>(&remoteSin), &remoteLen)) == FAILURE)
         throw ERROR;
     if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == FAILURE)
         throw ERROR;

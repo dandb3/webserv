@@ -45,7 +45,7 @@ public:
 
     Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
 
-    const ConfigInfo& getConfigInfo() const;
+    ConfigInfo& getConfigInfo();
     in_addr_t getLocalIp() const;
     in_port_t getLocalPort() const;
     in_addr_t getRemoteIp() const;

@@ -17,7 +17,7 @@ void Cycle::deleteCycle(Cycle *cycle)
     _cycleStorage.erase(cycle->getHttpSockfd());
 }
 
-const ConfigInfo& Cycle::getConfigInfo() const
+ConfigInfo& Cycle::getConfigInfo()
 {
     return _configInfo;
 }

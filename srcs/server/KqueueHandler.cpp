@@ -61,7 +61,7 @@ void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags,
     _eventsToAdd.push_back(kev);
 }
 
-void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, u_int fflags, void *udata = NULL)
+void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, u_int fflags, void *udata = NULL)
 {
     struct kevent kev;
 
