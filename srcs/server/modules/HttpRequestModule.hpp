@@ -4,8 +4,8 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include <queue>
 #include <map>
+#include "../cycle/HttpRequestQueue.hpp"
 #include "../../webserv.hpp"
 
 #define BUF_SIZE 1024
@@ -83,8 +83,8 @@ private:
     void _inputDefaultBody(int content_length_count, int transfer_encoding_count);
     void _inputChunkedBody(int transfer_encoding_count);
 
-    void _push_request(std::queue<HttpRequest> &httpRequestQ);
-    void _push_err_request(std::queue<HttpRequest> &httpRequestQ);
+    void _pushRequest(HttpRequestQueue &httpRequestQ);
+    void _pushErrorRequest(HttpRequestQueue &httpRequestQ);
 
 public:
     enum
@@ -97,14 +97,9 @@ public:
     HttpRequestHandler();
 
     void recvHttpRequest(int fd, size_t size);
-    void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);
+    void parseHttpRequest(bool eof, HttpRequestQueue &httpRequestQ);
 
-    inline bool closed() const;
+    bool closed() const;
 };
-
-inline bool HttpRequestHandler::closed() const
-{
-    return (_status == INPUT_CLOSED);
-}
 
 #endif

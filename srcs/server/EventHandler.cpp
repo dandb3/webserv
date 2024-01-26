@@ -52,7 +52,7 @@ void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
 {
     HttpResponseHandler& hrspHandler = cycle->getHttpResponseHandler();
     HttpRequestHandler& hreqHandler = cycle->getHttpRequestHandler();
-    std::queue<HttpRequest>& hreqQ = cycle->getHttpRequestQueue();
+    HttpRequestQueue& hreqQ = cycle->getHttpRequestQueue();
 
     hrspHandler.setStatus(HttpResponseHandler::RES_BUSY);
     hreqHandler.setHttpRequest(hreqQ.front());
@@ -110,12 +110,11 @@ void EventHandler::_servListen(const struct kevent &kev)
 void EventHandler::_servHttpRequest(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpRequestHandler& hreqHdlr = cycle->getHttpRequestHandler();
+    HttpRequestHandler& httpRequestHandler = cycle->getHttpRequestHandler();
 
+    httpRequestHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
+    httpRequestHandler.parseHttpRequest(kev.flags & EV_EOF, cycle->getHttpRequestQueue());
     /**
-     * HttpRequestHandler가 완전히 완성되면 작업 시작.
-     * hreqHdlr.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
-     * hreqHdlr.parseHttpRequest(kev.flags & EV_EOF, cycle->getHttpRequestQueue());
      * if (queue가 비어있지 않으면서 httpresponsehandler가 IDLE 상태라면)
      *     _processHttpRequest(cycle);
     */

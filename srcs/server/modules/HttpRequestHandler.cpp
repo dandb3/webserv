@@ -1,5 +1,6 @@
 #include <sstream>
 #include "HttpRequestModule.hpp"
+#include "../parse/parse.hpp"
 
 HttpRequestHandler::HttpRequestHandler() : _status(INPUT_READY)
 {}
@@ -199,17 +200,24 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
     _status = PARSE_FINISHED;
 }
 
-void HttpRequestHandler::_push_err_request(std::queue<HttpRequest> &httpRequestQ)
+void HttpRequestHandler::_pushErrorRequest(HttpRequestQueue &httpRequestQ)
 {
-    httpRequestQ.push(_httpRequest);
+    httpRequestQ.setErrorStatus(400, "Bad Request");
     _status = INPUT_CLOSED;
 }
 
-void HttpRequestHandler::_push_request(std::queue<HttpRequest> &httpRequestQ)
+void HttpRequestHandler::_pushRequest(HttpRequestQueue &httpRequestQ)
 {
+    const std::multimap<std::string, std::string>& headerFields = _httpRequest.getHeaderFields();
+    std::multimap<std::string, std::string>::const_iterator it;
+
     httpRequestQ.push(_httpRequest);
-    _status = INPUT_READY;
-    // 만약 Connection: closed라면 -> _status = INPUT_CLOSED;
+    /* case-insensitive하게 check해야 하는데.. */
+    it = headerFields.find("Connection");
+    if (it != headerFields.end() && isCaseInsensitiveSame(it->second, "closed"))
+        _status = INPUT_CLOSED;
+    else
+        _status = INPUT_READY;
 }
 
 void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
@@ -224,7 +232,7 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
     }
 }
 
-void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
+void HttpRequestHandler::parseHttpRequest(bool eof, HttpRequestQueue &httpRequestQ)
 {
     do {
         // 사실 여기서 status 값으로 PARSE_* 애들은 빼도 될 것 같음.
@@ -238,8 +246,13 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
         if (_status == INPUT_MESSAGE_BODY)
             _inputMessageBody();
         if (_status != PARSE_FINISHED && eof)
-            _push_err_request(httpRequestQ);
+            _pushErrorRequest(httpRequestQ);
         if (_status == PARSE_FINISHED)
-            _push_request(httpRequestQ);
+            _pushRequest(httpRequestQ);
     } while (_status == INPUT_READY);
+}
+
+bool HttpRequestHandler::closed() const
+{
+    return (_status == INPUT_CLOSED);
 }
