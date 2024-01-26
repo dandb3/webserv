@@ -78,9 +78,9 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         break;
     case ConfigInfo::HTTP_RESPONSE:
-        HttpResponseHandler& hrspHdlr = cycle->getHttpResponseHandler();
+        HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
 
-        hrspHdlr.makeHttpResponse(); // 수정 필요. 인자 들어가는거 맞춰서.
+        httpResponseHandler.makeHttpResponse(); // 수정 필요. 인자 들어가는거 맞춰서.
         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
         break;
     }
