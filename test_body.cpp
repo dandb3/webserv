@@ -96,21 +96,26 @@ void _inputChunkedBody(int transferEncodingCount)
     long long length;
     short mode = LENGTH;
 
+    (void) transferEncodingCount;
     start = 0;
-    while ((end = _remain.find(CRLF, start)) != std::string::npos) {
-        switch (mode) {
-        case (LENGTH):
-            cout << "LENGTH" << endl;
-            break;
-        case (STRING):
-            cout << "STRING" << endl;
-            break;
-        default:
-            cout << "default" << endl;
+    while (1) {
+        end = _remain.find(CRLF, start);
+        if (end == std::string::npos) {
+            if (_remain[start] == '0' && _remain[start + 1] == '\0') {
+                cout << "successfully finished" << endl;
+                break;
+            }
+            else {
+                // 400 Bad Request
+                cout << "error\n";
+                break;
+            }
         }
+            
         if (mode == LENGTH) {
             length = strtol(_remain.substr(start, end - start).c_str(), NULL, 10);
             mode = STRING;
+            cout << "length: " << length << endl;
         }
         else {
             message_body.append(_remain.substr(start, length));
@@ -118,7 +123,6 @@ void _inputChunkedBody(int transferEncodingCount)
         }
         start = end + 2;
     }
-    message_body.append("\0");
 }
 
 int main(int ac, char **av)
@@ -135,6 +139,7 @@ int main(int ac, char **av)
         std::cerr << "read error" << std::endl;
     
     size_t len = strlen(buf);
+    (void) len;
     _remain = buf;
     _remain.append("\0");
 

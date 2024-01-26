@@ -17,9 +17,7 @@ string decodeUrl(string &str)
     for (size_t i = 0; i < str.length(); i++) {
         if (str[i] == '%') {
             if (i + 2 < str.length() && isxdigit(str[i + 1]) && isxdigit(str[i + 2])) {
-                const std::string hexStrTemp = str.substr(i + 1, 2);
-                const char *hexStr = hexStrTemp.c_str();
-                char decodedChar = static_cast<char>(strtol(hexStr, nullptr, 16));
+                char decodedChar = static_cast<char>(strtol(str.substr(i + 1, 2).c_str(), nullptr, 16));
                 decoded << decodedChar;
                 i += 2;
             }

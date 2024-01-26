@@ -13,11 +13,13 @@ void HttpRequestHandler::_inputRequestLine()
 {
     size_t end;
 
+    // 아직 CRLF가 안나온 경우
     if ((end = _remain.find(CRLF)) == std::string::npos)
         return;
 
+    _lineV.clear();
     _lineV.push_back(_remain.substr(0, end));
-    _remain = _remain.substr(end + 2);
+    _remain = _remain.substr(end);
     _parseRequestLine();
 }
 
@@ -53,9 +55,7 @@ std::string HttpRequestHandler::_decodeUrl(std::string &str)
     for (size_t i = 0; i < str.length(); i++) {
         if (str[i] == '%') {
             if (i + 2 < str.length() && isxdigit(str[i + 1]) && isxdigit(str[i + 2])) {
-                const std::string hexStrTemp = str.substr(i + 1, 2);
-                const char *hexStr = hexStrTemp.c_str();
-                char decodedChar = static_cast<char>(strtol(hexStr, nullptr, 16));
+                char decodedChar = static_cast<char>(strtol(str.substr(i + 1, 2).c_str(), nullptr, 16));
                 decoded << decodedChar;
                 i += 2;
             }
@@ -102,10 +102,10 @@ bool HttpRequestHandler::_parseRequestLine()
 
     // set uri & query
     // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
-    token = decodeUrl(tokens[1]);
+    token = _decodeUrl(tokens[1]);
     std::vector<std::pair<std::string, std::string> > queryV;
     size_t pos = token.find('?');
-    if (pos == std::string::npos) 
+    if (pos == std::string::npos)
         requestLine.setUri(token);
     else {
         std::string uri = token.substr(0, pos);
@@ -132,20 +132,20 @@ void HttpRequestHandler::_inputHeaderField()
     const std::string whitespace = WHITESPACE;
     size_t start, end;
     bool lastWhitespace;
-    bool crlfFound = false;
 
-    start = 0;
+    if (_remain.find("\r\n\r\n") == std::string::npos)
+        return;
+
+    start = 2;
     _lineV.clear();
     while ((end = _remain.find(CRLF, start)) != std::string::npos) {
         if (start == end)
             break;
         lastWhitespace = (whitespace.find(_remain[end - 1]) != std::string::npos);
-        crlfFound = true;
         _lineV.push_back(_remain.substr(start, end - start + 1 - lastWhitespace));
         start = end + 2;
     }
-    if (crlfFound)
-        _remain = _remain.substr(start + 2);
+    _remain = _remain.substr(start + 2);
     _parseHeaderField();
 }
 
@@ -245,7 +245,17 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
 
     start = 0;
     _lineV.clear();
-    while ((end = _remain.find(CRLF, start)) != std::string::npos) {
+    while (1) {
+        end = _remain.find(CRLF, start);
+        if (end == std::string::npos) {
+            if (_remain[start] == '0' && _remain[start + 1] == '\0')
+                break;
+            else {
+                // 400 Bad Request
+                break;
+            }
+        }
+            
         if (mode == LENGTH) {
             length = strtol(_remain.substr(start, end - start).c_str(), NULL, 10);
             mode = STRING;
