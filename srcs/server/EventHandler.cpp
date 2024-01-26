@@ -1,6 +1,7 @@
 #include <cstring>
 #include <sys/event.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include "EventHandler.hpp"
 
 EventHandler::EventHandler()
@@ -32,7 +33,16 @@ char EventHandler::_getEventType(const struct kevent &kev)
             return EVENT_ERROR;
         }
     case EVFILT_PROC:
-        return EVENT_PROC;
+        return EVENT_CGI_PROC;
+    case EVFILT_TIMER:
+        Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+
+        if (kev.ident == cycle->getCgiSendfd())
+            return EVENT_CTIMER;
+        else if (cycle->isRTimer())
+            return EVENT_RTIMER;
+        else
+            return EVENT_KTIMER;
     default:
         return EVENT_ERROR;
     }
@@ -64,6 +74,8 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
         _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
+        _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
+        _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         break;
     case ConfigInfo::HTTP_RESPONSE:
         HttpResponseHandler& hrspHdlr = cycle->getHttpResponseHandler();
@@ -136,8 +148,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
     if (cgiRequestHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
-        _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
-        _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
+        _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, cycle);
     }
 }
 
@@ -148,10 +159,12 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
+    _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, cycle);
     cgiResponseHandler.recvCgiResponse(kev);
     if (cgiResponseHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
+        _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
         cgiResponseHandler.makeCgiResponse();
         switch (cgiResponseHandler.getResponseType()) {
         case CgiResponse::LOCAL_REDIR_RES:
@@ -170,7 +183,33 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     }
 }
 
-void EventHandler::_servProc(const struct kevent &kev)
+void EventHandler::_servRTimer(const struct kevent &kev)
+{
+
+}
+
+void EventHandler::_servKTimer(const struct kevent &kev)
+{
+    
+}
+
+void EventHandler::_servCTimer(const struct kevent &kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
+
+    if (kill(cycle->getCgiScriptPid(), SIGKILL) == FAILURE)
+        throw ERROR; // ERROR;
+    _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+    if (close(cycle->getCgiRecvfd()) == FAILURE) // fd를 닫기 때문에 따로 이벤트를 제거하지 않아도 된다.
+        throw ERROR; // ERROR;
+    _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+    /* 아래 함수 구현 필요. */
+    httpResponseHandler.makeHttpResponse(504, "Gateway Timeout");
+}
+
+void EventHandler::_servCgiProc(const struct kevent &kev)
 {
     if (waitpid(kev.ident, NULL, WNOHANG) == -1)
         throw 1;
@@ -213,8 +252,8 @@ void EventHandler::operate()
             case EVENT_CGI_RES:
                 _servCgiResponse(eventList[i]);
                 break;
-            case EVENT_PROC:
-                _servProc(eventList[i]);
+            case EVENT_CGI_PROC:
+                _servCgiProc(eventList[i]);
                 break;
             default:
                 _servError(eventList[i]);

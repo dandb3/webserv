@@ -30,6 +30,7 @@ private:
     int _cgiSendfd;
     int _cgiRecvfd;
     pid_t _cgiScriptPid;
+    bool _timerFlag; // set if it is a request timer
     bool _closed;
 
     HttpRequestHandler _httpRequestHandler;
@@ -53,6 +54,7 @@ public:
     int getCgiSendfd() const;
     int getCgiRecvfd() const;
     pid_t getCgiScriptPid() const;
+    bool isRTimer() const;
     bool closed() const;
 
     HttpRequestHandler &getHttpRequestHandler();
