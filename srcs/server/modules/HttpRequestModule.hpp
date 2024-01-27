@@ -62,12 +62,15 @@ private:
         INPUT_REQUEST_LINE,
         INPUT_HEADER_FIELD,
         INPUT_MESSAGE_BODY,
+        INPUT_DEFAULT_BODY,
+        INPUT_CHUNKED_BODY,
         PARSE_FINISHED,
         INPUT_CLOSED,
     };
 
     char _buf[BUF_SIZE];
     char _status;
+    size_t _contentLength;
 
     std::string _remain;
     std::vector<std::string> _lineV;

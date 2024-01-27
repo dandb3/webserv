@@ -19,7 +19,7 @@ void HttpRequestHandler::_inputRequestLine()
 
     _lineV.clear();
     _lineV.push_back(_remain.substr(0, end));
-    _remain = _remain.substr(end);
+    _remain = _remain.substr(end + 2);
     _parseRequestLine();
 }
 
@@ -124,6 +124,7 @@ bool HttpRequestHandler::_parseRequestLine()
     _httpRequest.setRequestLine(requestLine);
     _status = INPUT_HEADER_FIELD;
 
+    _lineV.clear();
     return SUCCESS;
 }
 
@@ -131,22 +132,23 @@ void HttpRequestHandler::_inputHeaderField()
 {
     const std::string whitespace = WHITESPACE;
     size_t start, end;
-    bool lastWhitespace;
+    bool lastWhitespace, lastCRLF;
 
-    if (_remain.find("\r\n\r\n") == std::string::npos)
-        return;
-
-    start = 2;
-    _lineV.clear();
+    lastCRLF = false;
+    start = 0;
     while ((end = _remain.find(CRLF, start)) != std::string::npos) {
-        if (start == end)
+        if (start == end) {
+            lastCRLF = true;
             break;
+        }
         lastWhitespace = (whitespace.find(_remain[end - 1]) != std::string::npos);
         _lineV.push_back(_remain.substr(start, end - start + 1 - lastWhitespace));
         start = end + 2;
     }
-    _remain = _remain.substr(start + 2);
-    _parseHeaderField();
+
+    _remain = _remain.substr(start);
+    if (lastCRLF)
+        _parseHeaderField();
 }
 
 bool HttpRequestHandler::_parseHeaderField()
@@ -187,21 +189,26 @@ void HttpRequestHandler::_inputMessageBody()
     int contentLengthCount = _httpRequest.getHeaderFields().count("Content-Length");
     int transferEncodingCount = _httpRequest.getHeaderFields().count("Transfer-Encoding");
 
-    if (contentLengthCount > 0)
-        _inputDefaultBody(contentLengthCount, transferEncodingCount);
-    else if (transferEncodingCount > 0)
-        _inputChunkedBody(transferEncodingCount);
+    if (contentLengthCount > 0) {
+        _extractContentLength(contentLengthCount);
+        _status = INPUT_DEFAULT_BODY;
+        _inputDefaultBody();
+    }
+    else if (transferEncodingCount > 0) {
+        if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") // chunked가 아님 -> 400 ERROR
+            return;
+        _lineV.clear();
+        _status = INPUT_CHUNKED_BODY;
+        _inputChunkedBody();
+    }
     else
         _status = PARSE_FINISHED;
 }
 
-void HttpRequestHandler::_inputDefaultBody(int contentLengthCount, int transferEncodingCount)
+void HttpRequestHandler::_extractContentLength(int contentLengthCount)
 {
     std::string lengthStr;
-    long long length;
 
-    if (transferEncodingCount > 0) // sender MUST NOT
-        return;
     if (contentLengthCount == 1)
         lengthStr = _httpRequest.getHeaderFields().find("Content-Length")->second;
     else {
@@ -223,13 +230,27 @@ void HttpRequestHandler::_inputDefaultBody(int contentLengthCount, int transferE
         }
         lengthStr = lengthV[0];
     }
-    length = strtol(lengthStr.c_str(), NULL, 10);
-
-    _httpRequest.getMessageBody().append(_remain.substr(0, length));
-    _status = PARSE_FINISHED;
+    _contentLength = strtol(lengthStr.c_str(), NULL, 10);
 }
 
-void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
+void HttpRequestHandler::_inputDefaultBody()
+{
+    const size_t length = _remain.length();
+
+    if (length > _contentLength) {
+        // 400 Bad Request
+        return;
+    }
+    
+    _httpRequest.getMessageBody().append(_remain);
+    _remain = "";
+    _contentLength -= length;
+
+    if (_contentLength == 0)
+        _status = PARSE_FINISHED;
+}
+
+void HttpRequestHandler::_inputChunkedBody()
 {
     enum {
         LENGTH = 0,
@@ -240,20 +261,12 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
     long long length;
     short mode = LENGTH;
 
-    if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") // chunked가 아님 -> 400 ERROR
-        return;
-
     start = 0;
-    _lineV.clear();
     while (1) {
-        end = _remain.find(CRLF, start);
-        if (end == std::string::npos) {
+        if ((end = _remain.find(CRLF, start)) == std::string::npos) {
             if (_remain[start] == '0' && _remain[start + 1] == '\0')
-                break;
-            else {
-                // 400 Bad Request
-                break;
-            }
+                _status = PARSE_FINISHED;
+            break;
         }
             
         if (mode == LENGTH) {
@@ -266,8 +279,7 @@ void HttpRequestHandler::_inputChunkedBody(int transferEncodingCount)
         }
         start = end + 2;
     }
-    _httpRequest.getMessageBody().append("\0");
-    _status = PARSE_FINISHED;
+    _remain = _remain.substr(start);
 }
 
 void HttpRequestHandler::_push_err_request(std::queue<HttpRequest> &httpRequestQ)
@@ -312,6 +324,10 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
             _inputHeaderField();
         if (_status == INPUT_MESSAGE_BODY)
             _inputMessageBody();
+        if (_status == INPUT_DEFAULT_BODY)
+            _inputDefaultBody();
+        if (_status == INPUT_CHUNKED_BODY)
+            _inputChunkedBody();
         if (_status != PARSE_FINISHED && eof)
             _push_err_request(httpRequestQ);
         if (_status == PARSE_FINISHED)
