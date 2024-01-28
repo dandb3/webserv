@@ -343,7 +343,9 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
     if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
         _httpRequest.setCode(500);
         _status = INPUT_ERROR_CLOSED;
+        return;
     }
+    // read_len == 0인 경우의 처리?
     _remain.append(_buf, static_cast<size_t>(read_len));
 }
 

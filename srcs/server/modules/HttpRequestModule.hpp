@@ -1,11 +1,11 @@
 #ifndef HTTP_REQUEST_MODULE_HPP
 #define HTTP_REQUEST_MODULE_HPP
 
+#include <queue>
 #include <string>
+#include <map>
 #include <unistd.h>
 #include <vector>
-#include <map>
-#include "../cycle/HttpRequestQueue.hpp"
 #include "../../webserv.hpp"
 
 #define BUF_SIZE 1024
