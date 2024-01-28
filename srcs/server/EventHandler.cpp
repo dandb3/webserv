@@ -62,7 +62,7 @@ void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
 void EventHandler::_processHttpRequest(Cycle* cycle)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
-    HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
+    const HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getUri()); // 얘도 수정 필요. getURI() 함수..
     switch (configInfo.requestType()) {
@@ -119,6 +119,11 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
     if (!httpRequestQueue.empty() && httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
         _setHttpRequestFromQ(cycle);
         _processHttpRequest(cycle);
+    }
+    if (httpRequestHandler.closed()) {
+        cycle->setClosed();
+        _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+        _kqueueHandler.deleteEventType(kev.ident);
     }
 }
 

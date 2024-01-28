@@ -80,7 +80,9 @@ private:
     std::vector<std::string> _lineV;
 
     HttpRequest _httpRequest;
+    HttpRequest _cycleHttpRequest;
 
+    void _inputEOF();
     void _inputStart();
 
     void _inputRequestLine();
@@ -112,6 +114,9 @@ public:
 
     void recvHttpRequest(int fd, size_t size);
     void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);
+
+    const HttpRequest& getHttpRequest() const;
+    void setHttpRequest(const HttpRequest& httpRequest);
 
     bool closed() const;
 };
