@@ -1,9 +1,31 @@
 #include "ConfigParser.hpp"
 
-const std::set<std::string> ConfigParser::SERVER_KEY_SET = {
-    "listen", "server_name", "root", "index", "autoindex", "client_max_body_size",
-    "error_page", "location", "access_log", "error_log", "cgi", "allow_methods",
-    "request_timeout", "keepalive_timeout", "session" };
+// const std::set<std::string> ConfigParser::SERVER_KEY_SET = {
+//     "listen", "server_name", "root", "index", "autoindex", "client_max_body_size",
+//     "error_page", "location", "access_log", "error_log", "cgi", "allow_methods",
+//     "request_timeout", "keepalive_timeout", "session" };
+
+std::set<std::string> init() {
+    std::set<std::string> s;
+    s.insert("listen");
+    s.insert("server_name");
+    s.insert("root");
+    s.insert("index");
+    s.insert("autoindex");
+    s.insert("client_max_body_size");
+    s.insert("error_page");
+    s.insert("location");
+    s.insert("access_log");
+    s.insert("error_log");
+    s.insert("cgi");
+    s.insert("allow_methods");
+    s.insert("request_timeout");
+    s.insert("keepalive_timeout");
+    s.insert("session");
+    return s;
+}
+
+const std::set<std::string> ConfigParser::SERVER_KEY_SET = init();
 
 std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
     std::string ipStr;

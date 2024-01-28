@@ -91,6 +91,7 @@
 		"filesystem": "cpp",
 		"queue": "cpp",
 		"ios": "cpp",
-		"locale": "cpp"
+		"locale": "cpp",
+		"csignal": "cpp"
 	}
 }

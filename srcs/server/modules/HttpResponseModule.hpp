@@ -12,7 +12,7 @@
 #include "CgiResponseModule.hpp"
 #include "HttpRequestModule.hpp"
 #include "../cycle/ConfigInfo.hpp"
-#include "../utils/utils.hpp"
+#include "../../utils/utils.hpp"
 
 #define CRLF "\r\n"
 
@@ -67,19 +67,18 @@ private:
 
 	HttpResponse _httpResponse;
 
-	void _setFileTime(std::multimap<std::string, std::string> &headerFields, const char *path);
-	void _setDate(std::multimap<std::string, std::string> &headerFields);
-	void _setContentType(std::multimap<std::string, std::string> &headerFields);
-	void _setContentLength(std::multimap<std::string, std::string> &headerFields);
 	void _setConnection(std::multimap<std::string, std::string> &headerFields);
+	void _setContentLength(std::multimap<std::string, std::string> &headerFields);
+	void _setContentType(std::multimap<std::string, std::string> &headerFields);
+	void _setDate(std::multimap<std::string, std::string> &headerFields);
+	void _setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path);
 
 	void _makeStatusLine(StatusLine &statusLine, short code);
-	void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &netConfig);
+	void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo);
 
-	void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &netConfig, bool isGET);
-	void _makeHEADResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
-	void _makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
-	void _makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
+	void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET);
+	void _makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
+	void _makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
 
 	void _statusLineToString();
 	void _headerFieldsToString();
@@ -101,7 +100,7 @@ public:
 	};
 	HttpResponseHandler();
 
-	void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
+	void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
 	void sendHttpResponse(int fd, size_t size);
 };
 

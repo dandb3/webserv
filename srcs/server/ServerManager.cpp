@@ -220,7 +220,7 @@ void ServerManager::operate()
                         if (getsockname(sockfd, (struct sockaddr *)&servaddr, &servLen) == -1)
                             throw std::runtime_error("getsockname error");
                         curEventInfo->ip = servaddr.sin_addr.s_addr;
-                        curEventInfo->port = 8100;
+                        curEventInfo->port = htons(servaddr.sin_port);
                         std::string uri = getUriFromRequest(buf);
                         curEventInfo->uri = uri;
                         curEventInfo->sockfd = sockfd;

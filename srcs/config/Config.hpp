@@ -11,7 +11,7 @@
 
 // class ConfigParser;
 
-typedef std::map<std::string, std::vector<std::string>> t_directives; // map<simple directive>
+typedef std::map<std::string, std::vector<std::string> > t_directives; // map<simple directive>
 
 // singleton
 class Config

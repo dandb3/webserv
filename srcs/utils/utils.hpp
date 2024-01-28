@@ -1,3 +1,6 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
 #include <iostream>
 #include <sstream>
 #include <map>
@@ -40,3 +43,5 @@ std::string toString(const T& val) {
 }
 
 void printParsedServer(ServerConfig &server);
+
+#endif
