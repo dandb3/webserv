@@ -1,10 +1,17 @@
 #include "HttpRequestModule.hpp"
 
-HttpRequest::HttpRequest() {}
+HttpRequest::HttpRequest()
+: _code(0)
+{}
 
 HttpRequest::HttpRequest(RequestLine &requestLine, \
         std::multimap<std::string, std::string> &headerFields, std::string &messageBody) 
         : _requestLine(requestLine), _headerFields(headerFields), _messageBody(messageBody) {}
+
+void HttpRequest::setCode(unsigned short code)
+{
+    _code = code;
+}
 
 void HttpRequest::setRequestLine(RequestLine &requestLine)
 {
@@ -24,6 +31,11 @@ void HttpRequest::setHeaderFields(std::multimap<std::string, std::string> &heade
 void HttpRequest::setMessageBody(std::string &messageBody)
 {
     _messageBody = messageBody;
+}
+
+unsigned short HttpRequest::getCode() const
+{
+    return _code;
 }
 
 const RequestLine& HttpRequest::getRequestLine() const

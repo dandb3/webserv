@@ -111,13 +111,15 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     HttpRequestHandler& httpRequestHandler = cycle->getHttpRequestHandler();
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+    HttpRequestQueue& httpRequestQueue = cycle->getHttpRequestQueue();
 
     httpRequestHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
-    httpRequestHandler.parseHttpRequest(kev.flags & EV_EOF, cycle->getHttpRequestQueue());
-    /**
-     * if (queue가 비어있지 않으면서 httpresponsehandler가 IDLE 상태라면)
-     *     _processHttpRequest(cycle);
-    */
+    httpRequestHandler.parseHttpRequest((kev.flags & EV_EOF) && kev.data == 0, cycle->getHttpRequestQueue());
+    if (!httpRequestQueue.empty() && httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
+        _setHttpRequestFromQ(cycle);
+        _processHttpRequest(cycle);
+    }
 }
 
 void EventHandler::_servHttpResponse(const struct kevent& kev)

@@ -19,9 +19,6 @@ public:
     const HttpRequest& front() const;
     bool empty() const;
 
-    void setErrorStatus(unsigned short errorCode, const std::string& reasonPhrase);
-    unsigned short getErrorCode() const;
-
 };
 
 #endif

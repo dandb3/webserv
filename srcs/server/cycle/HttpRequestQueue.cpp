@@ -23,14 +23,3 @@ bool HttpRequestQueue::empty() const
 {
     return _q.empty();
 }
-
-void HttpRequestQueue::setErrorStatus(unsigned short errorCode, const std::string& reasonPhrase)
-{
-    _errorCode = errorCode;
-    _reasonPhrase = reasonPhrase;
-}
-
-unsigned short HttpRequestQueue::getErrorCode() const
-{
-    return _errorCode;
-}

@@ -32,6 +32,7 @@ public:
 class HttpRequest
 {
 private:
+	unsigned short _code;
     RequestLine _requestLine;
     std::multimap<std::string, std::string> _headerFields;
     std::string _messageBody;
@@ -41,10 +42,12 @@ public:
     HttpRequest(RequestLine &requestLine,
                 std::multimap<std::string, std::string> &headerFields, std::string &messageBody);
 
+	void setCode(unsigned short code);
     void setRequestLine(RequestLine &requestLine);
     void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
     void setMessageBody(std::string &messageBody);
 
+	unsigned short getCode() const;
     const RequestLine &getRequestLine() const;
     std::multimap<std::string, std::string> &getHeaderFields() const;
     std::string &getMessageBody() const;
