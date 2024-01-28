@@ -215,6 +215,7 @@ void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo 
     const short method = httpRequest.getRequestLine().getMethod();
 
     // if else -> switch?
+    // httpRequest.code 확인해서 response 만들기
     if (method == GET) {
         _makeGETResponse(httpRequest, configInfo, true);
     }

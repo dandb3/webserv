@@ -6,6 +6,11 @@ HttpRequest::HttpRequest(RequestLine &requestLine, \
         std::multimap<std::string, std::string> &headerFields, std::string &messageBody) 
         : _requestLine(requestLine), _headerFields(headerFields), _messageBody(messageBody) {}
 
+void HttpRequest::setCode(unsigned short code)
+{
+    _code = code;
+}
+
 void HttpRequest::setRequestLine(RequestLine &requestLine)
 {
     _requestLine = requestLine;
@@ -23,6 +28,11 @@ void HttpRequest::setHeaderFields(std::multimap<std::string, std::string> &heade
 void HttpRequest::setMessageBody(std::string &messageBody)
 {
     _messageBody = messageBody;
+}
+
+const unsigned short HttpRequest::getCode() const
+{
+    return _code;
 }
 
 RequestLine& HttpRequest::getRequestLine()

@@ -30,8 +30,11 @@ void HttpRequestHandler::_parseQuery(RequestLine &requestLine, std::string &quer
     size_t equalPos, amperPos, start = 0;
 
     while (start != query.length()) {
-        if ((equalPos = query.find('=', start + 1)) == std::string::npos)
-            return; // GET 요청에 문법 오류(error 발생)
+        if ((equalPos = query.find('=', start + 1)) == std::string::npos) { // GET 요청에 문법 오류(error 발생)
+            _status = INPUT_CLOSED;
+            _httpRequest.setCode(400);
+            return;
+        }
 
         if ((amperPos = query.find('&', equalPos + 1)) == std::string::npos)
             amperPos = query.length();
@@ -69,9 +72,10 @@ std::string HttpRequestHandler::_decodeUrl(std::string &str)
     return decoded.str();
 }
 
-bool HttpRequestHandler::_parseRequestLine()
+void HttpRequestHandler::_parseRequestLine()
 {
     std::string requestLineStr = _lineV[0];
+    _lineV.clear();
 
     std::istringstream iss(requestLineStr);
     std::vector<std::string> tokens;
@@ -80,8 +84,11 @@ bool HttpRequestHandler::_parseRequestLine()
     while (iss >> token)
         tokens.push_back(token);
 
-    if (tokens.size() != 3) // 400 ERROR
-        return FAILURE;
+    if (tokens.size() != 3) {
+        _status = INPUT_CLOSED;
+        _httpRequest.setCode(400);
+        return;
+    }
 
     RequestLine requestLine;
 
@@ -96,13 +103,21 @@ bool HttpRequestHandler::_parseRequestLine()
         method = POST;
     else if (token == "DELETE")
         method = DELETE;
-    else // 처리하지 않을 header -> 501 Not Implemented
-        return FAILURE;
+    else { // 처리하지 않을 header -> 501 Not Implemented
+        _httpRequest.setCode(501);
+        return;
+    }
     requestLine.setMethod(method);
 
     // set uri & query
     // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
     token = _decodeUrl(tokens[1]);
+    if (token.length() > 8000) {
+        _status = INPUT_CLOSED;
+        _httpRequest.setCode(414);
+        return;
+    }
+
     std::vector<std::pair<std::string, std::string> > queryV;
     size_t pos = token.find('?');
     if (pos == std::string::npos)
@@ -116,16 +131,16 @@ bool HttpRequestHandler::_parseRequestLine()
 
     // set HTTP version
     token = tokens[2];
-    if (token.substr(0, 5) != "HTTP/" || token.length() != 8) // 정의되어있지 않음(내가 못찾은 거일수도) -> 400 error?
-        return FAILURE;
+    if (token.substr(0, 5) != "HTTP/" || token.length() != 8) { // 정의되어있지 않음(내가 못찾은 거일수도) -> 400 error?
+        _status = INPUT_CLOSED;
+        _httpRequest.setCode(400);
+        return;
+    }
 
     requestLine.setVersion(std::make_pair(static_cast<short>(token[5] - '0'), static_cast<short>(token[7] - '0')));
 
     _httpRequest.setRequestLine(requestLine);
     _status = INPUT_HEADER_FIELD;
-
-    _lineV.clear();
-    return SUCCESS;
 }
 
 void HttpRequestHandler::_inputHeaderField()
@@ -151,7 +166,7 @@ void HttpRequestHandler::_inputHeaderField()
         _parseHeaderField();
 }
 
-bool HttpRequestHandler::_parseHeaderField()
+void HttpRequestHandler::_parseHeaderField()
 {
     std::multimap<std::string, std::string> headerFields;
     const std::string whitespace = WHITESPACE;
@@ -159,10 +174,16 @@ bool HttpRequestHandler::_parseHeaderField()
     size_t pos;
 
     for (int i = 0; i < _lineV.size(); i++) {
-        if ((pos = _lineV[i].find(':')) == std::string::npos)
-            return FAILURE; // maybe a obs-fold -> 400 ERROR
-        if (whitespace.find(_lineV[i][pos - 1]) != std::string::npos)
-            return FAILURE; // 400 ERROR
+        if ((pos = _lineV[i].find(':')) == std::string::npos) { // maybe a obs-fold -> 400 ERROR
+            _status = INPUT_CLOSED;
+            _httpRequest.setCode(400);
+            return;
+        }
+        if (whitespace.find(_lineV[i][pos - 1]) != std::string::npos) {
+            _status = INPUT_CLOSED;
+            _httpRequest.setCode(400);
+            return;
+        }
 
         key = _lineV[i].substr(0, pos);
         pos = pos + 1 + (whitespace.find(_lineV[i][pos + 1]) != std::string::npos);
@@ -172,7 +193,6 @@ bool HttpRequestHandler::_parseHeaderField()
 
     _httpRequest.setHeaderFields(headerFields);
     _status = INPUT_MESSAGE_BODY;
-    return SUCCESS;
 }
 
 /*
@@ -190,13 +210,21 @@ void HttpRequestHandler::_inputMessageBody()
     int transferEncodingCount = _httpRequest.getHeaderFields().count("Transfer-Encoding");
 
     if (contentLengthCount > 0) {
+        if (transferEncodingCount > 0) {
+            _status = INPUT_CLOSED;
+            _httpRequest.setCode(400);
+            return;
+        }
         _extractContentLength(contentLengthCount);
         _status = INPUT_DEFAULT_BODY;
         _inputDefaultBody();
     }
     else if (transferEncodingCount > 0) {
-        if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") // chunked가 아님 -> 400 ERROR
+        if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") { // chunked가 아님 -> 400 ERROR
+            _status = INPUT_CLOSED;
+            _httpRequest.setCode(400);
             return;
+        }
         _lineV.clear();
         _status = INPUT_CHUNKED_BODY;
         _inputChunkedBody();
@@ -217,16 +245,22 @@ void HttpRequestHandler::_extractContentLength(int contentLengthCount)
 
         lengthStr = iter->second;
         for (iter++; iter != mp.end() && iter->first == "Content-Length"; iter++) {
-            if (lengthStr != iter->second) // 404 error
+            if (lengthStr != iter->second) { // 400 error
+                _status = INPUT_CLOSED;
+                _httpRequest.setCode(400);
                 return;
+            }
         }
     }
 
     std::vector<std::string> lengthV = _splitByComma(lengthStr);
     if (lengthV.size() != 1) {
         for (size_t i = 1; i < lengthV.size(); i++) {
-            if (lengthV[0] != lengthV[i]) // 404 error
+            if (lengthV[0] != lengthV[i]) { // 400 error
+                _status = INPUT_CLOSED;
+                _httpRequest.setCode(400);
                 return;
+            }
         }
         lengthStr = lengthV[0];
     }
@@ -237,17 +271,17 @@ void HttpRequestHandler::_inputDefaultBody()
 {
     const size_t length = _remain.length();
 
-    if (length > _contentLength) {
-        // 400 Bad Request
-        return;
+    if (length < _contentLength) {
+        _httpRequest.getMessageBody().append(_remain);
+        _remain = "";
+        _contentLength -= length;
     }
-    
-    _httpRequest.getMessageBody().append(_remain);
-    _remain = "";
-    _contentLength -= length;
-
-    if (_contentLength == 0)
+    else { // remain에 다음 request가 포함되어 있을 수 있다.
+        _httpRequest.getMessageBody().append(_remain.substr(0, _contentLength));
+        _remain = _remain.substr(_contentLength);
+        _contentLength = 0;
         _status = PARSE_FINISHED;
+    }
 }
 
 void HttpRequestHandler::_inputChunkedBody()
@@ -259,12 +293,12 @@ void HttpRequestHandler::_inputChunkedBody()
 
     size_t start, end;
     long long length;
-    short mode = LENGTH;
+    unsigned short mode = LENGTH;
 
     start = 0;
     while (1) {
         if ((end = _remain.find(CRLF, start)) == std::string::npos) {
-            if (_remain[start] == '0' && _remain[start + 1] == '\0')
+            if (_remain[start] == '0' && mode == LENGTH)
                 _status = PARSE_FINISHED;
             break;
         }
@@ -274,6 +308,11 @@ void HttpRequestHandler::_inputChunkedBody()
             mode = STRING;
         }
         else {
+            if (length != end - start) { // 400 error
+                _status = INPUT_CLOSED;
+                _httpRequest.setCode(400);
+                return;
+            }
             _httpRequest.getMessageBody().append(_remain.substr(start, length));
             mode = LENGTH;
         }
@@ -299,18 +338,19 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 {
     ssize_t read_len;
 
-    while (size > 0) {
-        if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
-            throw std::runtime_error("recvHttpRequest에서 read 실패");
-        size -= read_len;
-        _remain.append(_buf, static_cast<size_t>(read_len));
-    }
-    // configuration의 client-body size도 고려해야 함
-    // if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
-    //     throw std::runtime_error("recvHttpRequest에서 read 실패");
+    // while (size > 0) {
+    //     if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
+    //         throw std::runtime_error("recvHttpRequest에서 read 실패");
+    //     size -= read_len;
+    //     _remain.append(_buf, static_cast<size_t>(read_len));
     // }
-    // size -= read_len;
-    // _remain.append(_buf, static_cast<size_t>(read_len));
+    
+    // configuration의 client-body size도 고려해야 함
+    if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
+        _status = INPUT_CLOSED;
+    }
+    size -= read_len;
+    _remain.append(_buf, static_cast<size_t>(read_len));
 }
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)

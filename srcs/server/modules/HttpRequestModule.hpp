@@ -35,6 +35,7 @@ public:
 class HttpRequest
 {
 private:
+    unsigned short _code;
     RequestLine _requestLine;
     std::multimap<std::string, std::string> _headerFields;
     std::string _messageBody;
@@ -44,10 +45,12 @@ public:
     HttpRequest(RequestLine &requestLine,
                 std::multimap<std::string, std::string> &headerFields, std::string &messageBody);
 
+    void setCode(unsigned short code);
     void setRequestLine(RequestLine &requestLine);
     void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
     void setMessageBody(std::string &messageBody);
 
+    const unsigned short getCode() const;
     RequestLine &getRequestLine();
     std::multimap<std::string, std::string> &getHeaderFields();
     std::string getMessageBody() const;
@@ -81,18 +84,20 @@ private:
 
     void _inputRequestLine();
     std::string _decodeUrl(std::string &str);
-    bool _parseRequestLine();
+    void _parseRequestLine();
 
     void _inputHeaderField();
     void _parseQuery(RequestLine &requestLine, std::string &query);
-    bool _parseHeaderField();
+    void _parseHeaderField();
 
+    void _extractContentLength(int contentLengthCount);
     void _inputMessageBody();
-    void _inputDefaultBody(int content_length_count, int transfer_encoding_count);
-    void _inputChunkedBody(int transfer_encoding_count);
+    void _inputDefaultBody();
+    void _inputChunkedBody();
 
     void _push_request(std::queue<HttpRequest> &httpRequestQ);
     void _push_err_request(std::queue<HttpRequest> &httpRequestQ);
+
 
     std::vector<std::string> _splitByComma(std::string &str);
 public:
