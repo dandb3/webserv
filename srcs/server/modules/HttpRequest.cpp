@@ -47,7 +47,7 @@ std::multimap<std::string, std::string>& HttpRequest::getHeaderFields()
     return _headerFields;
 }
 
-std::string HttpRequest::getMessageBody() const
+std::string &HttpRequest::getMessageBody()
 {
     return _messageBody;
 }

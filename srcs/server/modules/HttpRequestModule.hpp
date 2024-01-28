@@ -53,7 +53,7 @@ public:
     unsigned short getCode() const;
     RequestLine &getRequestLine();
     std::multimap<std::string, std::string> &getHeaderFields();
-    std::string getMessageBody() const;
+    std::string &getMessageBody();
 };
 
 class HttpRequestHandler
@@ -68,7 +68,8 @@ private:
         INPUT_DEFAULT_BODY,
         INPUT_CHUNKED_BODY,
         PARSE_FINISHED,
-        INPUT_CLOSED,
+        INPUT_NORMAL_CLOSED,
+        INPUT_ERROR_CLOSED
     };
 
     char _buf[BUF_SIZE];
@@ -96,13 +97,12 @@ private:
     void _inputChunkedBody();
 
     void _pushRequest(HttpRequestQueue &httpRequestQ);
-    void _pushErrorRequest(HttpRequestQueue &httpRequestQ);
-
 
     std::vector<std::string> _splitByComma(std::string &str);
 public:
     enum
     {
+        METHOD_ERROR = -1,
         GET,
         HEAD,
         POST,

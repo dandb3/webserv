@@ -33,7 +33,7 @@ void HttpRequestHandler::_parseQuery(RequestLine &requestLine, std::string &quer
 
     while (start != query.length()) {
         if ((equalPos = query.find('=', start + 1)) == std::string::npos) { // GET 요청에 문법 오류(error 발생)
-            _status = INPUT_CLOSED;
+            _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
             return;
         }
@@ -87,7 +87,7 @@ void HttpRequestHandler::_parseRequestLine()
         tokens.push_back(token);
 
     if (tokens.size() != 3) {
-        _status = INPUT_CLOSED;
+        _status = INPUT_ERROR_CLOSED;
         _httpRequest.setCode(400);
         return;
     }
@@ -107,15 +107,13 @@ void HttpRequestHandler::_parseRequestLine()
         method = DELETE;
     else { // 처리하지 않을 header -> 501 Not Implemented
         _httpRequest.setCode(501);
-        return;
+        method = METHOD_ERROR;
     }
     requestLine.setMethod(method);
 
     // set uri & query
-    // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
     token = _decodeUrl(tokens[1]);
-    if (token.length() > 8000) {
-        _status = INPUT_CLOSED;
+    if (token.length() > 8000) { // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
         _httpRequest.setCode(414);
         return;
     }
@@ -134,7 +132,6 @@ void HttpRequestHandler::_parseRequestLine()
     // set HTTP version
     token = tokens[2];
     if (token.substr(0, 5) != "HTTP/" || token.length() != 8) { // 정의되어있지 않음(내가 못찾은 거일수도) -> 400 error?
-        _status = INPUT_CLOSED;
         _httpRequest.setCode(400);
         return;
     }
@@ -177,12 +174,12 @@ void HttpRequestHandler::_parseHeaderField()
 
     for (int i = 0; i < _lineV.size(); i++) {
         if ((pos = _lineV[i].find(':')) == std::string::npos) { // maybe a obs-fold -> 400 ERROR
-            _status = INPUT_CLOSED;
+            _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
             return;
         }
         if (whitespace.find(_lineV[i][pos - 1]) != std::string::npos) {
-            _status = INPUT_CLOSED;
+            _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
             return;
         }
@@ -213,7 +210,7 @@ void HttpRequestHandler::_inputMessageBody()
 
     if (contentLengthCount > 0) {
         if (transferEncodingCount > 0) {
-            _status = INPUT_CLOSED;
+            _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
             return;
         }
@@ -223,7 +220,7 @@ void HttpRequestHandler::_inputMessageBody()
     }
     else if (transferEncodingCount > 0) {
         if (_httpRequest.getHeaderFields().find("Transfer-Encoding")->second != "chunked") { // chunked가 아님 -> 400 ERROR
-            _status = INPUT_CLOSED;
+            _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
             return;
         }
@@ -248,7 +245,7 @@ void HttpRequestHandler::_extractContentLength(int contentLengthCount)
         lengthStr = iter->second;
         for (iter++; iter != mp.end() && iter->first == "Content-Length"; iter++) {
             if (lengthStr != iter->second) { // 400 error
-                _status = INPUT_CLOSED;
+                _status = INPUT_ERROR_CLOSED;
                 _httpRequest.setCode(400);
                 return;
             }
@@ -259,7 +256,7 @@ void HttpRequestHandler::_extractContentLength(int contentLengthCount)
     if (lengthV.size() != 1) {
         for (size_t i = 1; i < lengthV.size(); i++) {
             if (lengthV[0] != lengthV[i]) { // 400 error
-                _status = INPUT_CLOSED;
+                _status = INPUT_ERROR_CLOSED;
                 _httpRequest.setCode(400);
                 return;
             }
@@ -311,7 +308,7 @@ void HttpRequestHandler::_inputChunkedBody()
         }
         else {
             if (length != end - start) { // 400 error
-                _status = INPUT_CLOSED;
+                _status = INPUT_ERROR_CLOSED;
                 _httpRequest.setCode(400);
                 return;
             }
@@ -323,14 +320,6 @@ void HttpRequestHandler::_inputChunkedBody()
     _remain = _remain.substr(start);
 }
 
-void HttpRequestHandler::_pushErrorRequest(HttpRequestQueue &httpRequestQ)
-{
-    _status = INPUT_CLOSED;
-    if (_status == INPUT_REQUEST_LINE && _remain.empty())
-        return;
-    
-}
-
 void HttpRequestHandler::_pushRequest(HttpRequestQueue &httpRequestQ)
 {
     const std::multimap<std::string, std::string>& headerFields = _httpRequest.getHeaderFields();
@@ -340,8 +329,8 @@ void HttpRequestHandler::_pushRequest(HttpRequestQueue &httpRequestQ)
     /* case-insensitive하게 check해야 하는데.. */
     it = headerFields.find("Connection");
     if (it != headerFields.end() && isCaseInsensitiveSame(it->second, "closed"))
-        _status = INPUT_CLOSED;
-    else
+        _status = INPUT_NORMAL_CLOSED;
+    else if (_status == PARSE_FINISHED)
         _status = INPUT_READY;
 }
 
@@ -349,25 +338,20 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 {
     ssize_t read_len;
 
-    // while (size > 0) {
-    //     if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE)
-    //         throw std::runtime_error("recvHttpRequest에서 read 실패");
-    //     size -= read_len;
-    //     _remain.append(_buf, static_cast<size_t>(read_len));
-    // }
-    
     // configuration의 client-body size도 고려해야 함
+    // 곧 쳐야 됨
     if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
-        _status = INPUT_CLOSED;
+        _httpRequest.setCode(500);
+        _status = INPUT_ERROR_CLOSED;
     }
-    size -= read_len;
     _remain.append(_buf, static_cast<size_t>(read_len));
 }
 
 void HttpRequestHandler::parseHttpRequest(bool eof, HttpRequestQueue &httpRequestQ)
 {
+    if (eof && _httpRequest.getCode() == 0)
+        _status = INPUT_NORMAL_CLOSED;
     do {
-        // 아무런 메시지가 오지 않고 eof가 오는 경우 처리?
         if (_status == INPUT_READY)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
@@ -380,17 +364,14 @@ void HttpRequestHandler::parseHttpRequest(bool eof, HttpRequestQueue &httpReques
             _inputDefaultBody();
         if (_status == INPUT_CHUNKED_BODY)
             _inputChunkedBody();
-        if (_status != PARSE_FINISHED && eof)
-            // cycle의 closed를 set 해 주어야 한다.
-            _pushErrorRequest(httpRequestQ);
-        if (_status == PARSE_FINISHED /* || _status == PARSE_CLOSED ? */)
+        if (_status == PARSE_FINISHED || _status == INPUT_ERROR_CLOSED)
             _pushRequest(httpRequestQ);
     } while (_status == INPUT_READY);
 }
 
 bool HttpRequestHandler::closed() const
 {
-    return (_status == INPUT_CLOSED);
+    return (_status == INPUT_NORMAL_CLOSED || _status == INPUT_ERROR_CLOSED);
 }
 
 std::vector<std::string> HttpRequestHandler::_splitByComma(std::string &str)
