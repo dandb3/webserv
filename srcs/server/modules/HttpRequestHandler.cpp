@@ -7,7 +7,8 @@ HttpRequestHandler::HttpRequestHandler() : _status(INPUT_READY)
 
 void HttpRequestHandler::_inputStart()
 {
-    _status = INPUT_REQUEST_LINE;
+    if (!_remain.empty())
+        _status = INPUT_REQUEST_LINE;
 }
 
 void HttpRequestHandler::_inputRequestLine()
@@ -324,8 +325,10 @@ void HttpRequestHandler::_inputChunkedBody()
 
 void HttpRequestHandler::_pushErrorRequest(HttpRequestQueue &httpRequestQ)
 {
-    httpRequestQ.setErrorStatus(400, "Bad Request");
     _status = INPUT_CLOSED;
+    if (_status == INPUT_REQUEST_LINE && _remain.empty())
+        return;
+    
 }
 
 void HttpRequestHandler::_pushRequest(HttpRequestQueue &httpRequestQ)
@@ -364,6 +367,7 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 void HttpRequestHandler::parseHttpRequest(bool eof, HttpRequestQueue &httpRequestQ)
 {
     do {
+        // 아무런 메시지가 오지 않고 eof가 오는 경우 처리?
         if (_status == INPUT_READY)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
@@ -377,8 +381,9 @@ void HttpRequestHandler::parseHttpRequest(bool eof, HttpRequestQueue &httpReques
         if (_status == INPUT_CHUNKED_BODY)
             _inputChunkedBody();
         if (_status != PARSE_FINISHED && eof)
+            // cycle의 closed를 set 해 주어야 한다.
             _pushErrorRequest(httpRequestQ);
-        if (_status == PARSE_FINISHED)
+        if (_status == PARSE_FINISHED /* || _status == PARSE_CLOSED ? */)
             _pushRequest(httpRequestQ);
     } while (_status == INPUT_READY);
 }

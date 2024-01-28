@@ -107,6 +107,11 @@ void Cycle::setCgiScriptPid(pid_t pid)
     _cgiScriptPid = pid;
 }
 
+void Cycle::setClosed()
+{
+    _closed = true;
+}
+
 void Cycle::resetCycle()
 {
     // _httpRequestHandler = HttpRequestHandler();

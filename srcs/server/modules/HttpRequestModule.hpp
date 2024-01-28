@@ -50,7 +50,7 @@ public:
     void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
     void setMessageBody(std::string &messageBody);
 
-    const unsigned short getCode() const;
+    unsigned short getCode() const;
     RequestLine &getRequestLine();
     std::multimap<std::string, std::string> &getHeaderFields();
     std::string getMessageBody() const;

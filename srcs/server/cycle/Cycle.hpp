@@ -66,6 +66,7 @@ public:
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);
     void setCgiScriptPid(pid_t pid);
+	void setClosed();
 
     void resetCycle();
 };
