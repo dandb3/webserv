@@ -320,7 +320,7 @@ void HttpRequestHandler::_inputChunkedBody()
     _remain = _remain.substr(start);
 }
 
-void HttpRequestHandler::_pushRequest(HttpRequestQueue &httpRequestQ)
+void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
 {
     const std::multimap<std::string, std::string>& headerFields = _httpRequest.getHeaderFields();
     std::multimap<std::string, std::string>::const_iterator it;
@@ -347,7 +347,7 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
     _remain.append(_buf, static_cast<size_t>(read_len));
 }
 
-void HttpRequestHandler::parseHttpRequest(bool eof, HttpRequestQueue &httpRequestQ)
+void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
 {
     if (eof && _httpRequest.getCode() == 0)
         _status = INPUT_NORMAL_CLOSED;

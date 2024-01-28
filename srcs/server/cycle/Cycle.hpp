@@ -2,9 +2,9 @@
 #define CYCLE_HPP
 
 #include <map>
+#include <queue>
 #include "../../webserv.hpp"
 #include "ConfigInfo.hpp"
-#include "HttpRequestQueue.hpp"
 #include "../modules/HttpRequestModule.hpp"
 #include "../modules/HttpResponseModule.hpp"
 #include "../modules/CgiRequestModule.hpp"
@@ -38,7 +38,7 @@ private:
     CgiRequestHandler _cgiRequestHandler;
     CgiResponseHandler _cgiResponseHandler;
 
-    HttpRequestQueue _httpRequestQueue;
+    std::queue<HttpRequest> _httpRequestQueue;
 
 public:
     static Cycle *newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
@@ -61,7 +61,7 @@ public:
     HttpResponseHandler &getHttpResponseHandler();
     CgiRequestHandler &getCgiRequestHandler();
     CgiResponseHandler &getCgiResponseHandler();
-    HttpRequestQueue &getHttpRequestQueue();
+    std::queue<HttpRequest> &getHttpRequestQueue();
 
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);

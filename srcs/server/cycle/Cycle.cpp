@@ -87,7 +87,7 @@ CgiResponseHandler &Cycle::getCgiResponseHandler()
     return _cgiResponseHandler;
 }
 
-HttpRequestQueue &Cycle::getHttpRequestQueue()
+std::queue<HttpRequest> &Cycle::getHttpRequestQueue()
 {
     return _httpRequestQueue;
 }

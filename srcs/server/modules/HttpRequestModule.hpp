@@ -96,7 +96,7 @@ private:
     void _inputDefaultBody();
     void _inputChunkedBody();
 
-    void _pushRequest(HttpRequestQueue &httpRequestQ);
+    void _pushRequest(std::queue<HttpRequest> &httpRequestQ);
 
     std::vector<std::string> _splitByComma(std::string &str);
 public:
@@ -111,7 +111,7 @@ public:
     HttpRequestHandler();
 
     void recvHttpRequest(int fd, size_t size);
-    void parseHttpRequest(bool eof, HttpRequestQueue &httpRequestQ);
+    void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);
 
     bool closed() const;
 };
