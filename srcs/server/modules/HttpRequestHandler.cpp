@@ -131,13 +131,17 @@ void HttpRequestHandler::_parseRequestLine()
 
     // set HTTP version
     token = tokens[2];
-    if (token.substr(0, 5) != "HTTP/" || token.length() != 8) { // 정의되어있지 않음(내가 못찾은 거일수도) -> 400 error?
+    if (token.substr(0, 5) != "HTTP/" || token.length() != 8 || token[6] != '.') { // 정의되어있지 않음 -> 400 error
         _httpRequest.setCode(400);
         return;
     }
 
-    requestLine.setVersion(std::make_pair(static_cast<short>(token[5] - '0'), static_cast<short>(token[7] - '0')));
-
+    short first = static_cast<short>(token[5] - '0');
+    short second = static_cast<short>(token[7] - '0');
+    if (first != 1 || second != 1)
+        _httpRequest.setCode(505); // HTTP version not supported (1.1만 지원)
+    requestLine.setVersion(std::make_pair(first, second));
+    
     _httpRequest.setRequestLine(requestLine);
     _status = INPUT_HEADER_FIELD;
 }
