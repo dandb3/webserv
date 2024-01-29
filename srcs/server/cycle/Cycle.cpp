@@ -3,7 +3,7 @@
 std::map<int, Cycle> Cycle::_cycleStorage;
 
 Cycle::Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
-: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _isRTimer(true), _closed(false)
+: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _timerType(TIMER_KEEP_ALIVE), _closed(false)
 {}
 
 Cycle *Cycle::newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
@@ -57,9 +57,9 @@ pid_t Cycle::getCgiScriptPid() const
     return _cgiScriptPid;
 }
 
-bool Cycle::isRTimer() const
+bool Cycle::getTimerType() const
 {
-    return _isRTimer;
+    return _timerType;
 }
 
 bool Cycle::closed() const
@@ -105,6 +105,11 @@ void Cycle::setCgiRecvfd(int fd)
 void Cycle::setCgiScriptPid(pid_t pid)
 {
     _cgiScriptPid = pid;
+}
+
+void Cycle::setTimerType(bool type)
+{
+    _timerType = type;
 }
 
 void Cycle::setClosed()

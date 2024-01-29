@@ -390,6 +390,11 @@ void HttpRequestHandler::setHttpRequest(const HttpRequest& httpRequest)
     _cycleHttpRequest = httpRequest;
 }
 
+bool HttpRequestHandler::isInputReady() const
+{
+    return (_status == INPUT_READY);
+}
+
 bool HttpRequestHandler::closed() const
 {
     return (_status == INPUT_NORMAL_CLOSED || _status == INPUT_ERROR_CLOSED);

@@ -42,6 +42,7 @@ private:
 
 public:
     HttpRequest();
+    HttpRequest(unsigned short code);
     HttpRequest(RequestLine &requestLine,
                 std::multimap<std::string, std::string> &headerFields, std::string &messageBody);
 
@@ -118,6 +119,7 @@ public:
     const HttpRequest& getHttpRequest() const;
     void setHttpRequest(const HttpRequest& httpRequest);
 
+    bool isInputReady() const;
     bool closed() const;
 };
 
