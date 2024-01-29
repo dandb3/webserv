@@ -142,6 +142,7 @@ void EventHandler::_servHttpResponse(const struct kevent& kev)
      * sendHttpResponse();
      * if eof()라면? (전송이 다 끝난다면)
 
+
      *     cycle 초기화 (httpResponseHandler의 status를 IDLE로 바꿈. 도 포함)
      *     deleteEvent(); (혹은 disable?)
 
@@ -158,7 +159,6 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     CgiRequestHandler& cgiRequestHandler = cycle->getCgiRequestHandler();
-
     cgiRequestHandler.sendCgiRequest(kev);
     if (cgiRequestHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sstream>
 #include <cstring>
 #include <sys/socket.h>
@@ -232,7 +233,7 @@ void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
     size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
 
     remainSize = messageBody.size() - _pos;
-    sendSize = (remainSize < maxSize) ? remainSize : maxSize;
+    sendSize = std::min(remainSize, maxSize);
 
     if (write(kev.ident, messageBody.c_str() + _pos, sendSize) == FAILURE)
         throw ERROR;
