@@ -92,6 +92,7 @@
 		"queue": "cpp",
 		"ios": "cpp",
 		"locale": "cpp",
-		"csignal": "cpp"
+		"csignal": "cpp",
+		"event.h": "c"
 	}
 }

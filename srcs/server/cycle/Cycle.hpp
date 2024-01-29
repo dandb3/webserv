@@ -19,6 +19,13 @@
 
 class Cycle
 {
+public:
+    enum
+    {
+        TIMER_KEEP_ALIVE = 0,
+        TIMER_REQUEST = 1
+    };
+
 private:
     static std::map<int, Cycle> _cycleStorage;
 
@@ -30,7 +37,7 @@ private:
     int _cgiSendfd;
     int _cgiRecvfd;
     pid_t _cgiScriptPid;
-    bool _isRTimer; // set if it is a request timer
+    bool _timerType; // set if it is a request timer
     bool _closed;
 
     HttpRequestHandler _httpRequestHandler;
@@ -54,7 +61,7 @@ public:
     int getCgiSendfd() const;
     int getCgiRecvfd() const;
     pid_t getCgiScriptPid() const;
-    bool isRTimer() const;
+    bool getTimerType() const;
     bool closed() const;
 
     HttpRequestHandler &getHttpRequestHandler();
@@ -66,6 +73,7 @@ public:
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);
     void setCgiScriptPid(pid_t pid);
+    void setTimerType(bool type);
 	void setClosed();
 
     void resetCycle();

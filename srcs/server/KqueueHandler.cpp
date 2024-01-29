@@ -53,19 +53,11 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void *udata)
     _eventsToAdd.push_back(kev);
 }
 
-void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, void *udata)
+void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags = 0, intptr_t data = 0, void *udata = NULL)
 {
     struct kevent kev;
 
-    EV_SET(&kev, ident, filter, flags, 0, 0, udata);
-    _eventsToAdd.push_back(kev);
-}
-
-void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, u_int fflags, void *udata = NULL)
-{
-    struct kevent kev;
-
-    EV_SET(&kev, ident, filter, flags, fflags, 0, udata);
+    EV_SET(&kev, ident, filter, flags, fflags, data, udata);
     _eventsToAdd.push_back(kev);
 }
 
