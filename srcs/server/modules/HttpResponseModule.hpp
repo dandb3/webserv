@@ -18,44 +18,32 @@
 
 class StatusLine
 {
-private:
-	std::pair<short, short> _version;
-	short _code;
-	std::string _text;
-
 public:
+	std::pair<short, short> version;
+	short code;
+	std::string text;
+
 	StatusLine &operator=(const StatusLine &ref);
-
-	// setter
-	void setVersion(std::pair<short, short> version);
-	void setCode(short code);
-	void setText(std::string &text);
-
-	// getter
-	const std::pair<short, short> &getVersion() const;
-	const short getCode() const;
-	const std::string &getText() const;
 };
 
 class HttpResponse
 {
-private:
-	StatusLine _statusLine;
-	std::multimap<std::string, std::string> _headerFields;
-	std::string _messageBody;
-
 public:
+	StatusLine statusLine;
+	std::multimap<std::string, std::string> headerFields;
+	std::string messageBody;
+	
 	// HttpResponse();
 
 	// getter
-	const StatusLine &getStatusLine() const;
-	std::multimap<std::string, std::string> &getHeaderFields();
-	const std::string &getMessageBody() const;
+	// const StatusLine &getStatusLine() const;
+	// std::multimap<std::string, std::string> &getHeaderFields();
+	// const std::string &getMessageBody() const;
 
-	// setter
-	void setStatusLine(StatusLine &statusLine);
-	void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
-	void setMessageBody(std::string &messageBody);
+	// // setter
+	// void setStatusLine(StatusLine &statusLine);
+	// void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
+	// void setMessageBody(std::string &messageBody);
 };
 
 class HttpResponseHandler
@@ -67,14 +55,14 @@ private:
 
 	HttpResponse _httpResponse;
 
-	void _setConnection(std::multimap<std::string, std::string> &headerFields);
-	void _setContentLength(std::multimap<std::string, std::string> &headerFields);
-	void _setContentType(std::multimap<std::string, std::string> &headerFields);
-	void _setDate(std::multimap<std::string, std::string> &headerFields);
-	void _setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path);
+	void _setConnection();
+	void _setContentLength();
+	void _setContentType();
+	void _setDate();
+	void _setLastModified(const char *path);
 
 	void _makeStatusLine(StatusLine &statusLine, short code);
-	void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo);
+	void _makeHeaderFields(ConfigInfo &configInfo);
 
 	void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET);
 	void _makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);

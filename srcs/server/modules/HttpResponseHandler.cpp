@@ -6,8 +6,8 @@ void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
 {
     std::string text;
 
-    statusLine.setVersion(std::make_pair(1, 1));
-    statusLine.setCode(code);
+    statusLine.version = std::make_pair(1, 1);
+    statusLine.code = code;
 
     switch (code) {
     case 100:
@@ -34,20 +34,29 @@ void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
     case 204:
         text = "No Content";
         break;
+    case 400:
+        text = "Bad Request";
+        break;
     case 404:
         text = "Not Found";
         break;
+    case 500:
+        text = "Internal Server Error";
+        break;
     case 503:
         text = "Service Unavailable";
+        break;
+    case 505:
+        text = "HTTP Version Not Supported";
         break;
     default:
         text = "Not Yet Setted\n";
     }
 
-    statusLine.setText(text);
+    statusLine.text = text;
 }
 
-void HttpResponseHandler::_setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path)
+void HttpResponseHandler::_setLastModified(const char *path)
 {
     struct stat fileInfo;
 
@@ -64,10 +73,10 @@ void HttpResponseHandler::_setLastModified(std::multimap<std::string, std::strin
 
     char buf[100];
     std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
+    _httpResponse.headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
 }
 
-void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setDate()
 {
     std::time_t currentDate = std::time(NULL);
     if (currentDate == -1)
@@ -78,11 +87,11 @@ void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &head
 
     char buf[100];
     std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Date", std::string(buf)));
+    _httpResponse.headerFields.insert(std::make_pair("Date", std::string(buf)));
 }
 
 // 수정 필요
-void HttpResponseHandler::_setContentType(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setContentType()
 {
     std::string type;
 
@@ -97,52 +106,49 @@ void HttpResponseHandler::_setContentType(std::multimap<std::string, std::string
     else
         type = "application/json";
 
-    headerFields.insert(std::make_pair("Content-Type", type));
+    _httpResponse.headerFields.insert(std::make_pair("Content-Type", type));
 }
 
-void HttpResponseHandler::_setContentLength(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setContentLength()
 {
     // chunked로 구현하기?
-    headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.getMessageBody().length())));
+    _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.messageBody.length())));
 }
 
 // 수정 필요
-void HttpResponseHandler::_setConnection(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setConnection()
 {
     if (1)
-        headerFields.insert(std::make_pair("Connection", "keep-alive"));
+        _httpResponse.headerFields.insert(std::make_pair("Connection", "keep-alive"));
     else
-        headerFields.insert(std::make_pair("Connection", "close"));
+        _httpResponse.headerFields.insert(std::make_pair("Connection", "close"));
 }
 
-void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo)
+void HttpResponseHandler::_makeHeaderFields(ConfigInfo &configInfo)
 {
-    _setConnection(headerFields);
-    _setContentLength(headerFields);
-    _setContentType(headerFields);
-    _setDate(headerFields);
-    _setLastModified(headerFields, configInfo.getPath().c_str());
+    _setConnection();
+    _setContentLength();
+    _setContentType();
+    _setDate();
+    _setLastModified(configInfo.getPath().c_str());
 }
 
 void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET)
 {
     std::string path = "." + configInfo.getPath() + "index.html";
     int fileFd = open(path.c_str(), O_RDONLY);
-    StatusLine statusLine;
-    std::multimap<std::string, std::string> headerFields;
     std::string messageBody;
 
     if (fileFd == -1) {
-        _makeStatusLine(statusLine, 404);
+        _makeStatusLine(_httpResponse.statusLine, 404);
         fileFd = open(configInfo.getErrorPage().c_str(), O_RDONLY);
         // 404 Not Found 페이지가 없는 경우
         if (fileFd == -1)
             throw std::runtime_error("404 Not Found 페이지가 없습니다.");
     }
     else {
-        _makeStatusLine(statusLine, 200);
+        _makeStatusLine(_httpResponse.statusLine, 200);
     }
-    _httpResponse.setStatusLine(statusLine);
 
     if (isGET) {
         char buffer[1024];
@@ -151,13 +157,11 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
             messageBody.append(buffer);
             memset(buffer, 0, 1024);
         }
-        messageBody.push_back('\0');
-        _httpResponse.setMessageBody(messageBody);
+        _httpResponse.messageBody = messageBody;
     }
 
     // Header Field들을 세팅해준다.
-    _makeHeaderFields(headerFields, configInfo);
-    _httpResponse.setHeaderFields(headerFields);
+    _makeHeaderFields(configInfo);
 
     close(fileFd);
 }
@@ -176,8 +180,7 @@ void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, ConfigIn
 
 void HttpResponseHandler::_statusLineToString()
 {
-    const std::pair<short, short> version = _httpResponse.getStatusLine().getVersion();
-    const short code = _httpResponse.getStatusLine().getCode();
+    const std::pair<short, short> version = _httpResponse.statusLine.version;
     std::string versionStr;
     std::string codeStr;
 
@@ -186,17 +189,15 @@ void HttpResponseHandler::_statusLineToString()
     versionStr.push_back('.');
     versionStr.push_back(static_cast<char>(version.second + '0'));
 
-    codeStr = toString(code);
+    codeStr = toString(_httpResponse.statusLine.code);
 
-    _response = versionStr + " " + codeStr + " " + _httpResponse.getStatusLine().getText() + CRLF;
+    _response = versionStr + " " + codeStr + " " + _httpResponse.statusLine.text + CRLF;
 }
 
 void HttpResponseHandler::_headerFieldsToString()
 {
-    std::multimap<std::string, std::string> headerFields = _httpResponse.getHeaderFields();
-    std::multimap<std::string, std::string>::iterator it;
-
-    for (it = headerFields.begin(); it != headerFields.end(); it++) {
+    std::multimap<std::string, std::string>::iterator it = _httpResponse.headerFields.begin();
+    for (; it != _httpResponse.headerFields.end(); it++) {
         _response += it->first + ": " + it->second + CRLF;
     }
     _response += CRLF;
@@ -206,31 +207,39 @@ void HttpResponseHandler::_httpResponseToString()
 {
     _statusLineToString();
     _headerFieldsToString();
-    _response += _httpResponse.getMessageBody();
+    _response += _httpResponse.messageBody;
     std::cout << "final result: " << _response << '\n';
 }
 
 void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
-    const short method = httpRequest.getRequestLine().getMethod();
+    const unsigned short code = httpRequest.getCode();
 
-    // if else -> switch?
-    // httpRequest.code 확인해서 response 만들기
-    if (method == GET) {
-        _makeGETResponse(httpRequest, configInfo, true);
-    }
-    else if (method == HEAD) {
-        _makeGETResponse(httpRequest, configInfo, false);
-    }
-    else if (method == POST) {
-        _makePOSTResponse(httpRequest, configInfo);
-    }
-    else if (method == DELETE) {
-        _makeDELETEResponse(httpRequest, configInfo);
+    // http request에서 이미 에러가 발생한 경우
+    if (code != 0) {
+        if (code == 404) {
+
+        }
+        
     }
     else {
-        return;
-        // 400 Bad Request
+        const short method = httpRequest.getRequestLine().getMethod();
+        switch (method) {
+        case GET:
+            _makeGETResponse(httpRequest, configInfo, true);
+            break;
+        case HEAD:
+            _makeGETResponse(httpRequest, configInfo, false);
+            break;
+        case POST:
+            _makePOSTResponse(httpRequest, configInfo);
+            break;
+        case DELETE:
+            _makeDELETEResponse(httpRequest, configInfo);
+            break;
+        default:
+            // 여기로 올 수 있는 경우는 이미 HttpRequestHandler에서 걸러졌다.
+        }
     }
 
     _httpResponseToString();
