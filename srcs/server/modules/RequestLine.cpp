@@ -30,7 +30,7 @@ void RequestLine::setVersion(std::pair<short, short> version)
     _version = version;
 }
 
-const short RequestLine::getMethod() const
+short RequestLine::getMethod() const
 {
     return _method;
 }

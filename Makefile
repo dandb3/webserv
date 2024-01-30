@@ -6,7 +6,7 @@
 #    By: sunwsong <sunwsong@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/19 17:38:04 by sunwsong          #+#    #+#              #
-#    Updated: 2024/01/30 12:13:51 by sunwsong         ###   ########.fr        #
+#    Updated: 2024/01/30 17:40:20 by sunwsong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ SRCS		=	test_srv.cpp \
 
 OBJS		= ${SRCS:.cpp=.o}
 
-CXXFLAGS	= -std=c++98
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98
 
 NAME		= srv
 

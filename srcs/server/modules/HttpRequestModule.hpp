@@ -26,7 +26,7 @@ public:
     void setQuery(std::vector<std::pair<std::string, std::string> > &query);
     void setVersion(std::pair<short, short> version);
 
-    const short getMethod() const;
+    short getMethod() const;
     const std::string &getUri() const;
     const std::vector<std::pair<std::string, std::string> > &getQuery() const;
     const std::pair<short, short> &getVersion() const;

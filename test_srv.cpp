@@ -21,6 +21,8 @@ void f(){system("leaks srv");}
 
 int main(int ac, char **av) {
     atexit(f);
+    (void) ac;
+    (void) av;
     // 서버 소켓 생성
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
@@ -60,7 +62,6 @@ int main(int ac, char **av) {
 
     // 클라이언트로부터 메시지 수신
     std::queue<HttpRequest> que;
-    char buffer[1024];
 
     HttpRequestHandler requestHandler;
 
@@ -85,6 +86,7 @@ int main(int ac, char **av) {
         }
     }
 
+    // gchar buffer[1024];
     // struct sockaddr_in servaddr;
     // socklen_t servLen = sizeof(servaddr);
     // if (getsockname(clientSocket, (struct sockaddr *) &servaddr, &servLen) == -1) {

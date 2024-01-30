@@ -177,7 +177,7 @@ void HttpRequestHandler::_parseHeaderField()
     std::string key, value;
     size_t pos;
 
-    for (int i = 0; i < _lineV.size(); i++) {
+    for (size_t i = 0; i < _lineV.size(); i++) {
         if ((pos = _lineV[i].find(':')) == std::string::npos) { // maybe a obs-fold -> 400 ERROR
             _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
