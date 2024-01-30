@@ -119,16 +119,26 @@ void HttpRequestHandler::_parseRequestLine()
     }
 
     std::vector<std::pair<std::string, std::string> > queryV;
-    size_t pos = token.find('?');
-    if (pos == std::string::npos)
-        requestLine.setUri(token);
+    size_t qPos = token.find('?'), fPos = token.find('#');
+    if (qPos == std::string::npos) {
+        if (fPos == std::string::npos)
+            requestLine.setUri(token);
+        else
+            requestLine.setUri(token.substr(0, fPos));
+    }
     else {
-        std::string uri = token.substr(0, pos);
-        std::string queries = token.substr(pos + 1);
-        requestLine.setUri(uri);
+        std::string queries;
+
+        requestLine.setUri(token.substr(0, qPos));
+        if (fPos == std::string::npos)
+            queries = token.substr(qPos + 1);
+        else
+            queries = token.substr(qPos + 1, fPos - qPos - 1);
         _parseQuery(requestLine, queries);
     }
-
+    if (fPos != std::string::npos)
+        requestLine.setFragment(token.substr(fPos + 1));
+    
     // set HTTP version
     token = tokens[2];
     if (token.substr(0, 5) != "HTTP/" || token.length() != 8 || token[6] != '.') { // 정의되어있지 않음 -> 400 error

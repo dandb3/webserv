@@ -16,19 +16,20 @@ private:
     short _method;
     std::string _uri;
     std::vector<std::pair<std::string, std::string> > _query;
+    std::string _fragment;
     std::pair<short, short> _version;
 
 public:
-    RequestLine &operator=(const RequestLine &ref);
-
     void setMethod(short method);
-    void setUri(std::string &uri);
+    void setUri(std::string uri);
     void setQuery(std::vector<std::pair<std::string, std::string> > &query);
+    void setFragment(std::string fragment);
     void setVersion(std::pair<short, short> version);
 
     short getMethod() const;
     const std::string &getUri() const;
     const std::vector<std::pair<std::string, std::string> > &getQuery() const;
+    const std::string &getFragment() const;
     const std::pair<short, short> &getVersion() const;
 };
 
