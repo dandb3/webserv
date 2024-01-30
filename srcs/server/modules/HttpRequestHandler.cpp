@@ -157,10 +157,11 @@ void HttpRequestHandler::_inputHeaderField()
     while ((end = _remain.find(CRLF, start)) != std::string::npos) {
         if (start == end) {
             lastCRLF = true;
+            _remain = _remain.substr(2);
             break;
         }
         lastWhitespace = (whitespace.find(_remain[end - 1]) != std::string::npos);
-        _lineV.push_back(_remain.substr(start, end - start + 1 - lastWhitespace));
+        _lineV.push_back(_remain.substr(start, end - start - lastWhitespace));
         start = end + 2;
     }
 
@@ -336,6 +337,7 @@ void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
         _status = INPUT_NORMAL_CLOSED;
     else if (_status == PARSE_FINISHED)
         _status = INPUT_READY;
+    _httpRequest = HttpRequest();
 }
 
 void HttpRequestHandler::recvHttpRequest(int fd, size_t size)

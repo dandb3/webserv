@@ -13,11 +13,14 @@
 #include <string>
 #include <stdexcept>
 #include "./srcs/server/modules/HttpRequestModule.hpp"
-#include "./srcs/server/modules/HttpResponseModule.hpp"
-#include "./srcs/server/cycle/ConfigInfo.hpp"
+// #include "./srcs/server/modules/HttpResponseModule.hpp"
+// #include "./srcs/server/cycle/ConfigInfo.hpp"
 using namespace std;
 
+void f(){system("leaks srv");}
+
 int main(int ac, char **av) {
+    atexit(f);
     // 서버 소켓 생성
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
@@ -61,43 +64,60 @@ int main(int ac, char **av) {
 
     HttpRequestHandler requestHandler;
 
-    requestHandler.recvHttpRequest(clientSocket, 86);
-    requestHandler.parseHttpRequest(0, que);
-    HttpRequest httpRequest = que.front(); que.pop();
-    std::string uri = httpRequest.getRequestLine().getUri(); // uri
-    struct sockaddr_in servaddr;
-    socklen_t servLen = sizeof(servaddr);
-    if (getsockname(clientSocket, (struct sockaddr *) &servaddr, &servLen) == -1) {
-        std::cerr << "Error getting server socket name." << std::endl;
-        close(clientSocket);
-        close(serverSocket);
-        return 1;
+    int cnt = 0, cnt2 = 0;
+    while (1) {
+        cout << ++cnt << "st loop" << endl;
+        requestHandler.recvHttpRequest(clientSocket, 20);
+        requestHandler.parseHttpRequest(0, que);
+
+        if (que.size() > 0) {
+            HttpRequest httpRequest = que.front(); que.pop();
+            cout << "code: " << httpRequest.getCode() << endl;
+            cout << "method: " << httpRequest.getRequestLine().getMethod() << endl;
+            cout << "uri: " << httpRequest.getRequestLine().getUri() << endl;
+            cout << "version: " << httpRequest.getRequestLine().getVersion().first << endl;
+            for (std::map<std::string, std::string>::iterator it = httpRequest.getHeaderFields().begin(); it != httpRequest.getHeaderFields().end(); it++) {
+                cout << it->first << ": " << it->second << endl;
+            }
+            cout << "body: " << httpRequest.getMessageBody() << endl;
+            if (++cnt2 == 3)
+                break;
+        }
     }
-    // 연결된 서버의 port 구하기
-    int requestPort = ntohs(servaddr.sin_port); // port
 
-    in_addr_t ip = servaddr.sin_addr.s_addr; // ip
-    ConfigInfo configInfo(ip, requestPort, uri);
-    // configInfo.printConfigInfo();
-
-    HttpResponseHandler responseHandler;
-
-    responseHandler.makeHttpResponse(que.front(), configInfo);
-
-    // std::cout << que.size() << '\n';
-    // ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
-    // if (bytesRead == -1) {
-    //     std::cerr << "Error receiving message from client." << std::endl;
-    // } else {
-    //     buffer[bytesRead] = '\0';
-    //     std::cout << "Received message from client: " << buffer << std::endl;
+    // struct sockaddr_in servaddr;
+    // socklen_t servLen = sizeof(servaddr);
+    // if (getsockname(clientSocket, (struct sockaddr *) &servaddr, &servLen) == -1) {
+    //     std::cerr << "Error getting server socket name." << std::endl;
+    //     close(clientSocket);
+    //     close(serverSocket);
+    //     return 1;
     // }
+    // // 연결된 서버의 port 구하기
+    // int requestPort = ntohs(servaddr.sin_port); // port
 
-    // 클라이언트 소켓 닫기
-    close(clientSocket);
+    // in_addr_t ip = servaddr.sin_addr.s_addr; // ip
+    // ConfigInfo configInfo(ip, requestPort, uri);
+    // // configInfo.printConfigInfo();
 
-    // 서버 소켓 닫기
-    close(serverSocket);
+    // HttpResponseHandler responseHandler;
+
+    // responseHandler.makeHttpResponse(que.front(), configInfo);
+
+    // // std::cout << que.size() << '\n';
+    // // ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
+    // // if (bytesRead == -1) {
+    // //     std::cerr << "Error receiving message from client." << std::endl;
+    // // } else {
+    // //     buffer[bytesRead] = '\0';
+    // //     std::cout << "Received message from client: " << buffer << std::endl;
+    // // }
+
+    // // 클라이언트 소켓 닫기
+    // close(clientSocket);
+
+    // // 서버 소켓 닫기
+    // close(serverSocket);
 
     return 0;
 }

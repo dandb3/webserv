@@ -32,7 +32,7 @@ T stringToType(const std::string& str)
     T result;
 
     ss >> result;
-    return T;
+    return result;
 }
 
 template <typename T>
