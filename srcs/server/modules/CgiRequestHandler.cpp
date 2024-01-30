@@ -194,24 +194,24 @@ char** CgiRequestHandler::_makeEnvp() const
 
 void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ) const
 {
-    if (close(servToCgi[0]) == FAILURE || close(cgiToServ[1]) == FAILURE)
-        throw ERROR;
+    close(servToCgi[0]);
+    close(cgiToServ[1]);
 }
 
 void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
 {
     char **argv, **envp;
 
-    if (dup2(servToCgi[0], STDIN_FILENO) == FAILURE \
-        || dup2(cgiToServ[1], STDOUT_FILENO) == FAILURE)
-        exit(1);
-    if (close(servToCgi[0]) == FAILURE || close(servToCgi[1]) == FAILURE \
-        || close(cgiToServ[0]) == FAILURE || close(cgiToServ[1]) == FAILURE)
-        exit(1);
+    dup2(servToCgi[0], STDIN_FILENO);
+    dup2(cgiToServ[1], STDOUT_FILENO);
+    close(servToCgi[0]);
+    close(servToCgi[1]);
+    close(cgiToServ[0]);
+    close(cgiToServ[1]);
     argv = _makeArgv();
     envp = _makeEnvp();
     if (execve(argv[0], argv, envp) == FAILURE)
-        exit(1);
+        std::exit(1);
 }
 
 /**
@@ -247,16 +247,25 @@ void CgiRequestHandler::callCgiScript(Cycle* cycle)
     int servToCgi[2], cgiToServ[2];
     pid_t pid;
 
-    if (pipe(servToCgi) == FAILURE || pipe(cgiToServ) == FAILURE)
-        throw ERROR;
+    if (pipe(servToCgi) == FAILURE)
+        throw 500;
+    if (pipe(cgiToServ) == FAILURE) {
+        close(servToCgi[0]);
+        close(servToCgi[1]);
+        throw 500;
+    }
     // we don't know how cgi script acts, so let I/O fds blocking state.
-    if (fcntl(servToCgi[1], F_SETFL, O_NONBLOCK) == FAILURE \
-        || fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK) == FAILURE)
-        throw ERROR;
+    fcntl(servToCgi[1], F_SETFL, O_NONBLOCK);
+    fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK);
     cycle->setCgiSendfd(servToCgi[1]);
     cycle->setCgiRecvfd(cgiToServ[0]);
-    if ((pid = fork()) == FAILURE)
-        throw ERROR;
+    if ((pid = fork()) == FAILURE) {
+        close(servToCgi[0]);
+        close(servToCgi[1]);
+        close(cgiToServ[0]);
+        close(cgiToServ[1]);
+        throw 500;
+    }
     if (pid == 0)
         _childProcess(servToCgi, cgiToServ);
     else {

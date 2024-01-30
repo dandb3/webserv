@@ -72,7 +72,14 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
-        creqHdlr.callCgiScript(cycle);
+        try {
+            creqHdlr.callCgiScript(cycle);
+        }
+        catch (int code) {
+            httpResponseHandler.makeHttpResponse(HttpRequest(500));
+            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+            return;
+        }
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
         _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
@@ -99,11 +106,9 @@ void EventHandler::_servListen(const struct kevent &kev)
     memset(&localSin, 0, localLen);
     memset(&remoteSin, 0, remoteLen);
     if ((sockfd = accept(kev.ident, reinterpret_cast<struct sockaddr*>(&remoteSin), &remoteLen)) == FAILURE)
-        throw ERROR;
-    if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == FAILURE)
-        throw ERROR;
-    if (getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&localSin), &localLen) == FAILURE)
-        throw ERROR;
+        return;
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
+    getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&localSin), &localLen);
     cycle = Cycle::newCycle(localSin.sin_addr.s_addr, localSin.sin_port, remoteSin.sin_addr.s_addr, sockfd);
     _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
     _kqueueHandler.setEventType(sockfd, KqueueHandler::SOCKET_CLIENT);
@@ -236,11 +241,9 @@ void EventHandler::_servCTimer(const struct kevent &kev)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
-    if (kill(cycle->getCgiScriptPid(), SIGKILL) == FAILURE)
-        throw ERROR; // ERROR;
+    kill(cycle->getCgiScriptPid(), SIGKILL);
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
-    if (close(cycle->getCgiRecvfd()) == FAILURE) // fd를 닫기 때문에 따로 이벤트를 제거하지 않아도 된다.
-        throw ERROR; // ERROR;
+    close(cycle->getCgiRecvfd()); // fd를 닫기 때문에 따로 이벤트를 제거하지 않아도 된다.
     _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
     /* 아래 함수 구현 필요. */
     httpResponseHandler.makeHttpResponse(HttpRequest(504));
@@ -248,8 +251,7 @@ void EventHandler::_servCTimer(const struct kevent &kev)
 
 void EventHandler::_servCgiProc(const struct kevent &kev)
 {
-    if (waitpid(kev.ident, NULL, WNOHANG) == -1)
-        throw 1;
+    waitpid(kev.ident, NULL, WNOHANG);
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
 }
 
