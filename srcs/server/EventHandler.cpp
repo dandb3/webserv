@@ -81,11 +81,12 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
             _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
             break;
         }
-        _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
         _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
         _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
+        _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
+        _kqueueHandler.changeEvent(cyle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
         break;
     case ConfigInfo::HTTP_RESPONSE:
         HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
@@ -162,9 +163,6 @@ void EventHandler::_servHttpResponse(const struct kevent& kev)
     */
 }
 
-/**
- * 
-*/
 void EventHandler::_servCgiRequest(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
@@ -175,19 +173,25 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
         cgiRequestHandler.sendCgiRequest(kev);
     }
     catch (unsigned short code) {
-        if (cycle->getCgiScriptPid() != -1)
-            kill(cycle->getCgiScriptPid(), SIGKILL);
-        _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
-        _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
-        close(cycle->getCgiSendfd());
-        close(cycle->getCgiRecvfd());
-        httpResponseHandler.makeHttpResponse(HttpRequest(code));
-        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+        if (cycle->getCgiSendfd() != -1) {
+            if (cycle->getCgiScriptPid() != -1)
+                kill(cycle->getCgiScriptPid(), SIGKILL);
+            if (cycle->getCgiRecvfd() != -1) {
+                _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
+                close(cycle->getCgiRecvfd());
+                cycle->setCgiRecvfd(-1);
+            }
+            _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
+            close(cycle->getCgiSendfd());
+            cycle->setCgiSendfd(-1);
+            httpResponseHandler.makeHttpResponse(HttpRequest(code));
+            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+        }
     }
     if (cgiRequestHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
+        cycle->setCgiSendfd(-1);
         _kqueueHandler.deleteEventType(kev.ident);
-        _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
     }
 }
 
@@ -199,7 +203,25 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
     _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
-    cgiResponseHandler.recvCgiResponse(kev);
+    try {
+        cgiResponseHandler.recvCgiResponse(kev);
+    }
+    catch (unsigned short code) {
+        if (cycle->getCgiRecvfd() != -1) {
+            if (cycle->getCgiScriptPid() != -1)
+                kill(cycle->getCgiScriptPid(), SIGKILL);
+            if (cycle->getCgiSendfd() != -1) {
+                _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
+                close(cycle->getCgiSendfd());
+                cycle->setCgiSendfd(-1);
+            }
+            _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
+            close(cycle->getCgiRecvfd());
+            cycle->setCgiRecvfd(-1);
+            httpResponseHandler.makeHttpResponse(HttpRequest(code));
+            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+        }
+    }
     if (cgiResponseHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
@@ -260,13 +282,23 @@ void EventHandler::_servCTimer(const struct kevent &kev)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
-    if (cycle->getCgiScriptPid() != -1)
-        kill(cycle->getCgiScriptPid(), SIGKILL);
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
-    close(cycle->getCgiRecvfd()); // fd를 닫기 때문에 따로 이벤트를 제거하지 않아도 된다.
-    _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-    /* 아래 함수 구현 필요. */
-    httpResponseHandler.makeHttpResponse(HttpRequest(504));
+    if (cycle->getCgiSendfd() != -1 || cycle->getCgiRecvfd() != -1) {
+        if (cycle->getCgiScriptPid() != -1)
+            kill(cycle->getCgiScriptPid(), SIGKILL);
+        if (cycle->getCgiSendfd() != -1) {
+            _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
+            close(cycle->getCgiSendfd());
+            cycle->setCgiSendfd(-1);
+        }
+        if (cycle->getCgiRecvfd() != -1) {
+            _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
+            close(cycle->getCgiRecvfd());
+            cycle->setCgiRecvfd(-1);
+        }
+        httpResponseHandler.makeHttpResponse(HttpRequest(504));
+        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
+    }
 }
 
 void EventHandler::_servCgiProc(const struct kevent &kev)

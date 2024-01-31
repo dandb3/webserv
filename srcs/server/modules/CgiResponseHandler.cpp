@@ -25,7 +25,7 @@ void CgiResponseHandler::recvCgiResponse(const struct kevent& kev)
     size_t recvLen;
 
     if ((recvLen = read(kev.ident, _buf, std::min<size_t>(BUF_SIZE, kev.data))) == FAILURE)
-        throw ERROR;
+        throw 500;
     _rawCgiResponse.append(_buf, recvLen);
     if ((kev.flags & EV_EOF) && kev.data == 0)
         _eof = true;
