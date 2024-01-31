@@ -250,9 +250,9 @@ void EventHandler::_servRTimer(const struct kevent &kev)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     std::queue<HttpRequest>& httpRequestQ = cycle->getHttpRequestQueue();
 
-    cycle->setClosed();
-    _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+    _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
+    cycle->setClosed();
     httpRequestQ.push(HttpRequest(408));
     if (httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
         _setHttpRequestFromQ(cycle);
@@ -266,9 +266,9 @@ void EventHandler::_servKTimer(const struct kevent &kev)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     std::queue<HttpRequest>& httpRequestQ = cycle->getHttpRequestQueue();
 
-    cycle->setClosed();
-    _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+    _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
+    cycle->setClosed();
     httpRequestQ.push(HttpRequest(408));
     if (httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
         _setHttpRequestFromQ(cycle);
