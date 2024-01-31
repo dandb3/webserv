@@ -52,7 +52,7 @@ const std::string& CgiResponse::getReasonPhrase() const
     return _reasonPhrase;
 }
 
-const std::map<std::string, std::string>& CgiResponse::getHeaderFields() const
+const std::vector<pair_t>& CgiResponse::getHeaderFields() const
 {
     return _headerFields;
 }
