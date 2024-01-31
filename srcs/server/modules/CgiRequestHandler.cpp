@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <sstream>
 #include <cstring>
+#include <csignal>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -229,6 +230,7 @@ void CgiRequestHandler::makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest)
 
 void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
 {
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     const std::string& messageBody = _cgiRequest.getMessageBody();
     size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
 
@@ -236,7 +238,7 @@ void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
     sendSize = std::min(remainSize, maxSize);
 
     if (write(kev.ident, messageBody.c_str() + _pos, sendSize) == FAILURE)
-        throw ERROR;
+        throw 500;
     _pos += sendSize;
     if (remainSize <= maxSize)
         _eof = true;
