@@ -132,15 +132,14 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
         cycle->setTimerType(Cycle::TIMER_KEEP_ALIVE);
     else
         cycle->setTimerType(Cycle::TIMER_REQUEST);
-    if (!httpRequestQueue.empty() && httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
-        _setHttpRequestFromQ(cycle);
-        _processHttpRequest(cycle);
-    }
     if (httpRequestHandler.closed()) {
         cycle->setClosed();
         _kqueueHandler.deleteEvent(kev.ident, kev.filter);
-        _kqueueHandler.deleteEventType(kev.ident);
         _kqueueHandler.deleteEvent(kev.ident, EVFILT_TIMER);
+    }
+    if (!httpRequestQueue.empty() && httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
+        _setHttpRequestFromQ(cycle);
+        _processHttpRequest(cycle);
     }
 }
 
