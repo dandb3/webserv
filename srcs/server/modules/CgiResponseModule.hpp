@@ -27,6 +27,7 @@ private:
 
 public:
     CgiResponse();
+    CgiResponse(unsigned short code);
     CgiResponse(const std::string& rawCgiResponse);
     CgiResponse& operator=(const CgiResponse& cgiResponse);
 

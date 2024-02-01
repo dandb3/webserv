@@ -381,7 +381,7 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
     } while (_status == INPUT_READY);
 }
 
-const HttpRequest& HttpRequestHandler::getHttpRequest() const
+HttpRequest& HttpRequestHandler::getHttpRequest()
 {
     return _cycleHttpRequest;
 }

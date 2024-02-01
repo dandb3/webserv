@@ -243,6 +243,12 @@ void HttpResponseHandler::makeHttpResponse(const CgiResponse &cgiResponse)
     std::vector<pair_t>::iterator it = cgiHeaderFields.begin();
 
     _makeStatusLine(_httpResponse.statusLine, cgiResponse.getStatusCode());
+    // 수정 해야 함.....
+    if (cgiResponse.getStatusCode() >= 400 && cgiResponse.getStatusCode() < 600) {
+        _makeHttpErrorResponse(cgiResponse.getStatusCode());
+        return;
+    }
+
     _httpResponse.messageBody = cgiResponse.getMessageBody();
 
     if (!_httpResponse.messageBody.empty())

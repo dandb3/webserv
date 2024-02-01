@@ -3,6 +3,10 @@
 CgiResponse::CgiResponse()
 {}
 
+CgiResponse::CgiResponse(unsigned short code)
+: _statusCode(code)
+{}
+
 CgiResponse::CgiResponse(const std::string& rawCgiResponse)
 {}
 

@@ -65,7 +65,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    const HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
+    HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getUri()); // 얘도 수정 필요. getURI() 함수..
     switch (configInfo.requestType()) {
@@ -183,7 +183,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
             close(cycle->getCgiSendfd());
             cycle->setCgiSendfd(-1);
-            httpResponseHandler.makeHttpResponse(HttpRequest(code));
+            httpResponseHandler.makeHttpResponse(CgiResponse(code));
             _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
         }
     }
@@ -217,7 +217,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
-            httpResponseHandler.makeHttpResponse(HttpRequest(code));
+            httpResponseHandler.makeHttpResponse(CgiResponse(code));
             _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
         }
     }
@@ -239,7 +239,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             break;
         default:    /* in case of an error */
             _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-            httpResponseHandler.makeHttpResponse(HttpRequest(502));
+            httpResponseHandler.makeHttpResponse(CgiResponse(502));
             break;
         }
     }
@@ -297,7 +297,7 @@ void EventHandler::_servCTimer(const struct kevent &kev)
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
         }
-        httpResponseHandler.makeHttpResponse(HttpRequest(504));
+        httpResponseHandler.makeHttpResponse(CgiResponse(504));
         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
     }
 }

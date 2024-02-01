@@ -116,7 +116,7 @@ public:
     void recvHttpRequest(int fd, size_t size);
     void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);
 
-    const HttpRequest& getHttpRequest() const;
+    HttpRequest& getHttpRequest();
     void setHttpRequest(const HttpRequest& httpRequest);
 
     bool isInputReady() const;
