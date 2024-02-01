@@ -1,4 +1,5 @@
 #include "HttpResponseModule.hpp"
+#include "../parse/parse.hpp"
 
 HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
 
@@ -236,6 +237,23 @@ void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo 
     _httpResponseToString();
 }
 
+void HttpResponseHandler::makeHttpResponse(const CgiResponse &cgiResponse)
+{
+    std::vector<pair_t> cgiHeaderFields = cgiResponse.getHeaderFields();
+    std::vector<pair_t>::iterator it = cgiHeaderFields.begin();
+
+    _makeStatusLine(_httpResponse.statusLine, cgiResponse.getStatusCode());
+    _httpResponse.messageBody = cgiResponse.getMessageBody();
+
+    if (!_httpResponse.messageBody.empty())
+        _setContentLength(_httpResponse.headerFields);
+    for (; it != cgiHeaderFields.end(); ++it)
+        if (!isCaseInsensitiveSame(it->first, "Status") && !isCaseInsensitiveSame(it->first, "Content-Length"))
+            _httpResponse.headerFields.insert(*it);
+    
+    _httpResponseToString();
+}
+
 void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
 {
     size_t writeLen;
@@ -248,4 +266,14 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
         _status = RES_IDLE;
         _pos = 0;
     }
+}
+
+void HttpResponseHandler::setStatus(char status)
+{
+    _status = status;
+}
+
+char HttpResponseHandler::getStatus() const
+{
+    return _status;
 }

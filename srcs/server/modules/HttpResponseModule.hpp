@@ -101,7 +101,13 @@ public:
 	HttpResponseHandler();
 
 	void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
+	void makeHttpResponse(const CgiResponse &cgiResponse);
 	void sendHttpResponse(int fd, size_t size);
+
+	void setStatus(char status);
+
+	char getStatus() const;
+
 };
 
 #endif

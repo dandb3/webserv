@@ -22,11 +22,6 @@ void CgiResponse::setStatusCode(unsigned short statusCode)
     _statusCode = statusCode;
 }
 
-void CgiResponse::setReasonPhrase(const std::string& reasonPhrase)
-{
-    _reasonPhrase = reasonPhrase;
-}
-
 void CgiResponse::addHeaderField(const pair_t& p)
 {
     _headerFields.push_back(p);
@@ -45,11 +40,6 @@ void CgiResponse::setType(char type)
 unsigned short CgiResponse::getStatusCode() const
 {
     return _statusCode;
-}
-
-const std::string& CgiResponse::getReasonPhrase() const
-{
-    return _reasonPhrase;
 }
 
 const std::vector<pair_t>& CgiResponse::getHeaderFields() const

@@ -238,7 +238,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             httpResponseHandler.makeHttpResponse(cgiResponseHandler.getCgiResponse());
             break;
         default:    /* in case of an error */
-            _kqueueHandler.addEvent(cycle->getHttoSockfd(), EVFILT_WRITE, cycle);
+            _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
             httpResponseHandler.makeHttpResponse(HttpRequest(502));
             break;
         }

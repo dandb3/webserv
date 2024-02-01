@@ -21,7 +21,6 @@ public:
 
 private:
     unsigned short _statusCode;
-    std::string _reasonPhrase;
     std::vector<pair_t> _headerFields;
     std::string _messageBody;
     char _type;
@@ -32,13 +31,11 @@ public:
     CgiResponse& operator=(const CgiResponse& cgiResponse);
 
     void setStatusCode(unsigned short statusCode);
-    void setReasonPhrase(const std::string& reasonPhrase);
     void addHeaderField(const pair_t& p);
     void setMessageBody(const std::string& messageBody);
     void setType(char type);
 
     unsigned short getStatusCode() const;
-    const std::string& getReasonPhrase() const;
     const std::vector<pair_t>& getHeaderFields() const;
     const std::string& getMessageBody() const;
     char getType() const;
