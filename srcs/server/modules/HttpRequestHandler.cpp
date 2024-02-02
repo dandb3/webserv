@@ -2,7 +2,7 @@
 #include "HttpRequestModule.hpp"
 #include "../parse/parse.hpp"
 
-HttpRequestHandler::HttpRequestHandler() : _status(INPUT_READY)
+HttpRequestHandler::HttpRequestHandler(size_t clientMaxBodySize) : _status(INPUT_READY), _clientMaxBodySize(clientMaxBodySize)
 {}
 
 void HttpRequestHandler::_inputStart()
@@ -230,6 +230,10 @@ void HttpRequestHandler::_inputMessageBody()
             return;
         }
         _extractContentLength(contentLengthCount);
+        if (_contentLength > _clientMaxBodySize) {
+            _status = INPUT_NORMAL_CLOSED;
+            return;
+        }
         _status = INPUT_DEFAULT_BODY;
         _inputDefaultBody();
     }
@@ -312,8 +316,13 @@ void HttpRequestHandler::_inputChunkedBody()
     start = 0;
     while (1) {
         if ((end = _remain.find(CRLF, start)) == std::string::npos) {
-            if (_remain[start] == '0' && mode == LENGTH)
+            if (_remain[start] == '0' && mode == LENGTH) {
+                if (_httpRequest.getMessageBody().length() > _clientMaxBodySize) {
+                    _status = INPUT_NORMAL_CLOSED;
+                    return;
+                }
                 _status = PARSE_FINISHED;
+            }
             break;
         }
             
