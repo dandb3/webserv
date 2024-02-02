@@ -206,6 +206,7 @@ void HttpRequestHandler::_parseHeaderField()
     }
 
     _httpRequest.setHeaderFields(headerFields);
+    
     _status = INPUT_MESSAGE_BODY;
 }
 
@@ -231,7 +232,8 @@ void HttpRequestHandler::_inputMessageBody()
         }
         _extractContentLength(contentLengthCount);
         if (_contentLength > _clientMaxBodySize) {
-            _status = INPUT_NORMAL_CLOSED;
+            _status = INPUT_ERROR_CLOSED;
+            _httpRequest.setCode(413);
             return;
         }
         _status = INPUT_DEFAULT_BODY;
@@ -318,7 +320,8 @@ void HttpRequestHandler::_inputChunkedBody()
         if ((end = _remain.find(CRLF, start)) == std::string::npos) {
             if (_remain[start] == '0' && mode == LENGTH) {
                 if (_httpRequest.getMessageBody().length() > _clientMaxBodySize) {
-                    _status = INPUT_NORMAL_CLOSED;
+                    _status = INPUT_ERROR_CLOSED;
+                    _httpRequest.setCode(413);
                     return;
                 }
                 _status = PARSE_FINISHED;
