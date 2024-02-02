@@ -1,6 +1,12 @@
 #include "Cycle.hpp"
 
 std::map<int, Cycle> Cycle::_cycleStorage;
+char Cycle::_buf[BUF_SIZE];
+
+char* Cycle::getBuf()
+{
+    return _buf;
+}
 
 Cycle::Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
 : _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)

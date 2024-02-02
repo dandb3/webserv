@@ -245,6 +245,22 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     }
 }
 
+void EventHandler::_servCgiProc(const struct kevent &kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+
+    waitpid(kev.ident, NULL, WNOHANG);
+    _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+    cycle->setCgiScriptPid(-1);
+}
+
+void EventHandler::_servFile(const struct kevent& kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+
+    
+}
+
 void EventHandler::_servRTimer(const struct kevent &kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
@@ -300,15 +316,6 @@ void EventHandler::_servCTimer(const struct kevent &kev)
         httpResponseHandler.makeHttpResponse(CgiResponse(504));
         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
     }
-}
-
-void EventHandler::_servCgiProc(const struct kevent &kev)
-{
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-
-    waitpid(kev.ident, NULL, WNOHANG);
-    _kqueueHandler.deleteEvent(kev.ident, kev.filter);
-    cycle->setCgiScriptPid(-1);
 }
 
 void EventHandler::_servError(const struct kevent &kev)

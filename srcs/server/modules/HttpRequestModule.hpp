@@ -8,8 +8,6 @@
 #include <vector>
 #include "../../webserv.hpp"
 
-#define BUF_SIZE 1024
-
 class RequestLine
 {
 private:
@@ -73,7 +71,6 @@ private:
         INPUT_ERROR_CLOSED
     };
 
-    char _buf[BUF_SIZE];
     char _status;
     size_t _contentLength;
 

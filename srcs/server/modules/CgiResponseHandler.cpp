@@ -1,9 +1,8 @@
 #include <algorithm>
 #include <unistd.h>
-#include "webserv.hpp"
 #include "CgiResponseModule.hpp"
-
-char CgiResponseHandler::_buf[BUF_SIZE];
+#include "../cycle/Cycle.hpp"
+#include "../../webserv.hpp"
 
 CgiResponseHandler::CgiResponseHandler()
 : _cgiResponse(), _rawCgiResponse(), _eof(false)
@@ -24,9 +23,9 @@ void CgiResponseHandler::recvCgiResponse(const struct kevent& kev)
 {
     size_t recvLen;
 
-    if ((recvLen = read(kev.ident, _buf, std::min<size_t>(BUF_SIZE, kev.data))) == FAILURE)
+    if ((recvLen = read(kev.ident, Cycle::getBuf(), std::min<size_t>(BUF_SIZE, kev.data))) == FAILURE)
         throw 500;
-    _rawCgiResponse.append(_buf, recvLen);
+    _rawCgiResponse.append(Cycle::getBuf(), recvLen);
     if ((kev.flags & EV_EOF) && kev.data == 0)
         _eof = true;
 }

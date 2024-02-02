@@ -5,8 +5,6 @@
 # include <string>
 # include "../parse/CgiResponseParser.hpp"
 
-# define BUF_SIZE 1024
-
 class CgiResponse
 {
 public:
@@ -46,8 +44,6 @@ public:
 class CgiResponseHandler
 {
 private:
-    static char _buf[BUF_SIZE];
-
     CgiResponse _cgiResponse;
     std::string _rawCgiResponse;
     bool _eof;

@@ -19,6 +19,7 @@ private:
         EVENT_CGI_REQ,
         EVENT_CGI_RES,
         EVENT_CGI_PROC,
+        EVENT_FILE,
         EVENT_RTIMER,
         EVENT_KTIMER,
         EVENT_CTIMER,
@@ -36,7 +37,8 @@ private:
     void _servHttpResponse(const struct kevent& kev);
     void _servCgiRequest(const struct kevent& kev);
     void _servCgiResponse(const struct kevent& kev);
-    void _servCgiProc(const struct kevent &kev);
+    void _servCgiProc(const struct kevent& kev);
+    void _servFile(const struct kevent& kev);
     void _servRTimer(const struct kevent& kev);
     void _servKTimer(const struct kevent& kev);
     void _servCTimer(const struct kevent& kev);

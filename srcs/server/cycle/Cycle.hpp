@@ -10,6 +10,8 @@
 #include "../modules/CgiRequestModule.hpp"
 #include "../modules/CgiResponseModule.hpp"
 
+#define BUF_SIZE 1024
+
 /**
  * closed 상태에서 request queue에 있는 것이 다 비어있고,
  * keep-alive가 아님 || EOF이고 (_closed 변수로 관리됨, 파싱 중에 Connection 헤더 필드를 읽거나, EOF를 감지하게 되면 set된다.),
@@ -28,6 +30,7 @@ public:
 
 private:
     static std::map<int, Cycle> _cycleStorage;
+    static char _buf[BUF_SIZE];
 
     ConfigInfo _configInfo;
     in_addr_t _localIp;
@@ -50,6 +53,8 @@ private:
 public:
     static Cycle *newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
     static void deleteCycle(Cycle *cycle);
+
+    static char* getBuf();
 
     Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
 

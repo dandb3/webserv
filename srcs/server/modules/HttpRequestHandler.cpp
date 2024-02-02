@@ -1,5 +1,6 @@
 #include <sstream>
 #include "HttpRequestModule.hpp"
+#include "../cycle/Cycle.hpp"
 #include "../parse/parse.hpp"
 
 HttpRequestHandler::HttpRequestHandler() : _status(INPUT_READY)
@@ -350,13 +351,13 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 
     // configuration의 client-body size도 고려해야 함
     // 곧 쳐야 됨
-    if ((read_len = read(fd, _buf, std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
+    if ((read_len = read(fd, Cycle::getBuf(), std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
         _httpRequest.setCode(500);
         _status = INPUT_ERROR_CLOSED;
         return;
     }
     // read_len == 0인 경우의 처리?
-    _remain.append(_buf, static_cast<size_t>(read_len));
+    _remain.append(Cycle::getBuf(), static_cast<size_t>(read_len));
 }
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
