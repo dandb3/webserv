@@ -8,9 +8,9 @@ typedef std::map<std::string, std::vector<std::string>> t_directives;
 class ConfigInfo
 {
 private:
-	static const std::string DEFAULT_INDEX;						  // index.html
-	static const std::string DEFAULT_ROOT;						  // /var/www/html
-	static const std::map<std::string, std::string> DEFAULT_PAGE; // /confTest/error/defaultError.html
+	static const std::string DEFAULT_INDEX; // index.html
+	static const std::string DEFAULT_ROOT;	// /var/www/html
+	static const std::map<std::string, std::string> DEFAULT_PAGE;
 
 	std::string _root;
 	std::string _path;	   // root + uri
@@ -23,17 +23,17 @@ private:
 	std::pair<std::string, std::string> _redirect; // first: redirection 번호(301 or 302), second: redirect uri
 	t_directives _info;
 
-	std::vector<ServerConfig>::iterator findMatchedServer(in_addr_t ip, in_port_t port);
+	std::vector<ServerConfig>::iterator findMatchedServer(in_addr_t ip, in_port_t port, std::string serverName);
 	LocationConfig &findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap, std::string &path);
 	void transferInfo(t_directives &directives);
 
 public:
 	ConfigInfo();
-	ConfigInfo(in_addr_t ip, in_port_t port, std::string uri); // ip, port을 보고 match되는 config를 찾아서 생성자 호출
+	ConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri); // ip, port을 보고 match되는 config를 찾아서 생성자 호출
 	ConfigInfo &operator=(const ConfigInfo &ConfigInfo);
 	~ConfigInfo();
 
-	void initConfigInfo(in_addr_t ip, in_port_t port, std::string uri);
+	void initConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri);
 
 	// test
 	void printConfigInfo();

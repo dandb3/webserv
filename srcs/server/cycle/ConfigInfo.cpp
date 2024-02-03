@@ -22,10 +22,10 @@ ConfigInfo::ConfigInfo()
     _path = "";
 }
 
-ConfigInfo::ConfigInfo(in_addr_t ip, in_port_t port, std::string uri)
+ConfigInfo::ConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri)
 {
     *this = ConfigInfo();
-    initConfigInfo(ip, port, uri);
+    initConfigInfo(ip, port, serverName, uri);
 }
 
 ConfigInfo::~ConfigInfo()
@@ -47,26 +47,38 @@ ConfigInfo &ConfigInfo::operator=(const ConfigInfo &ConfigInfo)
     return *this;
 }
 
-// ip, port로 서버 찾기
-std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, in_port_t port) {
+// ip, port, serverName으로 서버 찾기
+std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, in_port_t port, std::string serverName) {
     Config &config = Config::getInstance();
     std::vector<ServerConfig> &server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
     std::vector<ServerConfig>::iterator matchedServer;
-    bool isMatched = false;
+    short matchedLevel = 0;
     for (; it != server_v.end(); it++) {
-        if (it->getIp().s_addr == 0 && it->getPort() == port) {
-            matchedServer = it;
-            isMatched = true;
+        if (matchedLevel < 2 && it->getIp().s_addr == 0 && it->getPort() == port) {
+            if (it->getServerName() == serverName) {
+                matchedServer = it;
+                matchedLevel = 2;
+            }
+            else if (matchedLevel == 0) {
+                matchedServer = it;
+                matchedLevel = 1;
+            }
         }
         if (it->getIp().s_addr == ip && it->getPort() == port) {
-            matchedServer = it;
-            isMatched = true;
-            break;
+            if (it->getServerName() == serverName) {
+                matchedServer = it;
+                matchedLevel = 4;
+                break;
+            }
+            if (matchedLevel != 3) {
+                matchedServer = it;
+                matchedLevel = 3;
+            }
         }
     }
-    if (!isMatched)
-        throw std::runtime_error("ConfigInfo 생성자에서 서버 찾기 실패");
+    if (matchedLevel == 0)
+        throw std::runtime_error("ConfigInfo 생성자에서 서버 찾기 실패: 매칭된 서버 없음");
     return matchedServer;
 }
 
@@ -155,8 +167,8 @@ LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::
 }
 
 // matchedServer에서 먼저 데이터 넣고, matchedLocation에도 있으면 거기서 덮어씌우기
-void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
-    ServerConfig &matchedServer = *findMatchedServer(ip, port);
+void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri) {
+    ServerConfig &matchedServer = *findMatchedServer(ip, port, serverName);
     transferInfo(matchedServer.getServerInfo());
     // LocationConfig location 찾기
     std::string path;
