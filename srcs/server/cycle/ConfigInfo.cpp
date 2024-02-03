@@ -3,8 +3,7 @@
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
-const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"200", "/defaultPage/200_OK.html"}, {"201", "/defaultPage/201_Created.html"}, \
-    {"204", "/defaultPage/204_NoContent.html"}, {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
+const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
     {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
 
 /// @brief ip, port를 보고 matchedServer,
