@@ -42,7 +42,7 @@ public:
 	std::string getPath() const;
 	bool getAllowMethods(int index) const;
 	std::string getIndex() const;
-	std::string getErrorPage() const;
+	std::string getErrorPage(std::string key) const;
 	bool getAutoIndex() const;
 	t_directives getInfo() const;
 };

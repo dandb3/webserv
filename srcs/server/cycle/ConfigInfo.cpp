@@ -234,8 +234,13 @@ std::string ConfigInfo::getIndex() const {
     return _index;
 }
 
-std::string ConfigInfo::getErrorPage() const {
-    return _errorPage;
+std::string ConfigInfo::getErrorPage(std::string key) const {
+    if (_errorPage.find(key) == _errorPage.end()) {
+        if (DEFAULT_PAGE.find(key) == DEFAULT_PAGE.end())
+            throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
+        return DEFAULT_PAGE.at(key);
+    }
+    return _errorPage.at(key);
 }
 
 bool ConfigInfo::getAutoIndex() const {
