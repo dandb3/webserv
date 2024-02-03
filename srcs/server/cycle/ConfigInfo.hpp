@@ -8,16 +8,16 @@ typedef std::map<std::string, std::vector<std::string>> t_directives;
 class ConfigInfo
 {
 private:
-	static const std::string DEFAULT_INDEX;		 // index.html
-	static const std::string DEFAULT_ROOT;		 // /var/www/html
-	static const std::string DEFAULT_ERROR_PAGE; // /confTest/error/defaultError.html
+	static const std::string DEFAULT_INDEX;						  // index.html
+	static const std::string DEFAULT_ROOT;						  // /var/www/html
+	static const std::map<std::string, std::string> DEFAULT_PAGE; // /confTest/error/defaultError.html
 
 	std::string _root;
 	std::string _path;	   // root + uri
 	bool _allowMethods[4]; // GET, HEAD, POST, DELETE
 	std::string _index;
-	std::string _errorPage;
-	// std::map<std::string, std::string> _errorPage;
+	// std::string _errorPage;
+	std::map<std::string, std::string> _errorPage;
 	bool _autoIndex;
 	t_directives _info;
 

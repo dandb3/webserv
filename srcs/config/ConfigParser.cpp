@@ -42,9 +42,9 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
  * 파싱 시에 key 값이 내가 찾는 값이 아닌경우 key가 무엇인지 알려주고 오류 처리 (해야할 것)
 */
 void ConfigParser::parse(std::string const &configPath, Config &config) {
-    std::cout << "read config file" << std::endl;
+    // std::cout << "read config file" << std::endl;
     std::string fileContent = FileReader::read_file(configPath); // 실패 시 throw
-    std::cout << "finish read config file" << std::endl;
+    // std::cout << "finish read config file" << std::endl;
     size_t i = 0;
     std::string key;
     while (i != std::string::npos && i < fileContent.size()) {

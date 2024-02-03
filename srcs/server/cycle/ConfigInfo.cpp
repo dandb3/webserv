@@ -3,7 +3,9 @@
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
-const std::string ConfigInfo::DEFAULT_ERROR_PAGE = "/confTest/error/defaultError.html";
+const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"200", "/defaultPage/200_OK.html"}, {"201", "/defaultPage/201_Created.html"}, \
+    {"204", "/defaultPage/204_NoContent.html"}, {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
+    {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
 
 /// @brief ip, port를 보고 matchedServer,
 ///        uri를 보고 matchedLocation을 찾아서 ConfigInfo 생성
@@ -14,7 +16,6 @@ ConfigInfo::ConfigInfo()
     for (size_t i = 0; i < 4; i++)
         _allowMethods[i] = false;
     _index = DEFAULT_INDEX;
-    _errorPage = DEFAULT_ERROR_PAGE;
     _autoIndex = false;
     _info.clear();
     _path = "";
@@ -108,6 +109,13 @@ void ConfigInfo::transferInfo(t_directives &directives) {
                     throw std::runtime_error("ConfigInfo 생성자에서 allow_methods 설정 실패");
             }
         }
+        else if (it->first == "error_page") { // test 필요
+            size_t sz = it->second.size();
+            std::string route = it->second[sz - 1];
+            for (int i = 0; i < sz - 1; i++) {
+                _errorPage[it->second[i]] = route;
+            }
+        }
         else {
             _info[it->first] = it->second;
         }
@@ -163,7 +171,10 @@ void ConfigInfo::printConfigInfo() {
     }
     std::cout << std::endl;
     std::cout << "index: " << _index << std::endl;
-    std::cout << "error_page: " << _errorPage << std::endl;
+    std::cout << "error_page" << std::endl;
+    for (std::map<std::string, std::string>::iterator it = _errorPage.begin(); it != _errorPage.end(); it++) {
+        std::cout << "num : " << it->first << ", route: " << it->second << std::endl;
+    }
     std::cout << "autoindex: " << _autoIndex << std::endl;
     std::cout << "info: " << std::endl;
     for (t_directives::iterator it = _info.begin(); it != _info.end(); it++) {
