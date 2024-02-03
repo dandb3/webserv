@@ -17,6 +17,7 @@ ConfigInfo::ConfigInfo()
         _allowMethods[i] = false;
     _index = DEFAULT_INDEX;
     _autoIndex = false;
+    _isRedirect = false;
     _info.clear();
     _path = "";
 }
@@ -116,6 +117,13 @@ void ConfigInfo::transferInfo(t_directives &directives) {
                 _errorPage[it->second[i]] = route;
             }
         }
+        else if (it->first == "return") { // 301 or 302이면 redirect 설정, 아니면 빈문자(나중에 에러처리용)
+            _isRedirect = true;
+            if (it->second.size() != 2 || (it->second[0] != "301" && it->second[0] != "302"))
+                _redirect = std::make_pair("", "");
+            else
+                _redirect = std::make_pair(it->second[0], it->second[1]);
+        }
         else {
             _info[it->first] = it->second;
         }
@@ -201,7 +209,10 @@ std::string ConfigInfo::getPrintableConfigInfo() {
     result << "\n";
 
     result << "index: " << _index << "\n";
-    result << "error_page: " << _errorPage << "\n";
+    result << "error_page" << std::endl;
+    for (std::map<std::string, std::string>::iterator it = _errorPage.begin(); it != _errorPage.end(); it++) {
+        result << "num : " << it->first << ", route: " << it->second << std::endl;
+    }
     result << "autoindex: " << _autoIndex << "\n";
 
     result << "\ninfo\n";
@@ -251,3 +262,12 @@ t_directives ConfigInfo::getInfo() const {
     return _info;
 }
 
+bool ConfigInfo::getIsRedirect() const {
+    return _isRedirect;
+}
+
+std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
+    if (!_isRedirect)
+        throw std::runtime_error("ConfigInfo에서 redirect 찾기 실패");
+    return _redirect;
+}

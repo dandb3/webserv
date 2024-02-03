@@ -1,0 +1,229 @@
+======================
+configPath: confTest/default.conf
+read config file
+confTest/default.conf File opened successfully
+finish read config file
+confTest/mime.types File opened successfully
+parse finish
+======================
+user: hello_webserv 
+worker_processes: 1 
+======================
+======================
+[parseServer] portsWithINADDR_ANY: 8100 8101 8102 8103 3004 3005 
+[parseServer] ip: 0
+[parseServer] port: 8100
+[parseServer] serverName: webserv
+access_log: logs/domain1.access.log main 
+cgi: .cgi 
+error_page: /YoupiBanane/error_page/defaultError.html 
+root: html 
+======================
+location: /
+allow_method: GET 
+autoindex: on 
+index: youpi.bad_extension 
+root: /YoupiBanane/ 
+======================
+location: /directory
+allow_method: GET,POST 
+autoindex: off 
+index: youpi.bad_extension 
+root: /YoupiBanane/ 
+======================
+location: /post_body
+allow_method: POST 
+autoindex: off 
+index: youpi.bla 
+limit_client_body_size: 100 
+root: /YoupiBanane/ 
+======================
+location: /put_test
+allow_method: PUT 
+autoindex: off 
+index: index.html 
+root: /YoupiBanane/put_test/ 
+======================
+======================
+[parseServer] portsWithINADDR_ANY: 8100 8101 8102 8103 3004 3005 
+[parseServer] ip: 0
+[parseServer] port: 8101
+[parseServer] serverName: webserv_2
+access_log: logs/domain1.access.log main 
+cgi: .bla 
+error_page: config/error_page/404error 
+root: html 
+======================
+location: /
+allow_method: GET 
+autoindex: on 
+index: youpi.bad_extension 
+root: /YoupiBanane/ 
+======================
+location: /directory
+allow_method: GET,POST 
+autoindex: off 
+index: youpi.bad_extension 
+limit_client_body_size: 100000000 
+root: /YoupiBanane/ 
+======================
+location: /post_body
+allow_method: POST 
+autoindex: off 
+index: youpi.bla 
+limit_client_body_size: 100 
+root: /YoupiBanane/ 
+======================
+location: /post_test
+allow_method: POST 
+autoindex: off 
+index: youpi.bla 
+limit_client_body_size: 10000000 
+root: /YoupiBanane/ 
+======================
+location: /put_test
+allow_method: PUT 
+autoindex: off 
+index: index.html 
+limit_client_body_size: 10000000 
+root: /YoupiBanane/put_test/ 
+======================
+======================
+[parseServer] portsWithINADDR_ANY: 8100 8101 8102 8103 3004 3005 
+[parseServer] ip: 0
+[parseServer] port: 8102
+[parseServer] serverName: chanheki
+access_log: logs/domain1.access.log main 
+error_page: config/error_page/404error 
+root: html 
+======================
+location: /
+allow_method: GET 
+autoindex: on 
+index: youpi.bad_extension 
+root: /YoupiBanane/ 
+======================
+location: /directory
+allow_method: GET 
+autoindex: off 
+index: youpi.bad_extension 
+root: /YoupiBanane/ 
+======================
+location: /post_body
+allow_method: POST 
+autoindex: off 
+index: youpi.bla 
+limit_client_body_size: 100 
+root: /YoupiBanane/ 
+======================
+location: /post_test
+allow_method: POST 
+autoindex: off 
+index: youpi.bla 
+limit_client_body_size: 100 
+root: /YoupiBanane/ 
+======================
+location: /put_test
+allow_method: PUT 
+autoindex: off 
+index: index.html 
+root: /YoupiBanane/put_test/ 
+======================
+======================
+[parseServer] portsWithINADDR_ANY: 8100 8101 8102 8103 3004 3005 
+[parseServer] ip: 0
+[parseServer] port: 8103
+[parseServer] serverName: webserv
+access_log: logs/domain1.access.log main 
+cgi: .cgi 
+error_page: config/error_page/404error 
+root: html 
+======================
+location: /
+allow_method: GET 
+autoindex: on 
+index: youpi.bad_extension 
+root: /YoupiBanane/ 
+======================
+location: /directory
+allow_method: GET 
+autoindex: off 
+index: youpi.bad_extension 
+root: /YoupiBanane/ 
+======================
+location: /post_body
+allow_method: POST 
+autoindex: off 
+index: youpi.bla 
+limit_client_body_size: 100 
+root: /YoupiBanane/ 
+======================
+location: /put_test
+allow_method: PUT 
+autoindex: off 
+index: index.html 
+root: /YoupiBanane/put_test/ 
+======================
+======================
+[parseServer] portsWithINADDR_ANY: 8100 8101 8102 8103 3004 3005 
+[parseServer] ip: 0
+[parseServer] port: 3004
+[parseServer] serverName: chanheki
+access_log: logs/domain1.access.log main 
+cgi: .cgi 
+error_page: /tests/html/ 
+keepalive_timeout: 10s 
+request_timeout: 10s 
+root: html 
+session: on 
+======================
+location: /
+allow_method: GET,POST 
+autoindex: on 
+index: index.html 
+root: /tests/html/ 
+======================
+location: /directory
+allow_method: GET 
+autoindex: on 
+root: /tests/ 
+======================
+location: /home
+return: 302 / 
+======================
+location: /marin
+return: 302 /asset/marin03.jpg 
+======================
+location: /post_body
+allow_method: POST 
+autoindex: off 
+index: youpi.bla 
+limit_client_body_size: 10000000 
+root: /tests/ 
+======================
+location: /put_test
+allow_method: PUT 
+autoindex: off 
+index: index.html 
+root: /tests/ 
+======================
+======================
+[parseServer] portsWithINADDR_ANY: 8100 8101 8102 8103 3004 3005 
+[parseServer] ip: 0
+[parseServer] port: 3005
+[parseServer] serverName: forum
+access_log: logs/domain1.access.log main 
+cgi: .py 
+error_page: /myforum/errorpage/ 
+======================
+location: /
+allow_method: GET,POST 
+autoindex: off 
+index: index.html 
+root: /myforum/html/ 
+======================
+location: /img-base
+allow_method: GET,POST,DELETE 
+autoindex: off 
+root: /myforum/html/images/ 
+======================

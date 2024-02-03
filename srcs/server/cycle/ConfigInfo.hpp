@@ -19,6 +19,8 @@ private:
 	// std::string _errorPage;
 	std::map<std::string, std::string> _errorPage;
 	bool _autoIndex;
+	bool _isRedirect;
+	std::pair<std::string, std::string> _redirect; // first: redirection 번호(301 or 302), second: redirect uri
 	t_directives _info;
 
 	std::vector<ServerConfig>::iterator findMatchedServer(in_addr_t ip, in_port_t port);
@@ -45,6 +47,8 @@ public:
 	std::string getErrorPage(std::string key) const;
 	bool getAutoIndex() const;
 	t_directives getInfo() const;
+	bool getIsRedirect() const;
+	std::pair<std::string, std::string> getRedirect() const;
 };
 
 #endif
