@@ -55,11 +55,13 @@ private:
 
 	HttpResponse _httpResponse;
 
-	void _setConnection();
+	void _setAllow();
+	void _setConnection(bool disConnected);
 	void _setContentLength();
 	void _setContentType();
 	void _setDate();
 	void _setLastModified(const char *path);
+	void _setLocation(std::string &location);
 
 	void _makeStatusLine(StatusLine &statusLine, short code);
 	void _makeHeaderFields(ConfigInfo &configInfo);
@@ -89,6 +91,7 @@ public:
 	HttpResponseHandler();
 
 	void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
+	void makeHttpErrorResponse(short code);	
 	void sendHttpResponse(int fd, size_t size);
 };
 

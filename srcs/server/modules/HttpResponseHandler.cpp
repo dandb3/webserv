@@ -56,11 +56,16 @@ void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
     statusLine.text = text;
 }
 
+void HttpResponseHandler::_setAllow()
+{
+    _httpResponse.headerFields.insert(std::make_pair("Allow", "GET, HEAD, POST, DELETE"));
+}
+
 void HttpResponseHandler::_setLastModified(const char *path)
 {
     struct stat fileInfo;
 
-    if (path == std::string(""))
+    if (path[0] == '\0')
         return;
     if (stat(path, &fileInfo) == -1)
         return;
@@ -115,22 +120,28 @@ void HttpResponseHandler::_setContentLength()
     _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.messageBody.length())));
 }
 
-// 수정 필요
-void HttpResponseHandler::_setConnection()
+void HttpResponseHandler::_setConnection(bool disConnected)
 {
-    if (1)
-        _httpResponse.headerFields.insert(std::make_pair("Connection", "keep-alive"));
-    else
+    if (disConnected)
         _httpResponse.headerFields.insert(std::make_pair("Connection", "close"));
+    else
+        _httpResponse.headerFields.insert(std::make_pair("Connection", "keep-alive"));
+}
+
+void HttpResponseHandler::_setLocation(std::string &location)
+{
+    _httpResponse.headerFields.insert(std::make_pair("Location", location));
 }
 
 void HttpResponseHandler::_makeHeaderFields(ConfigInfo &configInfo)
 {
-    _setConnection();
+    _setAllow();
+    _setConnection(1);
     _setContentLength();
     _setContentType();
     _setDate();
     _setLastModified(configInfo.getPath().c_str());
+    _setLocation();
 }
 
 void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET)
@@ -211,18 +222,26 @@ void HttpResponseHandler::_httpResponseToString()
     std::cout << "final result: " << _response << '\n';
 }
 
+void HttpResponseHandler::makeHttpErrorResponse(short code)
+{
+    _makeStatusLine(_httpResponse.statusLine, code);
+    _makeHeaderFields();
+    _httpResponse.messageBody = "";
+    _httpResponseToString();
+}
+
 void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
     const unsigned short code = httpRequest.getCode();
 
     // http request에서 이미 에러가 발생한 경우
     if (code != 0) {
-        if (code == 404) {
-
-        }
-        
+        makeHttpErrorResponse(code);
     }
     else {
+        if (configInfo.getIsRedirect()) {
+            // 빈문자열인지 확인하기
+        }
         const short method = httpRequest.getRequestLine().getMethod();
         switch (method) {
         case GET:
