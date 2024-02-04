@@ -28,6 +28,7 @@ public:
 		SOCKET_LISTEN,
 		SOCKET_CLIENT,
 		SOCKET_CGI,
+        FILE_OPEN,
         SOCKET_ERROR
 	};
 

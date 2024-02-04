@@ -21,11 +21,11 @@ CgiResponseHandler& CgiResponseHandler::operator=(const CgiResponseHandler& cgiR
 
 void CgiResponseHandler::recvCgiResponse(const struct kevent& kev)
 {
-    size_t recvLen;
+    ssize_t recvLen;
 
     if ((recvLen = read(kev.ident, Cycle::getBuf(), std::min<size_t>(BUF_SIZE, kev.data))) == FAILURE)
         throw 500;
-    _rawCgiResponse.append(Cycle::getBuf(), recvLen);
+    _rawCgiResponse.append(Cycle::getBuf(), static_cast<size_t>(recvLen));
     if ((kev.flags & EV_EOF) && kev.data == 0)
         _eof = true;
 }

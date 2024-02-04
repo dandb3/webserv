@@ -26,6 +26,8 @@ private:
 	void transferInfo(t_directives &directives);
 
 public:
+	static const std::string& getDefaultErrorPage();
+
 	ConfigInfo();
 	ConfigInfo(in_addr_t ip, in_port_t port, std::string uri); // ip, port을 보고 match되는 config를 찾아서 생성자 호출
 	ConfigInfo &operator=(const ConfigInfo &ConfigInfo);
@@ -45,6 +47,9 @@ public:
 	std::string getErrorPage() const;
 	bool getAutoIndex() const;
 	t_directives getInfo() const;
+
+    void setDefaultErrorPage();
+
 };
 
 #endif

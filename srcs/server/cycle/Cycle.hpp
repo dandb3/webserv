@@ -10,7 +10,7 @@
 #include "../modules/CgiRequestModule.hpp"
 #include "../modules/CgiResponseModule.hpp"
 
-#define BUF_SIZE 1024
+#define BUF_SIZE 1024UL
 
 /**
  * closed 상태에서 request queue에 있는 것이 다 비어있고,
@@ -39,6 +39,7 @@ private:
     int _httpSockfd;
     int _cgiSendfd;
     int _cgiRecvfd;
+    std::set<int> _openFiles;
     pid_t _cgiScriptPid;
     bool _timerType; // set if it is a request timer
     bool _closed;
@@ -65,6 +66,7 @@ public:
     int getHttpSockfd() const;
     int getCgiSendfd() const;
     int getCgiRecvfd() const;
+    std::set<int>& getOpenFiles();
     pid_t getCgiScriptPid() const;
     bool getTimerType() const;
     bool closed() const;

@@ -9,7 +9,7 @@ char* Cycle::getBuf()
 }
 
 Cycle::Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
-: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
+: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _openFiles(), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
 {}
 
 Cycle *Cycle::newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
@@ -56,6 +56,11 @@ int Cycle::getCgiSendfd() const
 int Cycle::getCgiRecvfd() const
 {
     return _cgiRecvfd;
+}
+
+std::set<int>& Cycle::getOpenFiles()
+{
+    return _openFiles;
 }
 
 pid_t Cycle::getCgiScriptPid() const

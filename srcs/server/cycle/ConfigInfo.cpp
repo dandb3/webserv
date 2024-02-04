@@ -5,6 +5,11 @@ const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
 const std::string ConfigInfo::DEFAULT_ERROR_PAGE = "/confTest/error/defaultError.html";
 
+const std::string& ConfigInfo::getDefaultErrorPage()
+{
+    return ConfigInfo::DEFAULT_ERROR_PAGE;
+}
+
 /// @brief ip, port를 보고 matchedServer,
 ///        uri를 보고 matchedLocation을 찾아서 ConfigInfo 생성
 ConfigInfo::ConfigInfo()
@@ -233,4 +238,8 @@ bool ConfigInfo::getAutoIndex() const {
 
 t_directives ConfigInfo::getInfo() const {
     return _info;
+}
+
+void ConfigInfo::setDefaultErrorPage() {
+    _errorPage = getDefaultErrorPage();
 }

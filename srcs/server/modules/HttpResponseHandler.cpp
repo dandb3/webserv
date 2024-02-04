@@ -3,6 +3,11 @@
 
 HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
 
+bool HttpResponseHandler::_isErrorCode(unsigned short code)
+{
+    return (code >= 400 && code < 600);
+}
+
 void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
 {
     std::string text;
@@ -175,6 +180,38 @@ void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, ConfigIn
     (void)configInfo;
 }
 
+void HttpResponseHandler::_makeHttpErrorResponse(Cycle* cycle)
+{
+    const std::string& errorPage = cycle->getConfigInfo().getErrorPage();
+    int fd;
+
+    if (access(errorPage.c_str(), R_OK) == FAILURE \
+        || (fd = open(errorPage.c_str(), O_RDONLY)) == FAILURE) {
+        if (errorPage == ConfigInfo::getDefaultErrorPage()) {
+            _httpResponse.statusLine.code = 500;
+            _makeHttpResponseFinal();
+        }
+        else {
+            cycle->getConfigInfo().setDefaultErrorPage();
+            _makeHttpErrorResponse(cycle);
+        }
+    }
+    else {
+        fcntl(fd, F_SETFL, O_NONBLOCK);
+        _addContentType(cycle->getConfigInfo());
+        cycle->getOpenFiles().insert(fd);
+    }
+}
+
+void HttpResponseHandler::_makeHttpResponseFinal()
+{
+    /**
+     * code를 기반으로 status-line 생성
+     * message-body를 기반으로 Content-Length 설정 및 기본 header-fields 설정 (date, 등등)
+     * message-body는 그냥 그대로 유지한다.
+    */
+}
+
 void HttpResponseHandler::_statusLineToString()
 {
     const std::pair<short, short> version = _httpResponse.getStatusLine().getVersion();
@@ -237,27 +274,23 @@ void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo 
     _httpResponseToString();
 }
 
-void HttpResponseHandler::makeHttpResponse(const CgiResponse &cgiResponse)
+void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse)
 {
-    std::vector<pair_t> cgiHeaderFields = cgiResponse.getHeaderFields();
-    std::vector<pair_t>::iterator it = cgiHeaderFields.begin();
+    const std::vector<pair_t>& cgiHeaderFields = cgiResponse.getHeaderFields();
+    std::vector<pair_t>::const_iterator it = cgiHeaderFields.begin();
 
-    _makeStatusLine(_httpResponse.statusLine, cgiResponse.getStatusCode());
-    // 수정 해야 함.....
-    if (cgiResponse.getStatusCode() >= 400 && cgiResponse.getStatusCode() < 600) {
-        _makeHttpErrorResponse(cgiResponse.getStatusCode());
+    _httpResponse.statusLine.code = cgiResponse.getStatusCode();
+    if (_isErrorCode(_httpResponse.statusLine.code)) {
+        _makeHttpErrorResponse(cycle);
         return;
     }
 
     _httpResponse.messageBody = cgiResponse.getMessageBody();
-
-    if (!_httpResponse.messageBody.empty())
-        _setContentLength(_httpResponse.headerFields);
     for (; it != cgiHeaderFields.end(); ++it)
         if (!isCaseInsensitiveSame(it->first, "Status") && !isCaseInsensitiveSame(it->first, "Content-Length"))
             _httpResponse.headerFields.insert(*it);
-    
-    _httpResponseToString();
+
+    _makeHttpResponseFinal();
 }
 
 void HttpResponseHandler::sendHttpResponse(int fd, size_t size)

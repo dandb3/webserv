@@ -29,6 +29,7 @@ private:
     KqueueHandler _kqueueHandler;
 
     char _getEventType(const struct kevent &kev);
+    void _setHttpResponseEvent(Cycle* cycle);
     void _setHttpRequestFromQ(Cycle* cycle);
     void _processHttpRequest(Cycle* cycle);
 
