@@ -1,9 +1,11 @@
+#include <cstring>
 #include "HttpResponseModule.hpp"
 
 HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
 
-void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
+void HttpResponseHandler::_makeStatusLine(short code)
 {
+    StatusLine &statusLine = _httpResponse.statusLine;
     std::string text;
 
     statusLine.version = std::make_pair(1, 1);
@@ -96,21 +98,8 @@ void HttpResponseHandler::_setDate()
 }
 
 // 수정 필요
-void HttpResponseHandler::_setContentType()
+void HttpResponseHandler::_setContentType(const std::string type)
 {
-    std::string type;
-
-    if (1)
-        type = "text/html";
-    else if (1)
-        type = "text/plain";
-    else if (1)
-        type = "image/jpeg";
-    else if (1)
-        type = "image/png";
-    else
-        type = "application/json";
-
     _httpResponse.headerFields.insert(std::make_pair("Content-Type", type));
 }
 
@@ -151,15 +140,14 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
     std::string messageBody;
 
     if (fileFd == -1) {
-        _makeStatusLine(_httpResponse.statusLine, 404);
+        _makeStatusLine(404);
         fileFd = open(configInfo.getErrorPage().c_str(), O_RDONLY);
         // 404 Not Found 페이지가 없는 경우
         if (fileFd == -1)
             throw std::runtime_error("404 Not Found 페이지가 없습니다.");
     }
-    else {
-        _makeStatusLine(_httpResponse.statusLine, 200);
-    }
+    else
+        _makeStatusLine(200);
 
     if (isGET) {
         char buffer[1024];
@@ -173,14 +161,90 @@ void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo 
 
     // Header Field들을 세팅해준다.
     _makeHeaderFields(configInfo);
+    _setContentType("text/html");
 
     close(fileFd);
 }
 
+// 최적화를 위하여 string 대신 vector<char> 이용함
+std::string &parseUrlencode(const std::string &encodedUrl)
+{
+    std::vector<std::pair<std::string, std::string> > query;
+    std::vector<char> resultVec;
+    std::string decodedUrl = decodeUrl(encodedUrl);
+    query = parseQuery(decodedUrl);
+
+    for (std::vector<std::pair<std::string, std::string> >::iterator it = query.begin(); it != query.end(); it++) {
+        for (size_t i = 0; i < it->first.length(); i++)
+            resultVec.push_back(it->first[i]);
+        resultVec.push_back(':');
+        resultVec.push_back(' ');
+        for (size_t i = 0; i < it->second.length(); i++)
+            resultVec.push_back(it->second[i]);
+        resultVec.push_back('\r');
+        resultVec.push_back('\n');
+    }
+
+    std::string resultString(resultVec.data(), resultVec.size());
+    return resultString;
+}
+
+void parseMultiForm(const std::string &body, const std::string &delim)
+{
+    size_t pos = 0, start, end;
+    std::string boundary = "--" + delim;
+    std::string endBoundary = boundary + "--";
+    std::string fileContent, fileName, contentType;
+
+    while (1) {
+        start = body.find(boundary, pos);
+        if (start == std::string::npos)
+            break;
+        start = body.find(CRLF, start);
+        end = body.find(endBoundary, start);
+        if (end == std::string::npos)
+            break;
+        fileContent = body.substr(start, end - start);
+        pos = end;
+    }
+}
+
 void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
 {
-    (void)httpRequest;
-    (void)configInfo;
+    std::map<std::string, std::string> files;
+    const std::string contentType = httpRequest.getHeaderFields().find("Content-Type")->second;
+    const std::string fileName = httpRequest.getRequestLine().getUri();
+    std::string fileContent;
+
+    if (contentType == "") {
+        if (httpRequest.getMessageBody() == "") // 실제 body가 없는 경우
+            _makeStatusLine(204);
+        else { // 실제 body가 있는 경우 -> binary로 해석
+            _makeStatusLine(400);
+        }
+    }
+    else if (std::strncmp(contentType.c_str(), "application/x-www-form-urlencoded", 33) == 0) {
+        fileContent = parseUrlencode(httpRequest.getMessageBody());
+        files.insert(std::make_pair(fileName, fileContent));
+    }
+    else if (std::strncmp(contentType.c_str(), "text/plain", 10) == 0) {
+        fileContent = httpRequest.getMessageBody();
+        for (size_t i = 0; i < fileContent.length(); i++) {
+            if (fileContent[i] == '+')
+                fileContent[i] = ' ';
+        }
+        files.insert(std::make_pair(fileName, fileContent));
+    }
+    else if (std::strncmp(contentType.c_str(), "multipart/form-data", 19) == 0) {
+        size_t pos = contentType.find("boundary=");
+        if (pos == std::string::npos)
+            throw 400;
+        std::string delim = contentType.substr(pos + 9);
+        parseMultiForm(httpRequest.getMessageBody(), delim);
+    }
+    else { // binary로 해석
+        
+    }
 }
 
 void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
@@ -276,4 +340,9 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
         _status = RES_IDLE;
         _pos = 0;
     }
+}
+
+void HttpResponseHandler::makeHttpResponseMessage()
+{
+    
 }

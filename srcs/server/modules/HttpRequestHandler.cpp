@@ -1,6 +1,7 @@
 #include <sstream>
 #include "HttpRequestModule.hpp"
 #include "../parse/parse.hpp"
+#include "../../utils/utils.hpp"
 
 HttpRequestHandler::HttpRequestHandler(size_t clientMaxBodySize) : _status(INPUT_READY), _clientMaxBodySize(clientMaxBodySize)
 {}
@@ -23,55 +24,6 @@ void HttpRequestHandler::_inputRequestLine()
     _lineV.push_back(_remain.substr(0, end));
     _remain = _remain.substr(end + 2);
     _parseRequestLine();
-}
-
-void HttpRequestHandler::_parseQuery(RequestLine &requestLine, std::string &query)
-{
-    std::vector<std::pair<std::string, std::string> > queryV;
-    std::string key, value;
-    size_t equalPos, amperPos, start = 0;
-
-    while (start != query.length()) {
-        if ((equalPos = query.find('=', start + 1)) == std::string::npos) { // GET 요청에 문법 오류(error 발생)
-            _status = INPUT_ERROR_CLOSED;
-            _httpRequest.setCode(400);
-            return;
-        }
-
-        if ((amperPos = query.find('&', equalPos + 1)) == std::string::npos)
-            amperPos = query.length();
-
-        if (start == 0)
-            --start;
-        key = query.substr(start + 1, equalPos - start - 1);
-        value = query.substr(equalPos + 1, amperPos - equalPos - 1);
-        queryV.push_back(std::make_pair(key, value));
-
-        start = amperPos;
-    }
-
-    requestLine.setQuery(queryV);
-}
-
-std::string HttpRequestHandler::_decodeUrl(std::string &str)
-{
-    std::ostringstream decoded;
-
-    for (size_t i = 0; i < str.length(); i++) {
-        if (str[i] == '%') {
-            if (i + 2 < str.length() && isxdigit(str[i + 1]) && isxdigit(str[i + 2])) {
-                char decodedChar = static_cast<char>(strtol(str.substr(i + 1, 2).c_str(), nullptr, 16));
-                decoded << decodedChar;
-                i += 2;
-            }
-            else
-                decoded << str[i];
-        }
-        else
-            decoded << str[i];
-    }
-
-    return decoded.str();
 }
 
 void HttpRequestHandler::_parseRequestLine()
@@ -112,7 +64,7 @@ void HttpRequestHandler::_parseRequestLine()
     requestLine.setMethod(method);
 
     // set uri & query
-    token = _decodeUrl(tokens[1]);
+    token = decodeUrl(tokens[1]);
     if (token.length() > 8000) { // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
         _httpRequest.setCode(414);
         return;
@@ -127,6 +79,7 @@ void HttpRequestHandler::_parseRequestLine()
             requestLine.setUri(token.substr(0, fPos));
     }
     else {
+        std::vector<std::pair<std::string, std::string> > queryV;
         std::string queries;
 
         requestLine.setUri(token.substr(0, qPos));
@@ -134,7 +87,12 @@ void HttpRequestHandler::_parseRequestLine()
             queries = token.substr(qPos + 1);
         else
             queries = token.substr(qPos + 1, fPos - qPos - 1);
-        _parseQuery(requestLine, queries);
+        queryV = parseQuery(queries);
+        if (queryV.empty()) {
+            _status = INPUT_ERROR_CLOSED;
+            _httpRequest.setCode(400);
+            return;
+        }
     }
     if (fPos != std::string::npos)
         requestLine.setFragment(token.substr(fPos + 1));
@@ -402,19 +360,4 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
 bool HttpRequestHandler::closed() const
 {
     return (_status == INPUT_NORMAL_CLOSED || _status == INPUT_ERROR_CLOSED);
-}
-
-std::vector<std::string> HttpRequestHandler::_splitByComma(std::string &str)
-{
-    std::vector<std::string> ret;
-    std::string token;
-    std::istringstream iss(str);
-
-    while (std::getline(iss, token, ',')) {
-        if (token[0] == ' ')
-            ret.push_back(token.substr(1));
-        else
-            ret.push_back(token);
-    }
-    return ret;
 }

@@ -58,12 +58,12 @@ private:
 	void _setAllow();
 	void _setConnection(bool disConnected);
 	void _setContentLength();
-	void _setContentType();
+	void _setContentType(const std::string type);
 	void _setDate();
 	void _setLastModified(const char *path);
 	void _setLocation(std::string &location);
 
-	void _makeStatusLine(StatusLine &statusLine, short code);
+	void _makeStatusLine(short code);
 	void _makeHeaderFields(ConfigInfo &configInfo);
 
 	void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET);
