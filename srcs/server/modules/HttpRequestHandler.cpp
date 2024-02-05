@@ -231,7 +231,7 @@ void HttpRequestHandler::_extractContentLength(int contentLengthCount)
         }
     }
 
-    std::vector<std::string> lengthV = _splitByComma(lengthStr);
+    std::vector<std::string> lengthV = splitByDlm(lengthStr, ',');
     if (lengthV.size() != 1) {
         for (size_t i = 1; i < lengthV.size(); i++) {
             if (lengthV[0] != lengthV[i]) { // 400 error

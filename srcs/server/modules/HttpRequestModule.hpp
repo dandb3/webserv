@@ -98,8 +98,6 @@ private:
     void _inputChunkedBody();
 
     void _pushRequest(std::queue<HttpRequest> &httpRequestQ);
-
-    std::vector<std::string> _splitByComma(std::string &str);
 public:
     enum
     {

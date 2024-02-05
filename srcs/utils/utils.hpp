@@ -45,7 +45,7 @@ std::string toString(const T& val) {
 void printParsedServer(ServerConfig &server);
 
 std::vector<std::pair<std::string, std::string> > &parseQuery(const std::string &query);
-std::vector<std::string> &splitByComma(const std::string &str);
+std::vector<std::string> &splitByDlm(const std::string &str, char dlm);
 std::string &decodeUrl(const std::string &str);
 
 #endif

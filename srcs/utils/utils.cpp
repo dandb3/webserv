@@ -177,13 +177,13 @@ std::vector<std::pair<std::string, std::string> > &parseQuery(const std::string 
     return queryV;
 }
 
-std::vector<std::string> &splitByComma(const std::string &str)
+std::vector<std::string> &splitByDlm(const std::string &str, char dlm)
 {
     std::vector<std::string> ret;
     std::string token;
     std::istringstream iss(str);
 
-    while (std::getline(iss, token, ',')) {
+    while (std::getline(iss, token, dlm)) {
         if (token[0] == ' ')
             ret.push_back(token.substr(1));
         else
