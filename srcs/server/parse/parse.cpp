@@ -8,6 +8,41 @@
             return false;                       \
     } while (0)
 
+static bool isDigit(char ch)
+{
+    return (ch >= '0' && ch <= '9');
+}
+
+static bool isLowAlpha(char ch)
+{
+    return (ch >= 'a' && ch <= 'z');
+}
+
+static bool isUpAlpha(char ch)
+{
+    return (ch >= 'A' && ch <= 'Z');
+}
+
+static bool isAlpha(char ch)
+{
+    return (isLowAlpha(ch) || isUpAlpha(ch));
+}
+
+static bool isAlphaNum(char ch)
+{
+    return (isAlpha(ch) || isDigit(ch));
+}
+
+static bool isChar(char ch)
+{
+    return (ch >= '\x00' && ch <= '\x7F');
+}
+
+static bool isCTL(char ch)
+{
+    return ((ch >= '\x00' && ch <= '\x1F') || ch == '\x7F');
+}
+
 static std::string& toLower(std::string& str)
 {
     for (size_t i = 0; i < str.size(); ++i) {
@@ -56,36 +91,6 @@ static bool isWS(char ch)
     return (ch == '\t' || ch == ' ');
 }
 
-static bool isDigit(char ch)
-{
-    return (ch >= '0' && ch <= '9');
-}
-
-static bool isLowAlpha(char ch)
-{
-    return (ch >= 'a' && ch <= 'z');
-}
-
-static bool isUpAlpha(char ch)
-{
-    return (ch >= 'A' && ch <= 'Z');
-}
-
-static bool isAlpha(char ch)
-{
-    return (isLowAlpha(ch) || isUpAlpha(ch));
-}
-
-static bool isAlphaNum(char ch)
-{
-    return (isAlpha(ch) || isDigit(ch));
-}
-
-static bool isCTL(char ch)
-{
-    return ((ch >= '\x00' && ch <= '\x1F') || ch == '\x7F');
-}
-
 static bool isSeparator(char ch)
 {
     return (ch == '(' || ch == ')' || ch == '<' || ch == '>' || ch == '@' || ch == ',' \
@@ -94,17 +99,12 @@ static bool isSeparator(char ch)
         || ch == '\t');
 }
 
-static bool isChar(char ch)
-{
-    return (ch >= '\x00' && ch <= '\x7F');
-}
-
 static bool eatToken(const std::string& str, size_t& pos)
 {
     size_t p = pos;
 
     while (p < str.size()) {
-        if (!isChar(str[pos]) || isCTL(str[pos]) || isSeparator(str[pos]))
+        if (!isChar(str[p]) || isCTL(str[p]) || isSeparator(str[p]))
             break;
         ++p;
     }

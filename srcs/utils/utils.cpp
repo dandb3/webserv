@@ -1,6 +1,16 @@
 #include <sstream>
 #include "utils.hpp"
 
+int stringToInt(const std::string& str)
+{
+    std::stringstream ss;
+    int result;
+
+    ss << str;
+    ss >> result;
+    return result;
+}
+
 std::string sizeToStr(size_t size)
 {
     std::stringstream ss;

@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include "LocationConfig.hpp"
 
-typedef std::map<std::string, std::vector<std::string>> t_directives;
+typedef std::map<std::string, std::vector<std::string> > t_directives;
 
 /*
 ** ServerConfig는 하나의 서버를 나타낸다.

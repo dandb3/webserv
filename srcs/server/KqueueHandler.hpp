@@ -28,6 +28,7 @@ public:
 		SOCKET_LISTEN,
 		SOCKET_CLIENT,
 		SOCKET_CGI,
+        FILE_OPEN,
         SOCKET_ERROR
 	};
 
@@ -48,7 +49,7 @@ public:
     /* method */
     void addEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void deleteEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
-    void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, void *udata = NULL);
+    void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags = 0, intptr_t data = 0, void *udata = NULL);
     void eventCatch();
     // void enableEvent(/* args */);
     // void disableEvent(/* args */);

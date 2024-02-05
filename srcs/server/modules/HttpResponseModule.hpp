@@ -11,98 +11,99 @@
 #include <unistd.h>
 #include "CgiResponseModule.hpp"
 #include "HttpRequestModule.hpp"
-#include "../cycle/ConfigInfo.hpp"
-#include "../utils/utils.hpp"
+#include "../cycle/Cycle.hpp"
+#include "../../utils/utils.hpp"
 
 #define CRLF "\r\n"
 
 class StatusLine
 {
-private:
-	std::pair<short, short> _version;
-	short _code;
-	std::string _text;
-
 public:
-	StatusLine &operator=(const StatusLine &ref);
+    std::pair<short, short> version;
+    unsigned short code;
+    std::string text;
 
-	// setter
-	void setVersion(std::pair<short, short> version);
-	void setCode(short code);
-	void setText(std::string &text);
-
-	// getter
-	const std::pair<short, short> &getVersion() const;
-	const short getCode() const;
-	const std::string &getText() const;
+    StatusLine &operator=(const StatusLine &ref);
 };
 
 class HttpResponse
 {
-private:
-	StatusLine _statusLine;
-	std::multimap<std::string, std::string> _headerFields;
-	std::string _messageBody;
-
 public:
-	// HttpResponse();
+    StatusLine statusLine;
+    std::multimap<std::string, std::string> headerFields;
+    std::string messageBody;
+    
+    // HttpResponse();
 
-	// getter
-	const StatusLine &getStatusLine() const;
-	std::multimap<std::string, std::string> &getHeaderFields();
-	const std::string &getMessageBody() const;
+    // getter
+    // const StatusLine &getStatusLine() const;
+    // std::multimap<std::string, std::string> &getHeaderFields();
+    // const std::string &getMessageBody() const;
 
-	// setter
-	void setStatusLine(StatusLine &statusLine);
-	void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
-	void setMessageBody(std::string &messageBody);
+    // // setter
+    // void setStatusLine(StatusLine &statusLine);
+    // void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
+    // void setMessageBody(std::string &messageBody);
 };
 
 class HttpResponseHandler
 {
 private:
-	std::string _response;
-	size_t _pos;
-	char _status;
+    std::string _response;
+    size_t _pos;
+    char _status;
 
-	HttpResponse _httpResponse;
+    HttpResponse _httpResponse;
 
-	void _setFileTime(std::multimap<std::string, std::string> &headerFields, const char *path);
-	void _setDate(std::multimap<std::string, std::string> &headerFields);
-	void _setContentType(std::multimap<std::string, std::string> &headerFields);
-	void _setContentLength(std::multimap<std::string, std::string> &headerFields);
-	void _setConnection(std::multimap<std::string, std::string> &headerFields);
+    void _setConnection(Cycle* cycle);
+    void _setContentLength();
+    void _setContentType(Cycle* cycle, const std::string& path);
+    void _setDate();
+    void _setLastModified(const char *path);
 
-	void _makeStatusLine(StatusLine &statusLine, short code);
-	void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &netConfig);
+    void _makeStatusLine();
+    void _makeHeaderFields(Cycle* cycle);
 
-	void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &netConfig, bool isGET);
-	void _makeHEADResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
-	void _makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
-	void _makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
+    void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest);
 
-	void _statusLineToString();
-	void _headerFieldsToString();
-	void _httpResponseToString();
+    void _statusLineToString();
+    void _headerFieldsToString();
+    void _httpResponseToString();
 
 public:
-	enum
-	{
-		GET,
-		HEAD,
-		POST,
-		DELETE
-	};
-	enum
-	{
-		RES_IDLE,
-		RES_BUSY,
-		RES_READY
-	};
-	HttpResponseHandler();
+    enum
+    {
+        GET,
+        HEAD,
+        POST,
+        DELETE
+    };
+    enum
+    {
+        RES_IDLE,
+        RES_BUSY,
+        RES_READY
+    };
 
-	void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &netConfig);
-	void sendHttpResponse(int fd, size_t size);
+    HttpResponseHandler();
+
+    void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse);
+    void makeHttpErrorResponse(Cycle* cycle);
+    void makeHttpResponseFinal();
+
+    void sendHttpResponse(int fd, size_t size);
+
+    void setStatus(char status);
+
+    char getStatus() const;
+    HttpResponse& getHttpResponse();
+
+    bool isErrorCode(unsigned short code);
+
 };
 
 #endif

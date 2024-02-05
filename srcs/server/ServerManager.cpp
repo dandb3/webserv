@@ -1,4 +1,5 @@
 #include <iostream>
+#include <csignal>
 #include "ServerManager.hpp"
 
 // test
@@ -21,6 +22,7 @@ ServerManager::ServerManager(std::string config_path)
  *    - 소켓을 리스닝 모드로 설정합니다.
  *    - 소켓을 논블로킹 모드로 설정하고 이벤트 핸들러에 이벤트를 추가합니다.
  *    - 서버 소켓 타입을 설정합니다.
+ *    - SIGPIPE 시그널 발생 시 SIG_IGN으로 설정한다.
  * @throws std::runtime_error 소켓 생성, 주소 바인딩, 논블로킹 설정, 이벤트 추가 등의 과정에서 오류 발생 시 예외 처리
  *      예외 처리는 나중에 구현할 예정입니다.
  */
@@ -72,6 +74,8 @@ void ServerManager::initServer()
         listenFds.push_back(sockfd);
     }
     _eventHandler.initEvent(listenFds);
+    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+        throw 123123123231;
 }
 
 std::string createHttpRequestPage(const std::string &httpRequest, const std::string &msg) {
@@ -216,7 +220,7 @@ void ServerManager::operate()
                         if (getsockname(sockfd, (struct sockaddr *)&servaddr, &servLen) == -1)
                             throw std::runtime_error("getsockname error");
                         curEventInfo->ip = servaddr.sin_addr.s_addr;
-                        curEventInfo->port = 8100;
+                        curEventInfo->port = htons(servaddr.sin_port);
                         std::string uri = getUriFromRequest(buf);
                         curEventInfo->uri = uri;
                         curEventInfo->sockfd = sockfd;
@@ -233,7 +237,7 @@ void ServerManager::operate()
                     EventInfo *data = (EventInfo *)curEvent.udata;
                     // EventInfo에 대한 fd string으로 변환
                     std::string fd = std::to_string(data->sockfd);
-                    ConfigInfo configInfo(data->ip, data->port, data->uri);
+                    ConfigInfo configInfo(data->ip, data->port, "", data->uri); // serverName은 일단 빈 문자열
                     std::string msg = configInfo.getPrintableConfigInfo();
                     std::string msg2 = createHttpRequestPage(data->data, msg);
                     int n = write(sockfd, msg2.c_str(), msg2.length());

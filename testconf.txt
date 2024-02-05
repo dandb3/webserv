@@ -1,6 +1,6 @@
 user hello_webserv;
 worker_processes 1;
-include confTest/mime.types;
+include ./config_parsing/conf/mime.types;
 
 server {
 	listen       8100;
@@ -11,7 +11,7 @@ server {
 	cgi 		.cgi;
 
 	location / {
-			root /var/www/html/;
+			root /YoupiBanane/;
 			allow_method GET;
 			index youpi.bad_extension;
 			autoindex on;
@@ -19,7 +19,7 @@ server {
 
 	location /put_test {
 			root /YoupiBanane/put_test/;
-			allow_method GET HEAD;
+			allow_method PUT;
 			index index.html;
 			autoindex off;
 	}

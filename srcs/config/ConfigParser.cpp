@@ -1,9 +1,31 @@
 #include "ConfigParser.hpp"
 
-const std::set<std::string> ConfigParser::SERVER_KEY_SET = {
-    "listen", "server_name", "root", "index", "autoindex", "client_max_body_size",
-    "error_page", "location", "access_log", "error_log", "cgi", "allow_methods",
-    "request_timeout", "keepalive_timeout", "session" };
+// const std::set<std::string> ConfigParser::SERVER_KEY_SET = {
+//     "listen", "server_name", "root", "index", "autoindex", "client_max_body_size",
+//     "error_page", "location", "access_log", "error_log", "cgi", "allow_methods",
+//     "request_timeout", "keepalive_timeout", "session" };
+
+std::set<std::string> init() {
+    std::set<std::string> s;
+    s.insert("listen");
+    s.insert("server_name");
+    s.insert("root");
+    s.insert("index");
+    s.insert("autoindex");
+    s.insert("client_max_body_size");
+    s.insert("error_page");
+    s.insert("location");
+    s.insert("access_log");
+    s.insert("error_log");
+    s.insert("cgi");
+    s.insert("allow_methods");
+    s.insert("request_timeout");
+    s.insert("keepalive_timeout");
+    s.insert("session");
+    return s;
+}
+
+const std::set<std::string> ConfigParser::SERVER_KEY_SET = init();
 
 std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
     std::string ipStr;
@@ -42,9 +64,9 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
  * 파싱 시에 key 값이 내가 찾는 값이 아닌경우 key가 무엇인지 알려주고 오류 처리 (해야할 것)
 */
 void ConfigParser::parse(std::string const &configPath, Config &config) {
-    std::cout << "read config file" << std::endl;
+    // std::cout << "read config file" << std::endl;
     std::string fileContent = FileReader::read_file(configPath); // 실패 시 throw
-    std::cout << "finish read config file" << std::endl;
+    // std::cout << "finish read config file" << std::endl;
     size_t i = 0;
     std::string key;
     while (i != std::string::npos && i < fileContent.size()) {

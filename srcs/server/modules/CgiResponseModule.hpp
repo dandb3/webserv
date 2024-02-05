@@ -5,8 +5,6 @@
 # include <string>
 # include "../parse/CgiResponseParser.hpp"
 
-# define BUF_SIZE 1024
-
 class CgiResponse
 {
 public:
@@ -15,25 +13,29 @@ public:
 		DOCUMENT_RES = 0,
 		LOCAL_REDIR_RES,
 		CLIENT_REDIR_RES,
-		CLIENT_REDIR_DOC_RES,
+		CLIENT_REDIRDOC_RES,
         CGI_RESPONSE_ERROR
 	};
 
 private:
-    std::map<std::string, std::string> _headerFields;
+    unsigned short _statusCode;
+    std::vector<pair_t> _headerFields;
     std::string _messageBody;
     char _type;
 
 public:
     CgiResponse();
+    CgiResponse(unsigned short code);
     CgiResponse(const std::string& rawCgiResponse);
     CgiResponse& operator=(const CgiResponse& cgiResponse);
 
+    void setStatusCode(unsigned short statusCode);
     void addHeaderField(const pair_t& p);
     void setMessageBody(const std::string& messageBody);
     void setType(char type);
 
-    const std::map<std::string, std::string>& getHeaderFields() const;
+    unsigned short getStatusCode() const;
+    const std::vector<pair_t>& getHeaderFields() const;
     const std::string& getMessageBody() const;
     char getType() const;
 
@@ -42,8 +44,6 @@ public:
 class CgiResponseHandler
 {
 private:
-    static char _buf[BUF_SIZE];
-
     CgiResponse _cgiResponse;
     std::string _rawCgiResponse;
     bool _eof;
@@ -56,6 +56,7 @@ public:
     void makeCgiResponse();
 
     const CgiResponse& getCgiResponse() const;
+    char getResponseType() const;
     bool eof() const;
 
 };
