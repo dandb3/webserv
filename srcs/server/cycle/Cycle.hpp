@@ -39,7 +39,8 @@ private:
     int _httpSockfd;
     int _cgiSendfd;
     int _cgiRecvfd;
-    std::set<int> _openFiles;
+    int _readFile;
+    std::set<int> _writeFiles;
     pid_t _cgiScriptPid;
     bool _timerType; // set if it is a request timer
     bool _closed;
@@ -66,7 +67,8 @@ public:
     int getHttpSockfd() const;
     int getCgiSendfd() const;
     int getCgiRecvfd() const;
-    std::set<int>& getOpenFiles();
+    int getReadFile() const;
+    std::set<int>& getWriteFiles();
     pid_t getCgiScriptPid() const;
     bool getTimerType() const;
     bool closed() const;
@@ -79,6 +81,7 @@ public:
 
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);
+    void setReadFile(int fd);
     void setCgiScriptPid(pid_t pid);
     void setTimerType(bool type);
 	void setClosed();

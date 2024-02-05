@@ -55,8 +55,6 @@ private:
 
     HttpResponse _httpResponse;
 
-    bool _isErrorCode(unsigned short code);
-
     void _setConnection(std::multimap<std::string, std::string> &headerFields);
     void _setContentLength(std::multimap<std::string, std::string> &headerFields);
     void _setContentType(std::multimap<std::string, std::string> &headerFields);
@@ -66,12 +64,10 @@ private:
     void _makeStatusLine(StatusLine &statusLine, short code);
     void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo);
 
-    void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET);
-    void _makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
-    void _makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
-
-    void _makeHttpErrorResponse(Cycle* cycle);
-    void _makeHttpResponseFinal();
+    void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest);
 
     void _statusLineToString();
     void _headerFieldsToString();
@@ -93,13 +89,19 @@ public:
     };
     HttpResponseHandler();
 
-    void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
+    void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
     void makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse);
+    void makeHttpErrorResponse(Cycle* cycle);
+    void makeHttpResponseFinal();
+
     void sendHttpResponse(int fd, size_t size);
 
     void setStatus(char status);
 
     char getStatus() const;
+    HttpResponse& getHttpResponse();
+
+    bool isErrorCode(unsigned short code);
 
 };
 

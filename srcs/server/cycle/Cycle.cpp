@@ -9,7 +9,7 @@ char* Cycle::getBuf()
 }
 
 Cycle::Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
-: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _openFiles(), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
+: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
 {}
 
 Cycle *Cycle::newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
@@ -58,9 +58,14 @@ int Cycle::getCgiRecvfd() const
     return _cgiRecvfd;
 }
 
-std::set<int>& Cycle::getOpenFiles()
+int Cycle::getReadFile() const
 {
-    return _openFiles;
+    return _readFile;
+}
+
+std::set<int>& Cycle::getWriteFiles()
+{
+    return _writeFiles;
 }
 
 pid_t Cycle::getCgiScriptPid() const
@@ -111,6 +116,11 @@ void Cycle::setCgiSendfd(int fd)
 void Cycle::setCgiRecvfd(int fd)
 {
     _cgiRecvfd = fd;
+}
+
+void Cycle::setReadFile(int fd)
+{
+    _readFile = fd;
 }
 
 void Cycle::setCgiScriptPid(pid_t pid)

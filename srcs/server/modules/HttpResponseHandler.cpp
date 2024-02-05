@@ -1,9 +1,10 @@
+#include <sys/stat.h>
 #include "HttpResponseModule.hpp"
 #include "../parse/parse.hpp"
 
 HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
 
-bool HttpResponseHandler::_isErrorCode(unsigned short code)
+bool HttpResponseHandler::isErrorCode(unsigned short code)
 {
     return (code >= 400 && code < 600);
 }
@@ -88,22 +89,9 @@ void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &head
 }
 
 // 수정 필요
-void HttpResponseHandler::_setContentType(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setContentType(const std::string& path, ConfigInfo& configInfo)
 {
-    std::string type;
 
-    if (1)
-        type = "text/html";
-    else if (1)
-        type = "text/plain";
-    else if (1)
-        type = "image/jpeg";
-    else if (1)
-        type = "image/png";
-    else
-        type = "application/json";
-
-    headerFields.insert(std::make_pair("Content-Type", type));
 }
 
 void HttpResponseHandler::_setContentLength(std::multimap<std::string, std::string> &headerFields)
@@ -130,57 +118,101 @@ void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::stri
     _setLastModified(headerFields, configInfo.getPath().c_str());
 }
 
-void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET)
+void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
-    std::string path = "." + configInfo.getPath() + "index.html";
-    int fileFd = open(path.c_str(), O_RDONLY);
-    StatusLine statusLine;
-    std::multimap<std::string, std::string> headerFields;
-    std::string messageBody;
+    std::string path = cycle->getConfigInfo().getPath();
+    struct stat buf;
+    int fd;
 
-    if (fileFd == -1) {
-        _makeStatusLine(statusLine, 404);
-        fileFd = open(configInfo.getErrorPage().c_str(), O_RDONLY);
-        // 404 Not Found 페이지가 없는 경우
-        if (fileFd == -1)
-            throw std::runtime_error("404 Not Found 페이지가 없습니다.");
-    }
-    else {
-        _makeStatusLine(statusLine, 200);
-    }
-    _httpResponse.setStatusLine(statusLine);
-
-    if (isGET) {
-        char buffer[1024];
-        memset(buffer, 0, 1024);
-        while (read(fileFd, buffer, 1024) > 0) {
-            messageBody.append(buffer);
-            memset(buffer, 0, 1024);
+    if (access(path.c_str(), F_OK) == FAILURE)
+        throw 404;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    if (S_ISDIR(buf.st_mode)) {
+        path = path + cycle->getConfigInfo().getIndex();
+        
+        if (access(path.c_str(), F_OK) == FAILURE) {
+            if (configInfo.getAutoIndex() == false)
+                throw 404;
+            /**
+             * directory listing 생성
+             * code = 200;
+             * Content-Type 설정
+            */
+            makeHttpResponseFinal();
+            return;
         }
-        messageBody.push_back('\0');
-        _httpResponse.setMessageBody(messageBody);
     }
-
-    // Header Field들을 세팅해준다.
-    _makeHeaderFields(headerFields, configInfo);
-    _httpResponse.setHeaderFields(headerFields);
-
-    close(fileFd);
+    if (access(path.c_str(), R_OK) == FAILURE)
+        throw 403;
+    if ((fd = open(path.c_str(), O_RDONLY)) == FAILURE)
+        throw 500;
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    cycle->setReadFile(fd);
+    _addContentType(cycle->getConfigInfo());
 }
 
-void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
+void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
+{
+    std::string path = cycle->getConfigInfo().getPath();
+    struct stat buf;
+
+    if (access(path.c_str(), F_OK) == FAILURE)
+        throw 404;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    if (S_ISDIR(buf.st_mode)) {
+        path = path + cycle->getConfigInfo().getIndex();
+        
+        if (access(path.c_str(), F_OK) == FAILURE) {
+            if (configInfo.getAutoIndex() == false)
+                throw 404;
+            /**
+             * directory listing 생성
+             * code = 200;
+             * Content-Type 설정
+            */
+            makeHttpResponseFinal();
+            return;
+        }
+    }
+    if (access(path.c_str(), R_OK) == FAILURE)
+        throw 403;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    _httpResponse.statusLine.code = 200;
+    _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(buf.st_size)));
+    _addContentType(path, cycle->getConfigInfo());
+    makeHttpResponseFinal();
+}
+
+void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
     (void)httpRequest;
     (void)configInfo;
 }
 
-void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
+void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
-    (void)httpRequest;
-    (void)configInfo;
+    std::string path = cycle->getConfigInfo().getPath();
+    std::string dirPath = path.substr(0, path.find_last_of('/') + 1);
+    struct stat buf;
+
+    if (access(path.c_str(), F_OK) == FAILURE)
+        throw 404;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    if (S_ISDIR(buf.st_mode))
+        throw 403;
+    if (access(dirPath.c_str(), W_OK | X_OK) == FAILURE)
+        throw 403;
+    if (std::remove(path.c_str()) == FAILURE)
+        throw 500;
+    _httpResponse.statusLine.code = 204;
+    makeHttpResponseFinal();
 }
 
-void HttpResponseHandler::_makeHttpErrorResponse(Cycle* cycle)
+void HttpResponseHandler::makeHttpErrorResponse(Cycle* cycle)
 {
     const std::string& errorPage = cycle->getConfigInfo().getErrorPage();
     int fd;
@@ -189,21 +221,21 @@ void HttpResponseHandler::_makeHttpErrorResponse(Cycle* cycle)
         || (fd = open(errorPage.c_str(), O_RDONLY)) == FAILURE) {
         if (errorPage == ConfigInfo::getDefaultErrorPage()) {
             _httpResponse.statusLine.code = 500;
-            _makeHttpResponseFinal();
+            makeHttpResponseFinal();
         }
         else {
             cycle->getConfigInfo().setDefaultErrorPage();
-            _makeHttpErrorResponse(cycle);
+            makeHttpErrorResponse(cycle);
         }
     }
     else {
         fcntl(fd, F_SETFL, O_NONBLOCK);
+        cycle->setReadFile(fd);
         _addContentType(cycle->getConfigInfo());
-        cycle->getOpenFiles().insert(fd);
     }
 }
 
-void HttpResponseHandler::_makeHttpResponseFinal()
+void HttpResponseHandler::makeHttpResponseFinal()
 {
     /**
      * code를 기반으로 status-line 생성
@@ -248,30 +280,46 @@ void HttpResponseHandler::_httpResponseToString()
     std::cout << "final result: " << _response << '\n';
 }
 
-void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
+void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
+    const std::string& path = httpRequest.getRequestLine().getUri();
     const short method = httpRequest.getRequestLine().getMethod();
 
-    // if else -> switch?
-    // httpRequest.code 확인해서 response 만들기
-    if (method == GET) {
-        _makeGETResponse(httpRequest, configInfo, true);
-    }
-    else if (method == HEAD) {
-        _makeGETResponse(httpRequest, configInfo, false);
-    }
-    else if (method == POST) {
-        _makePOSTResponse(httpRequest, configInfo);
-    }
-    else if (method == DELETE) {
-        _makeDELETEResponse(httpRequest, configInfo);
-    }
-    else {
+    _httpResponse.statusLine.code = httpRequest.getCode();
+    if (isErrorCode(_httpResponse.statusLine.code)) {
+        makeHttpErrorResponse(cycle);
         return;
-        // 400 Bad Request
     }
-
-    _httpResponseToString();
+    /**
+     * redirect 확인
+     * 맞으면?
+     * _httpResponse.statusLine.code = 301;
+     * 301 body 읽어와야 함.
+     * Location 헤더 추가.
+    */
+    try {
+        switch (method) {
+        case GET:
+            _makeGETResponse(httpRequest, cycle->getConfigInfo());
+            break;
+        case HEAD:
+            _makeHEADResponse(httpRequest, cycle->getConfigInfo());
+            break;
+        case POST:
+            _makePOSTResponse(httpRequest, cycle->getConfigInfo());
+            break;
+        case DELETE:
+            _makeDELETEResponse(httpRequest, cycle->getConfigInfo());
+            break;
+        default:
+            throw 405;
+            break;
+        }
+    }
+    catch (unsigned short code) {
+        _httpResponse.statusLine.code = code;
+        makeHttpErrorResponse(cycle);
+    }
 }
 
 void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse)
@@ -280,8 +328,8 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiR
     std::vector<pair_t>::const_iterator it = cgiHeaderFields.begin();
 
     _httpResponse.statusLine.code = cgiResponse.getStatusCode();
-    if (_isErrorCode(_httpResponse.statusLine.code)) {
-        _makeHttpErrorResponse(cycle);
+    if (isErrorCode(_httpResponse.statusLine.code)) {
+        makeHttpErrorResponse(cycle);
         return;
     }
 
@@ -290,7 +338,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiR
         if (!isCaseInsensitiveSame(it->first, "Status") && !isCaseInsensitiveSame(it->first, "Content-Length"))
             _httpResponse.headerFields.insert(*it);
 
-    _makeHttpResponseFinal();
+    makeHttpResponseFinal();
 }
 
 void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
@@ -315,4 +363,9 @@ void HttpResponseHandler::setStatus(char status)
 char HttpResponseHandler::getStatus() const
 {
     return _status;
+}
+
+HttpResponse& HttpResponseHandler::getHttpResponse()
+{
+    return _httpResponse;
 }

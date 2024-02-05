@@ -54,18 +54,13 @@ char EventHandler::_getEventType(const struct kevent &kev)
 
 void EventHandler::_setHttpResponseEvent(Cycle* cycle)
 {
-    std::set<int>& openFiles = cycle->getOpenFiles();
+    int readFile = cycle->getReadFile();
 
-    if (openFiles.empty()) {
+    if (readFile == -1)
         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-    }
     else {
-        std::set<int>::iterator it = openFiles.begin();
-
-        for (; it != openFiles.end(); ++it) {
-            _kqueueHandler.addEvent(*it, EVFILT_READ, cycle);
-            _kqueueHandler.setEventType(*it, KqueueHandler::FILE_OPEN);
-        }
+        _kqueueHandler.addEvent(readFile, EVFILT_READ, cycle);
+        _kqueueHandler.setEventType(readFile, KqueueHandler::FILE_OPEN);
     }
 }
 
@@ -276,12 +271,34 @@ void EventHandler::_servCgiProc(const struct kevent &kev)
 void EventHandler::_servFile(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+    HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
     ssize_t readLen;
 
-    if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
-
+    if ((kev.flags & EV_EOF) && kev.data == 0) {
+        close(kev.ident);
+        cycle->setReadFile(-1);
+        httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
+        httpResponseHandler.makeHttpResponseFinal();
+        _setHttpResponseEvent(cycle);
     }
-    // append();
+    else if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
+        httpResponse.headerFields.clear();
+        httpResponse.messageBody.clear();
+        close(kev.ident);
+        cycle->setReadFile(-1);
+        if (httpResponseHandler.isErrorCode(httpResponse.statusLine.code)) {
+            httpResponseHandler.makeHttpResponseFinal();
+            _setHttpResponseEvent(cycle);
+        }
+        else {
+            httpResponse.statusLine.code = 500;
+            httpResponseHandler.makeHttpErrorResponse(cycle);
+            _setHttpResponseEvent(cycle);
+        }
+    }
+    else
+        httpResponse.messageBody.append(Cycle::getBuf(), readLen);
 }
 
 void EventHandler::_servRTimer(const struct kevent &kev)
