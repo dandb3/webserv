@@ -293,7 +293,7 @@ void EventHandler::_servFile(const struct kevent& kev)
         }
         else {
             httpResponse.statusLine.code = 500;
-            httpResponseHandler.makeHttpErrorResponse(cycle);
+            httpResponseHandler.makeDefaultHttpResponse(cycle);
             _setHttpResponseEvent(cycle);
         }
     }

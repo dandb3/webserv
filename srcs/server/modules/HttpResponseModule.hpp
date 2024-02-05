@@ -92,7 +92,7 @@ public:
 
     void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
     void makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse);
-    void makeHttpErrorResponse(Cycle* cycle);
+    void makeDefaultHttpResponse(Cycle* cycle);
     void makeHttpResponseFinal();
 
     void sendHttpResponse(int fd, size_t size);

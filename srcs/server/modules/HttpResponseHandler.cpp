@@ -119,7 +119,7 @@ void HttpResponseHandler::_setDate()
 void HttpResponseHandler::_setContentType(Cycle* cycle, const std::string& path)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
-    t_directives& mimeTypes = Config::getInstance().getMimeTypes();
+    std::map<std::string, std::string>& mimeTypes = Config::getInstance().getMimeTypes();
     std::string extension;
     std::string contentType;
     size_t extensionPos;
@@ -190,7 +190,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
         throw 500;
     fcntl(fd, F_SETFL, O_NONBLOCK);
     cycle->setReadFile(fd);
-    _setContentType(cycle->getConfigInfo(), path);
+    _setContentType(cycle, path);
 }
 
 void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -223,14 +223,13 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
         throw 500;
     _httpResponse.statusLine.code = 200;
     _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(buf.st_size)));
-    _setContentType(cycle->getConfigInfo(), path);
+    _setContentType(cycle, path);
     makeHttpResponseFinal();
 }
 
 void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
-    (void)httpRequest;
-    (void)configInfo;
+    
 }
 
 void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -253,9 +252,9 @@ void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpReq
     makeHttpResponseFinal();
 }
 
-void HttpResponseHandler::makeHttpErrorResponse(Cycle* cycle)
+void HttpResponseHandler::makeDefaultHttpResponse(Cycle* cycle)
 {
-    const std::string& errorPage = cycle->getConfigInfo().getErrorPage();
+    const std::string& errorPage = cycle->getConfigInfo().getErrorPage(toString(_httpResponse.statusLine.code));
     int fd;
 
     if (access(errorPage.c_str(), R_OK) == FAILURE \
@@ -266,13 +265,13 @@ void HttpResponseHandler::makeHttpErrorResponse(Cycle* cycle)
         }
         else {
             cycle->getConfigInfo().setDefaultErrorPage();
-            makeHttpErrorResponse(cycle);
+            makeDefaultHttpResponse(cycle);
         }
     }
     else {
         fcntl(fd, F_SETFL, O_NONBLOCK);
         cycle->setReadFile(fd);
-        _setContentType(cycle->getConfigInfo(), errorPage);
+        _setContentType(cycle, errorPage);
     }
 }
 
@@ -288,8 +287,8 @@ void HttpResponseHandler::makeHttpResponseFinal()
 
 void HttpResponseHandler::_statusLineToString()
 {
-    const std::pair<short, short> version = _httpResponse.getStatusLine().getVersion();
-    const short code = _httpResponse.getStatusLine().getCode();
+    const std::pair<short, short> version = _httpResponse.statusLine.version;
+    const short code = _httpResponse.statusLine.code;
     std::string versionStr;
     std::string codeStr;
 
@@ -300,12 +299,12 @@ void HttpResponseHandler::_statusLineToString()
 
     codeStr = toString(code);
 
-    _response = versionStr + " " + codeStr + " " + _httpResponse.getStatusLine().getText() + CRLF;
+    _response = versionStr + " " + codeStr + " " + _httpResponse.statusLine.text + CRLF;
 }
 
 void HttpResponseHandler::_headerFieldsToString()
 {
-    std::multimap<std::string, std::string> headerFields = _httpResponse.getHeaderFields();
+    std::multimap<std::string, std::string> headerFields = _httpResponse.headerFields;
     std::multimap<std::string, std::string>::iterator it;
 
     for (it = headerFields.begin(); it != headerFields.end(); it++) {
@@ -318,27 +317,27 @@ void HttpResponseHandler::_httpResponseToString()
 {
     _statusLineToString();
     _headerFieldsToString();
-    _response += _httpResponse.getMessageBody();
+    _response += _httpResponse.messageBody;
     std::cout << "final result: " << _response << '\n';
 }
 
 void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
-    const std::string& path = httpRequest.getRequestLine().getUri();
+    ConfigInfo& configInfo = cycle->getConfigInfo();
+    const std::string& path = configInfo.getPath();
     const short method = httpRequest.getRequestLine().getMethod();
 
     _httpResponse.statusLine.code = httpRequest.getCode();
     if (isErrorCode(_httpResponse.statusLine.code)) {
-        makeHttpErrorResponse(cycle);
+        makeDefaultHttpResponse(cycle);
         return;
     }
-    /**
-     * redirect 확인
-     * 맞으면?
-     * _httpResponse.statusLine.code = 301;
-     * 301 body 읽어와야 함.
-     * Location 헤더 추가.
-    */
+    if (configInfo.getIsRedirect()) {
+        _httpResponse.statusLine.code = stringToType<unsigned short>(configInfo.getRedirect().first);
+        _httpResponse.headerFields.insert(std::make_pair("Location", configInfo.getRedirect().second));
+        makeDefaultHttpResponse(cycle);
+        return;
+    }
     try {
         switch (method) {
         case GET:
@@ -360,7 +359,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
     }
     catch (unsigned short code) {
         _httpResponse.statusLine.code = code;
-        makeHttpErrorResponse(cycle);
+        makeDefaultHttpResponse(cycle);
     }
 }
 
@@ -371,7 +370,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiR
 
     _httpResponse.statusLine.code = cgiResponse.getStatusCode();
     if (isErrorCode(_httpResponse.statusLine.code)) {
-        makeHttpErrorResponse(cycle);
+        makeDefaultHttpResponse(cycle);
         return;
     }
 
