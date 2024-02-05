@@ -169,14 +169,15 @@ void ConfigParser::parseLocation(std::string const &fileContent, size_t &i, Serv
 }
 
 void ConfigParser::parseTypes(std::string const &filePath, Config &config) {
-    t_directives mime_types;
+    std::map<std::string, std::string> mime_types;
     std::string fileContent = FileReader::read_file(filePath); // 실패 시 throw
     size_t i = 0;
-    std::string key = getKey(fileContent, i);
+    std::string value = getKey(fileContent, i);
     while (i != std::string::npos && i < fileContent.size()) {
-        std::vector<std::string> value = getValues(fileContent, i, ';');
-        mime_types[key] = value;
-        key = getWord(fileContent, i);
+        std::vector<std::string> keys = getValues(fileContent, i, ';');
+        for (size_t idx = 0; idx < keys.size(); ++idx)
+            mime_types[keys[idx]] = value;
+        value = getWord(fileContent, i);
     }
     config.setMimeTypes(mime_types);
 }
