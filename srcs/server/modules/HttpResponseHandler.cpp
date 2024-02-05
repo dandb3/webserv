@@ -71,7 +71,7 @@ void HttpResponseHandler::_makeStatusLine()
         _httpResponse.statusLine.text = "Gateway Timeout";
         break;
     default:
-        _httpResponse.statusLine.text = "Not Yet Set";
+        _httpResponse.statusLine.text = "Not Set";
         break;
     }
 }
@@ -115,21 +115,25 @@ void HttpResponseHandler::_setDate()
     _httpResponse.headerFields.insert(std::make_pair("Date", std::string(buf)));
 }
 
-// 수정 필요
+// 수정 필요, mimeTypes의 구조.
 void HttpResponseHandler::_setContentType(Cycle* cycle, const std::string& path)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
+    t_directives& mimeTypes = Config::getInstance().getMimeTypes();
     std::string extension;
     std::string contentType;
     size_t extensionPos;
 
     extension = path.substr(path.find_last_of('/') + 1); // path에 '/'가 존재한다고 가정.
     if ((extensionPos = extension.find_last_of('.')) == std::string::npos) { // 확장자가 없는 경우
-        
+        contentType = "application/octet-stream";
     }
     else { // 확장자가 있는 경우
         extension = extension.substr(extensionPos + 1);
-
+        if (mimeTypes.find(extension) == mimeTypes.end())
+            contentType = "application/octet-stream";
+        else
+            contentType = mimeTypes.at(extension);
     }
     _httpResponse.headerFields.insert(std::make_pair("Content-Type", contentType));
 }
