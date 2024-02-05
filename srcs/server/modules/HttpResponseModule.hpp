@@ -61,7 +61,7 @@ private:
     void _setDate(std::multimap<std::string, std::string> &headerFields);
     void _setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path);
 
-    void _makeStatusLine(StatusLine &statusLine, short code);
+    void _makeStatusLine();
     void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo);
 
     void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);

@@ -9,49 +9,71 @@ bool HttpResponseHandler::isErrorCode(unsigned short code)
     return (code >= 400 && code < 600);
 }
 
-void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
+void HttpResponseHandler::_makeStatusLine()
 {
-    std::string text;
-
-    statusLine.setVersion(std::make_pair(1, 1));
-    statusLine.setCode(code);
-
-    switch (code) {
+    _httpResponse.statusLine.version = std::make_pair(1, 1);
+    switch (_httpResponse.statusLine.code) {
     case 100:
-        text = "Continue";
+        _httpResponse.statusLine.text = "Continue";
         break;
     case 101:
-        text = "Switching Protocol";
+        _httpResponse.statusLine.text = "Switching Protocol";
         break;
     case 102:
-        text = "Processing";
+        _httpResponse.statusLine.text = "Processing";
         break;
     case 200:
-        text = "OK";
+        _httpResponse.statusLine.text = "OK";
         break;
     case 201:
-        text = "Created";
+        _httpResponse.statusLine.text = "Created";
         break;
     case 202:
-        text = "Accepted";
+        _httpResponse.statusLine.text = "Accepted";
         break;
     case 203:
-        text = "Non-Authoritative Information";
+        _httpResponse.statusLine.text = "Non-Authoritative Information";
         break;
     case 204:
-        text = "No Content";
+        _httpResponse.statusLine.text = "No Content";
+        break;
+    case 403:
+        _httpResponse.statusLine.text = "Forbidden";
         break;
     case 404:
-        text = "Not Found";
+        _httpResponse.statusLine.text = "Not Found";
+        break;
+    case 405:
+        _httpResponse.statusLine.text = "Method Not Allowed";
+        break;
+    case 408:
+        _httpResponse.statusLine.text = "Request Timeout";
+        break;
+    case 409:
+        _httpResponse.statusLine.text = "Conflict";
+        break;
+    case 413:
+        _httpResponse.statusLine.text = "Payload Too Large";
+        break;
+    case 414:
+        _httpResponse.statusLine.text = "URI Too Long";
+        break;
+    case 500:
+        _httpResponse.statusLine.text = "Internal Server Error";
+        break;
+    case 502:
+        _httpResponse.statusLine.text = "Bad Gateway";
         break;
     case 503:
-        text = "Service Unavailable";
+        _httpResponse.statusLine.text = "Service Unavailable";
+        break;
+    case 504:
+        _httpResponse.statusLine.text = "Gateway Timeout";
         break;
     default:
-        text = "Not Yet Setted\n";
+        _httpResponse.statusLine.text = "Not Yet Set";
+        break;
     }
-
-    statusLine.setText(text);
 }
 
 void HttpResponseHandler::_setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path)
@@ -132,7 +154,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
         path = path + cycle->getConfigInfo().getIndex();
         
         if (access(path.c_str(), F_OK) == FAILURE) {
-            if (configInfo.getAutoIndex() == false)
+            if (cycle->getConfigInfo().getAutoIndex() == false)
                 throw 404;
             /**
              * directory listing 생성
@@ -165,7 +187,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
         path = path + cycle->getConfigInfo().getIndex();
         
         if (access(path.c_str(), F_OK) == FAILURE) {
-            if (configInfo.getAutoIndex() == false)
+            if (cycle->getConfigInfo().getAutoIndex() == false)
                 throw 404;
             /**
              * directory listing 생성
@@ -195,7 +217,7 @@ void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpReque
 void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
     std::string path = cycle->getConfigInfo().getPath();
-    std::string dirPath = path.substr(0, path.find_last_of('/') + 1);
+    std::string dirPath = path.substr(0, path.find_last_of('/') + 1); // 경로 내에 '/'가 무조건 있다고 가정했음.
     struct stat buf;
 
     if (access(path.c_str(), F_OK) == FAILURE)
@@ -235,13 +257,14 @@ void HttpResponseHandler::makeHttpErrorResponse(Cycle* cycle)
     }
 }
 
+/**
+ * code를 기반으로 status-line 생성
+ * message-body를 기반으로 Content-Length 설정 및 기본 header-fields 설정 (date, 등등)
+ * message-body는 그냥 그대로 유지한다.
+*/
 void HttpResponseHandler::makeHttpResponseFinal()
 {
-    /**
-     * code를 기반으로 status-line 생성
-     * message-body를 기반으로 Content-Length 설정 및 기본 header-fields 설정 (date, 등등)
-     * message-body는 그냥 그대로 유지한다.
-    */
+    _makeStatusLine();
 }
 
 void HttpResponseHandler::_statusLineToString()
@@ -300,16 +323,16 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
     try {
         switch (method) {
         case GET:
-            _makeGETResponse(httpRequest, cycle->getConfigInfo());
+            _makeGETResponse(cycle, httpRequest);
             break;
         case HEAD:
-            _makeHEADResponse(httpRequest, cycle->getConfigInfo());
+            _makeHEADResponse(cycle, httpRequest);
             break;
         case POST:
-            _makePOSTResponse(httpRequest, cycle->getConfigInfo());
+            _makePOSTResponse(cycle, httpRequest);
             break;
         case DELETE:
-            _makeDELETEResponse(httpRequest, cycle->getConfigInfo());
+            _makeDELETEResponse(cycle, httpRequest);
             break;
         default:
             throw 405;
@@ -338,6 +361,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiR
         if (!isCaseInsensitiveSame(it->first, "Status") && !isCaseInsensitiveSame(it->first, "Content-Length"))
             _httpResponse.headerFields.insert(*it);
 
+    // 아래 함수가 기본적으로 만들어 주는 header-field가 있을텐데, 이 때 어떤 field가 만들어지는지 확실히 해야 한다.
     makeHttpResponseFinal();
 }
 
