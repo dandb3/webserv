@@ -6,6 +6,11 @@ const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
 const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
     {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
 
+const std::string& ConfigInfo::getDefaultErrorPage()
+{
+    return ConfigInfo::DEFAULT_ERROR_PAGE;
+}
+
 /// @brief ip, port를 보고 matchedServer,
 ///        uri를 보고 matchedLocation을 찾아서 ConfigInfo 생성
 ConfigInfo::ConfigInfo()
@@ -13,7 +18,7 @@ ConfigInfo::ConfigInfo()
     // ip, port을 보고 match되는 config를 찾아서 생성자 호출
     _root = DEFAULT_ROOT;
     for (size_t i = 0; i < 4; i++)
-        _allowMethods[i] = false;
+        _allowMethods[i] = true;
     _index = DEFAULT_INDEX;
     _autoIndex = false;
     _isRedirect = false;
@@ -143,13 +148,13 @@ void ConfigInfo::transferInfo(t_directives &directives) {
 
 // uri로 location 찾기
 LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap, std::string &path) {
-    if (uri.find('.') != std::string::npos) {
-        size_t pos = uri.find_last_of('/');
-        if (uri.find('.') < pos)
-            throw std::runtime_error("경로내에 .이 있습니다.");
-        path = uri.substr(0, uri.find_last_of('/') + 1);
-    }
-    else if (uri[uri.size() - 1] == '/')
+    // if (uri.find('.') != std::string::npos) {
+    //     size_t pos = uri.find_last_of('/');
+    //     if (uri.find('.') < pos)
+    //         throw std::runtime_error("경로내에 .이 있습니다.");
+    //     path = uri.substr(0, uri.find_last_of('/') + 1);
+    // }
+    if (uri[uri.size() - 1] == '/')
         path = uri;
     else
         path = uri + '/';
@@ -281,4 +286,8 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
     if (!_isRedirect)
         throw std::runtime_error("ConfigInfo에서 redirect 찾기 실패");
     return _redirect;
+}
+
+void ConfigInfo::setDefaultErrorPage() {
+    _errorPage = getDefaultErrorPage();
 }

@@ -1,8 +1,8 @@
+#include <algorithm>
 #include <unistd.h>
-#include "webserv.hpp"
 #include "CgiResponseModule.hpp"
-
-char CgiResponseHandler::_buf[BUF_SIZE];
+#include "../cycle/Cycle.hpp"
+#include "../../webserv.hpp"
 
 CgiResponseHandler::CgiResponseHandler()
 : _cgiResponse(), _rawCgiResponse(), _eof(false)
@@ -21,16 +21,12 @@ CgiResponseHandler& CgiResponseHandler::operator=(const CgiResponseHandler& cgiR
 
 void CgiResponseHandler::recvCgiResponse(const struct kevent& kev)
 {
-    size_t recvLen, totalSize = static_cast<size_t>(kev.data);
+    ssize_t recvLen;
 
-    while (totalSize > 0) {
-        recvLen = (BUF_SIZE < totalSize) ? BUF_SIZE : totalSize;
-        totalSize -= recvLen;
-        if (read(kev.ident, _buf, recvLen) == FAILURE)
-            throw ERROR;
-        _rawCgiResponse.append(_buf, recvLen);
-    }
-    if (kev.flags & EV_EOF)
+    if ((recvLen = read(kev.ident, Cycle::getBuf(), std::min<size_t>(BUF_SIZE, kev.data))) == FAILURE)
+        throw 500;
+    _rawCgiResponse.append(Cycle::getBuf(), static_cast<size_t>(recvLen));
+    if ((kev.flags & EV_EOF) && kev.data == 0)
         _eof = true;
 }
 
@@ -42,6 +38,11 @@ void CgiResponseHandler::makeCgiResponse()
 const CgiResponse& CgiResponseHandler::getCgiResponse() const
 {
     return _cgiResponse;
+}
+
+char CgiResponseHandler::getResponseType() const
+{
+    return _cgiResponse.getType();
 }
 
 bool CgiResponseHandler::eof() const

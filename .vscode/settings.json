@@ -91,6 +91,10 @@
 		"filesystem": "cpp",
 		"queue": "cpp",
 		"ios": "cpp",
-		"locale": "cpp"
+		"locale": "cpp",
+		"csignal": "cpp",
+		"event.h": "c",
+		"__bits": "cpp",
+		"variant": "cpp"
 	}
 }

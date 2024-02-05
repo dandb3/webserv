@@ -1,3 +1,6 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
 #include <iostream>
 #include <sstream>
 #include <map>
@@ -23,6 +26,16 @@ std::string ft_inet_ntoa(in_addr_t addr);
 int ft_inet_aton(const char *str, struct in_addr *addr);
 
 template <typename T>
+T stringToType(const std::string& str)
+{
+    std::stringstream ss(str);
+    T result;
+
+    ss >> result;
+    return T;
+}
+
+template <typename T>
 std::string toString(const T& val) {
     std::ostringstream oss;
     oss << val;
@@ -30,3 +43,5 @@ std::string toString(const T& val) {
 }
 
 void printParsedServer(ServerConfig &server);
+
+#endif

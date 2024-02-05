@@ -3,7 +3,7 @@
 
 #include <netinet/in.h>
 #include "../../config/Config.hpp"
-typedef std::map<std::string, std::vector<std::string>> t_directives;
+typedef std::map<std::string, std::vector<std::string> > t_directives;
 
 class ConfigInfo
 {
@@ -28,6 +28,8 @@ private:
 	void transferInfo(t_directives &directives);
 
 public:
+	static const std::string& getDefaultErrorPage();
+
 	ConfigInfo();
 	ConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri); // ip, port을 보고 match되는 config를 찾아서 생성자 호출
 	ConfigInfo &operator=(const ConfigInfo &ConfigInfo);
@@ -49,6 +51,9 @@ public:
 	t_directives getInfo() const;
 	bool getIsRedirect() const;
 	std::pair<std::string, std::string> getRedirect() const;
+
+  void setDefaultErrorPage();
+ 
 };
 
 #endif

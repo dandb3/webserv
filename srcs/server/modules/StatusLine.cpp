@@ -2,11 +2,9 @@
 
 StatusLine& StatusLine::operator=(const StatusLine& ref)
 {
-    if (this != ref) {
-        _version = ref._version;
-        _code = ref._code;
-        _text = ref._text;
-    }
+    _version = ref._version;
+    _code = ref._code;
+    _text = ref._text;
     return *this;
 }
 
@@ -15,7 +13,7 @@ void StatusLine::setVersion(std::pair<short, short> version)
     _version = version;
 }
 
-void StatusLine::setCode(short code)
+void StatusLine::setCode(unsigned short code)
 {
     _code = code;
 }
@@ -30,7 +28,7 @@ const std::pair<short, short>& StatusLine::getVersion() const
     return _version;
 }
 
-const short StatusLine::getCode() const
+unsigned short StatusLine::getCode() const
 {
     return _code;
 }

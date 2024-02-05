@@ -1,163 +1,289 @@
+#include <sys/stat.h>
 #include "HttpResponseModule.hpp"
+#include "../parse/parse.hpp"
 
 HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
 
-void HttpResponseHandler::_makeStatusLine(StatusLine &statusLine, short code)
+bool HttpResponseHandler::isErrorCode(unsigned short code)
 {
-    std::string text;
+    return (code >= 400 && code < 600);
+}
 
-    statusLine.setVersion(std::make_pair(1, 1));
-    statusLine.setCode(code);
-
-    switch (code) {
+void HttpResponseHandler::_makeStatusLine()
+{
+    _httpResponse.statusLine.version = std::make_pair(1, 1);
+    switch (_httpResponse.statusLine.code) {
     case 100:
-        text = "Continue";
+        _httpResponse.statusLine.text = "Continue";
         break;
     case 101:
-        text = "Switching Protocol";
+        _httpResponse.statusLine.text = "Switching Protocol";
         break;
     case 102:
-        text = "Processing";
+        _httpResponse.statusLine.text = "Processing";
         break;
     case 200:
-        text = "OK";
+        _httpResponse.statusLine.text = "OK";
         break;
     case 201:
-        text = "Created";
+        _httpResponse.statusLine.text = "Created";
         break;
     case 202:
-        text = "Accepted";
+        _httpResponse.statusLine.text = "Accepted";
         break;
     case 203:
-        text = "Non-Authoritative Information";
+        _httpResponse.statusLine.text = "Non-Authoritative Information";
         break;
     case 204:
-        text = "No Content";
+        _httpResponse.statusLine.text = "No Content";
+        break;
+    case 403:
+        _httpResponse.statusLine.text = "Forbidden";
         break;
     case 404:
-        text = "Not Found";
+        _httpResponse.statusLine.text = "Not Found";
+        break;
+    case 405:
+        _httpResponse.statusLine.text = "Method Not Allowed";
+        break;
+    case 408:
+        _httpResponse.statusLine.text = "Request Timeout";
+        break;
+    case 409:
+        _httpResponse.statusLine.text = "Conflict";
+        break;
+    case 413:
+        _httpResponse.statusLine.text = "Payload Too Large";
+        break;
+    case 414:
+        _httpResponse.statusLine.text = "URI Too Long";
+        break;
+    case 500:
+        _httpResponse.statusLine.text = "Internal Server Error";
+        break;
+    case 502:
+        _httpResponse.statusLine.text = "Bad Gateway";
         break;
     case 503:
-        text = "Service Unavailable";
+        _httpResponse.statusLine.text = "Service Unavailable";
+        break;
+    case 504:
+        _httpResponse.statusLine.text = "Gateway Timeout";
         break;
     default:
-        text = "Not Yet Setted\n";
+        _httpResponse.statusLine.text = "Not Set";
+        break;
     }
-
-    statusLine.setText(text);
 }
 
-void HttpResponseHandler::_setFileTime(std::multimap<std::string, std::string> &headerFields, const char *path)
+void HttpResponseHandler::_setLastModified(const char *path)
 {
     struct stat fileInfo;
-    char buffer[100];
 
-    if (path == "")
+    if (path == std::string(""))
+        return;
+    if (stat(path, &fileInfo) == -1)
+        return;
+    std::time_t lastModifiedTime = fileInfo.st_mtime;
+    if (lastModifiedTime == -1)
+        return;
+    std::tm *timeInfo = std::gmtime(&lastModifiedTime);
+    if (timeInfo == NULL)
         return;
 
-    stat(path, &fileInfo);
-    std::time_t lastModifiedTime = fileInfo.st_mtime;
-    std::tm *timeInfo = std::gmtime(&lastModifiedTime);
-
-    std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Last-Modified", std::string(buffer)));
+    char buf[100];
+    std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
+    _httpResponse.headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
 }
 
-void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setDate()
 {
-    std::time_t currentDate = std::time(nullptr);
+    std::time_t currentDate = std::time(NULL);
+
+    if (_httpResponse.headerFields.find("Date") != _httpResponse.headerFields.end())
+        return;
+    if (currentDate == -1)
+        return;
     std::tm *timeInfo = std::gmtime(&currentDate);
-    char buffer[100];
 
-    std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Date", std::string(buffer)));
+    if (timeInfo == NULL)
+        return;
+
+    char buf[100];
+
+    std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
+    _httpResponse.headerFields.insert(std::make_pair("Date", std::string(buf)));
+}
+
+// 수정 필요, mimeTypes의 구조.
+void HttpResponseHandler::_setContentType(Cycle* cycle, const std::string& path)
+{
+    ConfigInfo& configInfo = cycle->getConfigInfo();
+    t_directives& mimeTypes = Config::getInstance().getMimeTypes();
+    std::string extension;
+    std::string contentType;
+    size_t extensionPos;
+
+    extension = path.substr(path.find_last_of('/') + 1); // path에 '/'가 존재한다고 가정.
+    if ((extensionPos = extension.find_last_of('.')) == std::string::npos) { // 확장자가 없는 경우
+        contentType = "application/octet-stream";
+    }
+    else { // 확장자가 있는 경우
+        extension = extension.substr(extensionPos + 1);
+        if (mimeTypes.find(extension) == mimeTypes.end())
+            contentType = "application/octet-stream";
+        else
+            contentType = mimeTypes.at(extension);
+    }
+    _httpResponse.headerFields.insert(std::make_pair("Content-Type", contentType));
+}
+
+void HttpResponseHandler::_setContentLength()
+{
+    _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.messageBody.length())));
 }
 
 // 수정 필요
-void HttpResponseHandler::_setContentType(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setConnection(Cycle* cycle)
 {
-    headerFields.insert(std::make_pair("Content-Type", "text/html"));
-}
-
-void HttpResponseHandler::_setContentLength(std::multimap<std::string, std::string> &headerFields)
-{
-    // chunked로 구현하기?
-    headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.getMessageBody().length())));
-}
-
-// 수정 필요
-void HttpResponseHandler::_setConnection(std::multimap<std::string, std::string> &headerFields)
-{
-    if (1)
-        headerFields.insert(std::make_pair("Connection", "keep-alive"));
+    _httpResponse.headerFields.erase("Connection");
+    if (cycle->getHttpRequestQueue().empty() && cycle->closed())
+        _httpResponse.headerFields.insert(std::make_pair("Connection", "close"));
     else
-        headerFields.insert(std::make_pair("Connection", "close"));
+        _httpResponse.headerFields.insert(std::make_pair("Connection", "keep-alive"));
 }
 
-void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo)
+void HttpResponseHandler::_makeHeaderFields(Cycle* cycle)
 {
-    _setDate(headerFields);
-    _setContentType(headerFields);
-    _setConnection(headerFields);
-    _setContentLength(headerFields);
-    // _setFileTime(headerFields, configInfo.getPath());
+    _setConnection(cycle);
+    _setDate();
 }
 
-void HttpResponseHandler::_makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET)
+void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
-    int fileFd = open(configInfo.getPath().c_str(), O_RDONLY);
-    StatusLine statusLine;
-    std::multimap<std::string, std::string> headerFields;
-    std::string messageBody;
+    std::string path = cycle->getConfigInfo().getPath();
+    struct stat buf;
+    int fd;
 
-    if (fileFd == -1) {
-        _makeStatusLine(statusLine, 404);
-        fileFd = open(configInfo.getErrorPage().c_str(), O_RDONLY);
+    if (access(path.c_str(), F_OK) == FAILURE)
+        throw 404;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    if (S_ISDIR(buf.st_mode)) {
+        path = path + cycle->getConfigInfo().getIndex();
+        
+        if (access(path.c_str(), F_OK) == FAILURE) {
+            if (cycle->getConfigInfo().getAutoIndex() == false)
+                throw 404;
+            /**
+             * directory listing 생성
+             * code = 200;
+             * Content-Type 설정
+            */
+            makeHttpResponseFinal();
+            return;
+        }
+    }
+    if (access(path.c_str(), R_OK) == FAILURE)
+        throw 403;
+    if ((fd = open(path.c_str(), O_RDONLY)) == FAILURE)
+        throw 500;
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    cycle->setReadFile(fd);
+    _setContentType(cycle->getConfigInfo(), path);
+}
 
-        // 404 Not Found 페이지가 없는 경우
-        if (fileFd == -1)
-            throw std::runtime_error("404 Not Found 페이지가 없습니다.");
+void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
+{
+    std::string path = cycle->getConfigInfo().getPath();
+    struct stat buf;
+
+    if (access(path.c_str(), F_OK) == FAILURE)
+        throw 404;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    if (S_ISDIR(buf.st_mode)) {
+        path = path + cycle->getConfigInfo().getIndex();
+        
+        if (access(path.c_str(), F_OK) == FAILURE) {
+            if (cycle->getConfigInfo().getAutoIndex() == false)
+                throw 404;
+            /**
+             * directory listing 생성
+             * code = 200;
+             * Content-Type 설정
+            */
+            makeHttpResponseFinal();
+            return;
+        }
+    }
+    if (access(path.c_str(), R_OK) == FAILURE)
+        throw 403;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    _httpResponse.statusLine.code = 200;
+    _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(buf.st_size)));
+    _setContentType(cycle->getConfigInfo(), path);
+    makeHttpResponseFinal();
+}
+
+void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest)
+{
+    (void)httpRequest;
+    (void)configInfo;
+}
+
+void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest)
+{
+    std::string path = cycle->getConfigInfo().getPath();
+    std::string dirPath = path.substr(0, path.find_last_of('/') + 1); // 경로 내에 '/'가 무조건 있다고 가정했음.
+    struct stat buf;
+
+    if (access(path.c_str(), F_OK) == FAILURE)
+        throw 404;
+    if (stat(path.c_str(), &buf) == FAILURE)
+        throw 500;
+    if (S_ISDIR(buf.st_mode))
+        throw 403;
+    if (access(dirPath.c_str(), W_OK | X_OK) == FAILURE)
+        throw 403;
+    if (std::remove(path.c_str()) == FAILURE)
+        throw 500;
+    _httpResponse.statusLine.code = 204;
+    makeHttpResponseFinal();
+}
+
+void HttpResponseHandler::makeHttpErrorResponse(Cycle* cycle)
+{
+    const std::string& errorPage = cycle->getConfigInfo().getErrorPage();
+    int fd;
+
+    if (access(errorPage.c_str(), R_OK) == FAILURE \
+        || (fd = open(errorPage.c_str(), O_RDONLY)) == FAILURE) {
+        if (errorPage == ConfigInfo::getDefaultErrorPage()) {
+            _httpResponse.statusLine.code = 500;
+            makeHttpResponseFinal();
+        }
+        else {
+            cycle->getConfigInfo().setDefaultErrorPage();
+            makeHttpErrorResponse(cycle);
+        }
     }
     else {
-        _makeStatusLine(statusLine, 200);
+        fcntl(fd, F_SETFL, O_NONBLOCK);
+        cycle->setReadFile(fd);
+        _setContentType(cycle->getConfigInfo(), errorPage);
     }
-
-    // fileFd로부터 해당 파일을 읽어온다.
-    // std::string에 append 혹은 push_back을 통해서 body를 만든다.(C++ version 확인)
-    // HTTPresponse의 messagebody에 할당해준다.
-    // method가 HEAD인 경우에 body를 세팅하지 않는다.
-    if (isGET) {
-        char buffer[1024];
-        while (read(fileFd, buffer, 1024) > 0)
-            messageBody.append(buffer);
-    }
-
-    // Header Field들을 세팅해준다.
-    _makeHeaderFields(headerFields, configInfo);
-
-    _httpResponse.setStatusLine(statusLine);
-    _httpResponse.setHeaderFields(headerFields);
-    _httpResponse.setMessageBody(messageBody);
-
-    close(fileFd);
 }
 
-void HttpResponseHandler::_makeHEADResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
+/**
+ * code를 기반으로 status-line 생성
+ * message-body를 기반으로 Content-Length 설정 및 기본 header-fields 설정 (date, 등등)
+ * message-body는 그냥 그대로 유지한다.
+*/
+void HttpResponseHandler::makeHttpResponseFinal()
 {
-    (void)httpRequest;
-    (void)configInfo;
-}
-
-void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
-{
-    (void)httpRequest;
-    (void)configInfo;
-}
-
-void HttpResponseHandler::_makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
-{
-    (void)httpRequest;
-    (void)configInfo;
+    _makeStatusLine();
 }
 
 void HttpResponseHandler::_statusLineToString()
@@ -193,27 +319,69 @@ void HttpResponseHandler::_httpResponseToString()
     _statusLineToString();
     _headerFieldsToString();
     _response += _httpResponse.getMessageBody();
+    std::cout << "final result: " << _response << '\n';
 }
 
-void HttpResponseHandler::makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
+void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
+    const std::string& path = httpRequest.getRequestLine().getUri();
     const short method = httpRequest.getRequestLine().getMethod();
 
-    // if else -> switch?
-    if (method == GET || method == HEAD) {
-        _makeGETResponse(httpRequest, configInfo, (method == GET));
+    _httpResponse.statusLine.code = httpRequest.getCode();
+    if (isErrorCode(_httpResponse.statusLine.code)) {
+        makeHttpErrorResponse(cycle);
+        return;
     }
-    else if (method == POST) {
-        _makePOSTResponse(httpRequest, configInfo);
+    /**
+     * redirect 확인
+     * 맞으면?
+     * _httpResponse.statusLine.code = 301;
+     * 301 body 읽어와야 함.
+     * Location 헤더 추가.
+    */
+    try {
+        switch (method) {
+        case GET:
+            _makeGETResponse(cycle, httpRequest);
+            break;
+        case HEAD:
+            _makeHEADResponse(cycle, httpRequest);
+            break;
+        case POST:
+            _makePOSTResponse(cycle, httpRequest);
+            break;
+        case DELETE:
+            _makeDELETEResponse(cycle, httpRequest);
+            break;
+        default:
+            throw 405;
+            break;
+        }
     }
-    else if (method == DELETE) {
-        _makeDELETEResponse(httpRequest, configInfo);
+    catch (unsigned short code) {
+        _httpResponse.statusLine.code = code;
+        makeHttpErrorResponse(cycle);
     }
-    else {
-        std::cout << "??";
+}
+
+void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse)
+{
+    const std::vector<pair_t>& cgiHeaderFields = cgiResponse.getHeaderFields();
+    std::vector<pair_t>::const_iterator it = cgiHeaderFields.begin();
+
+    _httpResponse.statusLine.code = cgiResponse.getStatusCode();
+    if (isErrorCode(_httpResponse.statusLine.code)) {
+        makeHttpErrorResponse(cycle);
+        return;
     }
 
-    _httpResponseToString();
+    _httpResponse.messageBody = cgiResponse.getMessageBody();
+    for (; it != cgiHeaderFields.end(); ++it)
+        if (!isCaseInsensitiveSame(it->first, "Status") && !isCaseInsensitiveSame(it->first, "Content-Length"))
+            _httpResponse.headerFields.insert(*it);
+
+    // 아래 함수가 기본적으로 만들어 주는 header-field가 있을텐데, 이 때 어떤 field가 만들어지는지 확실히 해야 한다.
+    makeHttpResponseFinal();
 }
 
 void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
@@ -228,4 +396,19 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
         _status = RES_IDLE;
         _pos = 0;
     }
+}
+
+void HttpResponseHandler::setStatus(char status)
+{
+    _status = status;
+}
+
+char HttpResponseHandler::getStatus() const
+{
+    return _status;
+}
+
+HttpResponse& HttpResponseHandler::getHttpResponse()
+{
+    return _httpResponse;
 }

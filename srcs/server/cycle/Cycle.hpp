@@ -10,6 +10,8 @@
 #include "../modules/CgiRequestModule.hpp"
 #include "../modules/CgiResponseModule.hpp"
 
+#define BUF_SIZE 1024UL
+
 /**
  * closed 상태에서 request queue에 있는 것이 다 비어있고,
  * keep-alive가 아님 || EOF이고 (_closed 변수로 관리됨, 파싱 중에 Connection 헤더 필드를 읽거나, EOF를 감지하게 되면 set된다.),
@@ -19,15 +21,28 @@
 
 class Cycle
 {
+public:
+    enum
+    {
+        TIMER_KEEP_ALIVE = 0,
+        TIMER_REQUEST = 1
+    };
+
 private:
-    static std::map<std::pair<serv_ip_t, serv_port_t>, Cycle> _cycleStorage;
+    static std::map<int, Cycle> _cycleStorage;
+    static char _buf[BUF_SIZE];
 
     ConfigInfo _configInfo;
-    serv_ip_t _ip;
-    serv_port_t _port;
+    in_addr_t _localIp;
+    in_port_t _localPort;
+    in_addr_t _remoteIp;
     int _httpSockfd;
     int _cgiSendfd;
     int _cgiRecvfd;
+    int _readFile;
+    std::set<int> _writeFiles;
+    pid_t _cgiScriptPid;
+    bool _timerType; // set if it is a request timer
     bool _closed;
 
     HttpRequestHandler _httpRequestHandler;
@@ -38,23 +53,38 @@ private:
     std::queue<HttpRequest> _httpRequestQueue;
 
 public:
-    static Cycle *newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
+    static Cycle *newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
     static void deleteCycle(Cycle *cycle);
 
-    Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd);
+    static char* getBuf();
 
-    serv_ip_t getIp() const;
-    serv_port_t getPort() const;
+    Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd);
+
+    ConfigInfo& getConfigInfo();
+    in_addr_t getLocalIp() const;
+    in_port_t getLocalPort() const;
+    in_addr_t getRemoteIp() const;
     int getHttpSockfd() const;
     int getCgiSendfd() const;
     int getCgiRecvfd() const;
+    int getReadFile() const;
+    std::set<int>& getWriteFiles();
+    pid_t getCgiScriptPid() const;
+    bool getTimerType() const;
     bool closed() const;
 
-    HttpRequestHandler &getHttpRequestHandler() const;
-    HttpResponseHandler &getHttpResponseHandler() const;
-    CgiRequestHandler &getCgiRequestHandler() const;
-    CgiResponseHandler &getCgiResponseHandler() const;
-    std::queue<HttpRequest> &getHttpRequestQueue() const;
+    HttpRequestHandler &getHttpRequestHandler();
+    HttpResponseHandler &getHttpResponseHandler();
+    CgiRequestHandler &getCgiRequestHandler();
+    CgiResponseHandler &getCgiResponseHandler();
+    std::queue<HttpRequest> &getHttpRequestQueue();
+
+    void setCgiSendfd(int fd);
+    void setCgiRecvfd(int fd);
+    void setReadFile(int fd);
+    void setCgiScriptPid(pid_t pid);
+    void setTimerType(bool type);
+	void setClosed();
 
     void resetCycle();
 };

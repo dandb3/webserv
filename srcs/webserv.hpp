@@ -10,9 +10,6 @@
 #define CRLF "\r\n"
 #define WHITESPACE " \t\n\r\f\v"
 
-typedef in_addr_t serv_ip_t;
-typedef in_port_t serv_port_t;
-
 // #include "Exception.hpp"
 #define ERROR 1
 
@@ -75,6 +72,28 @@ struct kevent
 /* returned values */
 #define EV_EOF 0x8000	/* EOF detected */
 #define EV_ERROR 0x4000 /* error, data contains errno */
+
+/*
+ * data/hint fflags for EVFILT_PROC, shared with userspace
+ */
+#define	NOTE_EXIT	0x80000000		/* process exited */
+#define	NOTE_FORK	0x40000000		/* process forked */
+#define	NOTE_EXEC	0x20000000		/* process exec'd */
+#define	NOTE_PCTRLMASK	0xf0000000		/* mask for hint bits */
+#define	NOTE_PDATAMASK	0x000fffff		/* mask for pid */
+
+/*
+ * data/hint fflags for EVFILT_TIMER, shared with userspace.
+ * The default is a (repeating) interval timer with the data
+ * specifying the timeout interval in milliseconds.
+ *
+ * All timeouts are implicitly EV_CLEAR events.
+ */
+#define NOTE_SECONDS	0x00000001		/* data is seconds         */
+#define NOTE_USECONDS	0x00000002		/* data is microseconds    */
+#define NOTE_NSECONDS	0x00000004		/* data is nanoseconds     */
+#define NOTE_ABSOLUTE	0x00000008		/* absolute timeout        */
+						/* ... implicit EV_ONESHOT */
 
 #endif
 

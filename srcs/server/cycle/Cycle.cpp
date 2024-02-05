@@ -1,32 +1,46 @@
 #include "Cycle.hpp"
 
-std::map<std::pair<serv_ip_t, serv_port_t>, Cycle> Cycle::_cycleStorage;
+std::map<int, Cycle> Cycle::_cycleStorage;
+char Cycle::_buf[BUF_SIZE];
 
-Cycle::Cycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
-    : _configInfo(), _ip(ip), _port(port), _httpSockfd(httpSockfd), _closed(false)
+char* Cycle::getBuf()
+{
+    return _buf;
+}
+
+Cycle::Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
+: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
 {}
 
-Cycle *Cycle::newCycle(serv_ip_t ip, serv_port_t port, int httpSockfd)
+Cycle *Cycle::newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
 {
-    std::pair<serv_ip_t, serv_port_t> key = std::make_pair(ip, port);
-
-    _cycleStorage.insert(key, Cycle(ip, port, httpSockfd));
-    return &_cycleStorage.at(key);
+    _cycleStorage.insert(std::make_pair(httpSockfd, Cycle(localIp, localPort, remoteIp, httpSockfd)));
+    return &_cycleStorage.at(httpSockfd);
 }
 
 void Cycle::deleteCycle(Cycle *cycle)
 {
-    _cycleStorage.erase(std::make_pair(cycle->getIp(), cycle->getPort()));
+    _cycleStorage.erase(cycle->getHttpSockfd());
 }
 
-serv_ip_t Cycle::getIp() const
+ConfigInfo& Cycle::getConfigInfo()
 {
-    return _ip;
+    return _configInfo;
 }
 
-serv_port_t Cycle::getPort() const
+in_addr_t Cycle::getLocalIp() const
 {
-    return _port;
+    return _localIp;
+}
+
+in_port_t Cycle::getLocalPort() const
+{
+    return _localPort;
+}
+
+in_addr_t Cycle::getRemoteIp() const
+{
+    return _remoteIp;
 }
 
 int Cycle::getHttpSockfd() const
@@ -44,39 +58,88 @@ int Cycle::getCgiRecvfd() const
     return _cgiRecvfd;
 }
 
+int Cycle::getReadFile() const
+{
+    return _readFile;
+}
+
+std::set<int>& Cycle::getWriteFiles()
+{
+    return _writeFiles;
+}
+
+pid_t Cycle::getCgiScriptPid() const
+{
+    return _cgiScriptPid;
+}
+
+bool Cycle::getTimerType() const
+{
+    return _timerType;
+}
+
 bool Cycle::closed() const
 {
     return _closed;
 }
 
-HttpRequestHandler &Cycle::getHttpRequestHandler() const
+HttpRequestHandler &Cycle::getHttpRequestHandler()
 {
     return _httpRequestHandler;
 }
 
-HttpResponseHandler &Cycle::getHttpResponseHandler() const
+HttpResponseHandler &Cycle::getHttpResponseHandler()
 {
     return _httpResponseHandler;
 }
 
-CgiRequestHandler &Cycle::getCgiRequestHandler() const
+CgiRequestHandler &Cycle::getCgiRequestHandler()
 {
     return _cgiRequestHandler;
 }
 
-CgiResponseHandler &Cycle::getCgiResponseHandler() const
+CgiResponseHandler &Cycle::getCgiResponseHandler()
 {
     return _cgiResponseHandler;
 }
 
-std::queue<HttpRequest> &Cycle::getHttpRequestQueue() const
+std::queue<HttpRequest> &Cycle::getHttpRequestQueue()
 {
     return _httpRequestQueue;
 }
 
+void Cycle::setCgiSendfd(int fd)
+{
+    _cgiSendfd = fd;
+}
+
+void Cycle::setCgiRecvfd(int fd)
+{
+    _cgiRecvfd = fd;
+}
+
+void Cycle::setReadFile(int fd)
+{
+    _readFile = fd;
+}
+
+void Cycle::setCgiScriptPid(pid_t pid)
+{
+    _cgiScriptPid = pid;
+}
+
+void Cycle::setTimerType(bool type)
+{
+    _timerType = type;
+}
+
+void Cycle::setClosed()
+{
+    _closed = true;
+}
+
 void Cycle::resetCycle()
 {
-    _configInfo = ConfigInfo(); // 맞나?
     // _httpRequestHandler = HttpRequestHandler();
     // _httpResponseHandler = HttpResponseHandler();
     _cgiRequestHandler = CgiRequestHandler();

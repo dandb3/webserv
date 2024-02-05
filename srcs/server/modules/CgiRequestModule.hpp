@@ -46,7 +46,7 @@ public:
 
 	void makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest);
 	void sendCgiRequest(const struct kevent& kev);
-	void callCgiScript(int& cgiSendFd, int& cgiRecvFd) const;
+	void callCgiScript(Cycle* cycle);
 
 	bool eof() const;
 
