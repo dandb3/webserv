@@ -55,14 +55,14 @@ private:
 
     HttpResponse _httpResponse;
 
-    void _setConnection(std::multimap<std::string, std::string> &headerFields);
-    void _setContentLength(std::multimap<std::string, std::string> &headerFields);
-    void _setContentType(std::multimap<std::string, std::string> &headerFields);
-    void _setDate(std::multimap<std::string, std::string> &headerFields);
-    void _setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path);
+    void _setConnection(Cycle* cycle);
+    void _setContentLength();
+    void _setContentType(Cycle* cycle, const std::string& path);
+    void _setDate();
+    void _setLastModified(const char *path);
 
     void _makeStatusLine();
-    void _makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo);
+    void _makeHeaderFields(Cycle* cycle);
 
     void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
     void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);
@@ -87,6 +87,7 @@ public:
         RES_BUSY,
         RES_READY
     };
+
     HttpResponseHandler();
 
     void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);

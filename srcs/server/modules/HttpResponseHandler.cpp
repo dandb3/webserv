@@ -76,7 +76,7 @@ void HttpResponseHandler::_makeStatusLine()
     }
 }
 
-void HttpResponseHandler::_setLastModified(std::multimap<std::string, std::string> &headerFields, const char *path)
+void HttpResponseHandler::_setLastModified(const char *path)
 {
     struct stat fileInfo;
 
@@ -93,51 +93,66 @@ void HttpResponseHandler::_setLastModified(std::multimap<std::string, std::strin
 
     char buf[100];
     std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
+    _httpResponse.headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
 }
 
-void HttpResponseHandler::_setDate(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setDate()
 {
     std::time_t currentDate = std::time(NULL);
+
+    if (_httpResponse.headerFields.find("Date") != _httpResponse.headerFields.end())
+        return;
     if (currentDate == -1)
         return;
     std::tm *timeInfo = std::gmtime(&currentDate);
+
     if (timeInfo == NULL)
         return;
 
     char buf[100];
+
     std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", timeInfo);
-    headerFields.insert(std::make_pair("Date", std::string(buf)));
+    _httpResponse.headerFields.insert(std::make_pair("Date", std::string(buf)));
 }
 
 // 수정 필요
-void HttpResponseHandler::_setContentType(const std::string& path, ConfigInfo& configInfo)
+void HttpResponseHandler::_setContentType(Cycle* cycle, const std::string& path)
 {
+    ConfigInfo& configInfo = cycle->getConfigInfo();
+    std::string extension;
+    std::string contentType;
+    size_t extensionPos;
 
+    extension = path.substr(path.find_last_of('/') + 1); // path에 '/'가 존재한다고 가정.
+    if ((extensionPos = extension.find_last_of('.')) == std::string::npos) { // 확장자가 없는 경우
+        
+    }
+    else { // 확장자가 있는 경우
+        extension = extension.substr(extensionPos + 1);
+
+    }
+    _httpResponse.headerFields.insert(std::make_pair("Content-Type", contentType));
 }
 
-void HttpResponseHandler::_setContentLength(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setContentLength()
 {
-    // chunked로 구현하기?
-    headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.getMessageBody().length())));
+    _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.messageBody.length())));
 }
 
 // 수정 필요
-void HttpResponseHandler::_setConnection(std::multimap<std::string, std::string> &headerFields)
+void HttpResponseHandler::_setConnection(Cycle* cycle)
 {
-    if (1)
-        headerFields.insert(std::make_pair("Connection", "keep-alive"));
+    _httpResponse.headerFields.erase("Connection");
+    if (cycle->getHttpRequestQueue().empty() && cycle->closed())
+        _httpResponse.headerFields.insert(std::make_pair("Connection", "close"));
     else
-        headerFields.insert(std::make_pair("Connection", "close"));
+        _httpResponse.headerFields.insert(std::make_pair("Connection", "keep-alive"));
 }
 
-void HttpResponseHandler::_makeHeaderFields(std::multimap<std::string, std::string> &headerFields, ConfigInfo &configInfo)
+void HttpResponseHandler::_makeHeaderFields(Cycle* cycle)
 {
-    _setConnection(headerFields);
-    _setContentLength(headerFields);
-    _setContentType(headerFields);
-    _setDate(headerFields);
-    _setLastModified(headerFields, configInfo.getPath().c_str());
+    _setConnection(cycle);
+    _setDate();
 }
 
 void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -171,7 +186,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
         throw 500;
     fcntl(fd, F_SETFL, O_NONBLOCK);
     cycle->setReadFile(fd);
-    _addContentType(cycle->getConfigInfo());
+    _setContentType(cycle->getConfigInfo(), path);
 }
 
 void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -204,7 +219,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
         throw 500;
     _httpResponse.statusLine.code = 200;
     _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(buf.st_size)));
-    _addContentType(path, cycle->getConfigInfo());
+    _setContentType(cycle->getConfigInfo(), path);
     makeHttpResponseFinal();
 }
 
@@ -253,7 +268,7 @@ void HttpResponseHandler::makeHttpErrorResponse(Cycle* cycle)
     else {
         fcntl(fd, F_SETFL, O_NONBLOCK);
         cycle->setReadFile(fd);
-        _addContentType(cycle->getConfigInfo());
+        _setContentType(cycle->getConfigInfo(), errorPage);
     }
 }
 
