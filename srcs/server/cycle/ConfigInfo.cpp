@@ -6,9 +6,9 @@ const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
 const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
     {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
 
-const std::string& ConfigInfo::getDefaultErrorPage()
+const std::string& ConfigInfo::getDefaultPage(unsigned short code)
 {
-    return ConfigInfo::DEFAULT_ERROR_PAGE;
+    return ConfigInfo::DEFAULT_PAGE.at(toString(code));
 }
 
 /// @brief ip, port를 보고 matchedServer,
@@ -288,6 +288,6 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
     return _redirect;
 }
 
-void ConfigInfo::setDefaultErrorPage() {
-    _errorPage = getDefaultErrorPage();
+void ConfigInfo::setDefaultErrorPage(unsigned short code) {
+    _errorPage[toString(code)] = getDefaultPage(code);
 }

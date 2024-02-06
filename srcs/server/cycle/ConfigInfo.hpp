@@ -28,7 +28,7 @@ private:
 	void transferInfo(t_directives &directives);
 
 public:
-	static const std::string& getDefaultErrorPage();
+	static const std::string& getDefaultPage(unsigned short code);
 
 	ConfigInfo();
 	ConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri); // ip, port을 보고 match되는 config를 찾아서 생성자 호출
@@ -52,7 +52,7 @@ public:
 	bool getIsRedirect() const;
 	std::pair<std::string, std::string> getRedirect() const;
 
-  void setDefaultErrorPage();
+    void setDefaultErrorPage(unsigned short code);
  
 };
 
