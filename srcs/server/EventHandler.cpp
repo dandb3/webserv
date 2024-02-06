@@ -81,9 +81,9 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
-    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getUri()); // 얘도 수정 필요. getURI() 함수..
+    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri()); // 얘도 수정 필요. getURI() 함수..
     switch (configInfo.requestType()) {
-    case ConfigInfo::CGI_REQUEST:
+    case ConfigInfo::MAKE_CGI_REQUEST:
         CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
@@ -91,7 +91,8 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
             creqHdlr.callCgiScript(cycle);
         }
         catch (unsigned short code) {
-            httpResponseHandler.makeHttpResponse(HttpRequest(code));
+            httpRequest.setCode(code);
+            httpResponseHandler.makeHttpResponse(cycle, httpRequest);
             _setHttpResponseEvent(cycle);
             break;
         }
@@ -100,12 +101,10 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
-        _kqueueHandler.changeEvent(cyle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
+        _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
         break;
-    case ConfigInfo::HTTP_RESPONSE:
-        HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-
-        httpResponseHandler.makeHttpResponse(); // 수정 필요. 인자 들어가는거 맞춰서.
+    case ConfigInfo::MAKE_HTTP_RESPONSE:
+        httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
         _setHttpResponseEvent(cycle);
         break;
     }
@@ -242,7 +241,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
         cgiResponseHandler.makeCgiResponse();
         switch (cgiResponseHandler.getResponseType()) {
         case CgiResponse::LOCAL_REDIR_RES:
-            httpRequestHandler.setURI(); // 구현해야 함.
+            httpRequestHandler.getHttpRequest().getRequestLine().setUri(cgiResponseHandler.getCgiResponse().getHeaderFields().at(0).second); // 구현해야 함.
             _processHttpRequest(cycle);
             break;
         case CgiResponse::DOCUMENT_RES:

@@ -35,7 +35,7 @@ void CgiResponseHandler::makeCgiResponse()
     CgiResponseParser::parseCgiResponse(_cgiResponse, _rawCgiResponse);
 }
 
-const CgiResponse& CgiResponseHandler::getCgiResponse() const
+CgiResponse& CgiResponseHandler::getCgiResponse()
 {
     return _cgiResponse;
 }

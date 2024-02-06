@@ -288,6 +288,24 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
     return _redirect;
 }
 
+bool ConfigInfo::requestType() const
+{
+    std::string cgiExtension;
+    size_t extensionPos;
+    size_t start = _root.size();
+
+    if (_info.find("CGI") == _info.end() || _info.at("CGI").size() != 1)
+        return MAKE_HTTP_RESPONSE;
+
+    cgiExtension = "." + _info.at("CGI").at(0);
+    while ((extensionPos = _path.find(cgiExtension, start)) == std::string::npos) {
+        start += cgiExtension.size();
+        if (extensionPos + cgiExtension.size() == _path.size() || _path[start] == '/')
+            return MAKE_CGI_REQUEST;
+    }
+    return MAKE_HTTP_RESPONSE;
+}
+
 void ConfigInfo::setDefaultErrorPage(unsigned short code) {
     _errorPage[toString(code)] = getDefaultPage(code);
 }
