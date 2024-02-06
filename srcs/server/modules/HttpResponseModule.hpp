@@ -94,7 +94,7 @@ public:
     HttpResponseHandler();
 
     void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
-    void makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse);
+    void makeHttpResponse(Cycle* cycle, CgiResponse &cgiResponse);
     void makeErrorHttpResponse(Cycle* cycle);
     void makeHttpResponseFinal(Cycle* cycle);
 

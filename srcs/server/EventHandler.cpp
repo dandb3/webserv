@@ -81,7 +81,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
-    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri()); // 얘도 수정 필요. getURI() 함수..
+    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
     switch (configInfo.requestType()) {
     case ConfigInfo::MAKE_CGI_REQUEST:
         CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();

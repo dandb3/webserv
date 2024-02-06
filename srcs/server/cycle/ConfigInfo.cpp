@@ -294,10 +294,10 @@ bool ConfigInfo::requestType() const
     size_t extensionPos;
     size_t start = _root.size();
 
-    if (_info.find("CGI") == _info.end() || _info.at("CGI").size() != 1)
+    if (_info.find("cgi") == _info.end() || _info.at("cgi").size() != 1)
         return MAKE_HTTP_RESPONSE;
 
-    cgiExtension = "." + _info.at("CGI").at(0);
+    cgiExtension = "." + _info.at("cgi").at(0);
     while ((extensionPos = _path.find(cgiExtension, start)) == std::string::npos) {
         start += cgiExtension.size();
         if (extensionPos + cgiExtension.size() == _path.size() || _path[start] == '/')

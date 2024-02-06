@@ -431,7 +431,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
     }
 }
 
-void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse)
+void HttpResponseHandler::makeHttpResponse(Cycle* cycle, CgiResponse &cgiResponse)
 {
     const std::vector<pair_t>& cgiHeaderFields = cgiResponse.getHeaderFields();
     std::vector<pair_t>::const_iterator it = cgiHeaderFields.begin();

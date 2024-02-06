@@ -48,19 +48,25 @@ static void setGatewayInterface(CgiRequest& cgiRequest)
     cgiRequest.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 }
 
-static void setPathInfo(CgiRequest& cgiRequest, const RequestLine& requestLine)
+static void setPathInfoAndTranslated(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
 {
-    cgiRequest.addMetaVariable("PATH_INFO", requestLine.getRequestTarget());
-}
-
-static void setPathTranslated(CgiRequest& cgiRequest, Cycle* cycle, const RequestLine& requestLine)
-{
-    cgiRequest.addMetaVariable("PATH_TRANSLATED", cycle->getConfigInfo().getPath());
+    std::string path = configInfo.getPath();
+    std::string root = configInfo.getRoot();
+    eng
+    cgiRequest.addMetaVariable("PATH_INFO", requestLine.getUri());
 }
 
 static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLine)
 {
-    cgiRequest.addMetaVariable("QUERY_STRING", restoreQuery(requestLine.getQuery()));
+    const std::vector<pair_t>& query = requestLine.getQuery();
+    std::string rawQuery;
+
+    for (size_t i = 0; i < query.size(); ++i) {
+        rawQuery += query[i].first + "=" + query[i].second;
+        if (i + 1 != query.size())
+            rawQuery += "&";
+    }
+    cgiRequest.addMetaVariable("QUERY_STRING", rawQuery);
 }
 
 static void setRemoteAddr(CgiRequest& cgiRequest, Cycle* cycle)
@@ -155,8 +161,7 @@ void CgiRequestHandler::_setMetaVariables(Cycle* cycle, HttpRequest& httpRequest
     setContentLength(_cgiRequest, messageBody);
     setContentType(_cgiRequest, headerFields);
     setGatewayInterface(_cgiRequest);
-    setPathInfo(_cgiRequest, requestLine);
-    setPathTranslated(_cgiRequest, cycle, requestLine);
+    setPathInfoAndTranslated(_cgiRequest, cycle->getConfigInfo(), requestLine);
     setQueryString(_cgiRequest, requestLine);
     setRemoteAddr(_cgiRequest, cycle);
     setRemoteHost(_cgiRequest, cycle);
