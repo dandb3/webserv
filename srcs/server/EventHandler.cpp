@@ -279,7 +279,7 @@ void EventHandler::_servFile(const struct kevent& kev)
         close(kev.ident);
         cycle->setReadFile(-1);
         httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
-        httpResponseHandler.makeHttpResponseFinal();
+        httpResponseHandler.makeHttpResponseFinal(cycle);
         _setHttpResponseEvent(cycle);
     }
     else if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
@@ -288,7 +288,7 @@ void EventHandler::_servFile(const struct kevent& kev)
         close(kev.ident);
         cycle->setReadFile(-1);
         if (httpResponseHandler.isErrorCode(httpResponse.statusLine.code)) {
-            httpResponseHandler.makeHttpResponseFinal();
+            httpResponseHandler.makeHttpResponseFinal(cycle);
             _setHttpResponseEvent(cycle);
         }
         else {

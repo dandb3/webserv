@@ -214,7 +214,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
             _setContentType("text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
-            makeHttpResponseFinal();
+            makeHttpResponseFinal(cycle);
             return;
         }
         if (stat(path.c_str(), &buf) == FAILURE)
@@ -228,7 +228,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
             _setContentType("text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
-            makeHttpResponseFinal();
+            makeHttpResponseFinal(cycle);
             return;
         }
         // index 파일이 존재하면서 디렉터리가 아닌 경우 if문을 빠져나온다.
@@ -266,7 +266,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
             _setContentLength();
             _httpResponse.statusLine.code = 200;
             _httpResponse.messageBody.clear();
-            makeHttpResponseFinal();
+            makeHttpResponseFinal(cycle);
             return;
         }
         if (stat(path.c_str(), &buf) == FAILURE)
@@ -281,7 +281,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
             _setContentLength();
             _httpResponse.statusLine.code = 200;
             _httpResponse.messageBody.clear();
-            makeHttpResponseFinal();
+            makeHttpResponseFinal(cycle);
             return;
         }
         // index 파일이 존재하면서 디렉터리가 아닌 경우 if문을 빠져나온다.
@@ -291,7 +291,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
     _setContentType(cycle, path);
     _setContentLength(buf.st_size);
     _httpResponse.statusLine.code = 200;
-    makeHttpResponseFinal();
+    makeHttpResponseFinal(cycle);
 }
 
 void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -316,7 +316,7 @@ void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpReq
     if (std::remove(path.c_str()) == FAILURE)
         throw 500;
     _httpResponse.statusLine.code = 204;
-    makeHttpResponseFinal();
+    makeHttpResponseFinal(cycle);
 }
 
 void HttpResponseHandler::makeErrorHttpResponse(Cycle* cycle)
@@ -328,7 +328,7 @@ void HttpResponseHandler::makeErrorHttpResponse(Cycle* cycle)
         || (fd = open(errorPage.c_str(), O_RDONLY)) == FAILURE) {
         if (errorPage == ConfigInfo::getDefaultPage(_httpResponse.statusLine.code)) {
             _httpResponse.statusLine.code = 500;
-            makeHttpResponseFinal();
+            makeHttpResponseFinal(cycle);
         }
         else {
             cycle->getConfigInfo().setDefaultErrorPage(_httpResponse.statusLine.code);
@@ -347,9 +347,10 @@ void HttpResponseHandler::makeErrorHttpResponse(Cycle* cycle)
  * message-body를 기반으로 Content-Length 설정 및 기본 header-fields 설정 (date, 등등)
  * message-body는 그냥 그대로 유지한다.
 */
-void HttpResponseHandler::makeHttpResponseFinal()
+void HttpResponseHandler::makeHttpResponseFinal(Cycle* cycle)
 {
     _makeStatusLine();
+    _makeHeaderFields(cycle);
 }
 
 void HttpResponseHandler::_statusLineToString()
@@ -447,7 +448,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiR
             _httpResponse.headerFields.insert(*it);
 
     // 아래 함수가 기본적으로 만들어 주는 header-field가 있을텐데, 이 때 어떤 field가 만들어지는지 확실히 해야 한다.
-    makeHttpResponseFinal();
+    makeHttpResponseFinal(cycle);
 }
 
 void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
