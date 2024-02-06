@@ -57,9 +57,12 @@ private:
 
     void _setConnection(Cycle* cycle);
     void _setContentLength();
+    void _setContentLength(off_t size);
     void _setContentType(Cycle* cycle, const std::string& path);
+    void _setContentType(const std::string& type);
     void _setDate();
     void _setLastModified(const char *path);
+    void _makeDirectoryListing(const std::string& path);
 
     void _makeStatusLine();
     void _makeHeaderFields(Cycle* cycle);
@@ -92,7 +95,7 @@ public:
 
     void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
     void makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse);
-    void makeDefaultHttpResponse(Cycle* cycle);
+    void makeErrorHttpResponse(Cycle* cycle);
     void makeHttpResponseFinal();
 
     void sendHttpResponse(int fd, size_t size);

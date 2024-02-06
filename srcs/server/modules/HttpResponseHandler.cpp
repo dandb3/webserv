@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include <sys/stat.h>
 #include "HttpResponseModule.hpp"
 #include "../parse/parse.hpp"
@@ -96,6 +97,26 @@ void HttpResponseHandler::_setLastModified(const char *path)
     _httpResponse.headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
 }
 
+void HttpResponseHandler::_makeDirectoryListing(const std::string& path)
+{
+    DIR *dir = opendir(path.c_str());
+    struct dirent *entry;
+
+    if (dir == NULL)
+        throw 500;
+
+    _httpResponse.messageBody = "<!DOCTYPE html>\n<html>\n<head>\n<title>Directory Listing</title>\n</head>\n<body>\n";
+    _httpResponse.messageBody += "<h1>Directory Listing: " + path + "</h1>\n<ul>\n";
+
+    while ((entry = readdir(dir)) != NULL)
+        if (entry->d_name[0] != '.')  // Skip hidden files/directories
+            _httpResponse.messageBody += std::string("<li><a href=\"") + entry->d_name + "\">" + entry->d_name + "</a></li>\n";
+
+    _httpResponse.messageBody += "</ul>\n</body>\n</html>\n";
+
+    closedir(dir);
+}
+
 void HttpResponseHandler::_setDate()
 {
     std::time_t currentDate = std::time(NULL);
@@ -138,9 +159,19 @@ void HttpResponseHandler::_setContentType(Cycle* cycle, const std::string& path)
     _httpResponse.headerFields.insert(std::make_pair("Content-Type", contentType));
 }
 
+void HttpResponseHandler::_setContentType(const std::string& type)
+{
+    _httpResponse.headerFields.insert(std::make_pair("Content-Type", type));
+}
+
 void HttpResponseHandler::_setContentLength()
 {
     _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(_httpResponse.messageBody.length())));
+}
+
+void HttpResponseHandler::_setContentLength(off_t size)
+{
+    _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(size)));
 }
 
 // 수정 필요
@@ -162,6 +193,7 @@ void HttpResponseHandler::_makeHeaderFields(Cycle* cycle)
 void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
     std::string path = cycle->getConfigInfo().getPath();
+    std::string prevPath;
     struct stat buf;
     int fd;
 
@@ -170,19 +202,36 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
     if (stat(path.c_str(), &buf) == FAILURE)
         throw 500;
     if (S_ISDIR(buf.st_mode)) {
-        path = path + cycle->getConfigInfo().getIndex();
+        prevPath = path;
+        path += cycle->getConfigInfo().getIndex();
         
         if (access(path.c_str(), F_OK) == FAILURE) {
             if (cycle->getConfigInfo().getAutoIndex() == false)
                 throw 404;
-            /**
-             * directory listing 생성
-             * code = 200;
-             * Content-Type 설정
-            */
+            if (access(prevPath.c_str(), R_OK) == FAILURE)
+                throw 403;
+            _makeDirectoryListing(prevPath);
+            _setContentType("text/html");
+            _setContentLength();
+            _httpResponse.statusLine.code = 200;
             makeHttpResponseFinal();
             return;
         }
+        if (stat(path.c_str(), &buf) == FAILURE)
+            throw 500;
+        if (S_ISDIR(buf.st_mode)) {
+            if (cycle->getConfigInfo().getAutoIndex() == false)
+                throw 404;
+            if (access(path.c_str(), R_OK) == FAILURE)
+                throw 403;
+            _makeDirectoryListing(path);
+            _setContentType("text/html");
+            _setContentLength();
+            _httpResponse.statusLine.code = 200;
+            makeHttpResponseFinal();
+            return;
+        }
+        // index 파일이 존재하면서 디렉터리가 아닌 경우 if문을 빠져나온다.
     }
     if (access(path.c_str(), R_OK) == FAILURE)
         throw 403;
@@ -196,6 +245,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
 void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
     std::string path = cycle->getConfigInfo().getPath();
+    std::string prevPath;
     struct stat buf;
 
     if (access(path.c_str(), F_OK) == FAILURE)
@@ -203,27 +253,44 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
     if (stat(path.c_str(), &buf) == FAILURE)
         throw 500;
     if (S_ISDIR(buf.st_mode)) {
-        path = path + cycle->getConfigInfo().getIndex();
-        
+        prevPath = path;
+        path += cycle->getConfigInfo().getIndex();
+
         if (access(path.c_str(), F_OK) == FAILURE) {
             if (cycle->getConfigInfo().getAutoIndex() == false)
                 throw 404;
-            /**
-             * directory listing 생성
-             * code = 200;
-             * Content-Type 설정
-            */
+            if (access(prevPath.c_str(), R_OK) == FAILURE)
+                throw 403;
+            _makeDirectoryListing(prevPath);
+            _setContentType("text/html");
+            _setContentLength();
+            _httpResponse.statusLine.code = 200;
+            _httpResponse.messageBody.clear();
             makeHttpResponseFinal();
             return;
         }
+        if (stat(path.c_str(), &buf) == FAILURE)
+            throw 500;
+        if (S_ISDIR(buf.st_mode)) {
+            if (cycle->getConfigInfo().getAutoIndex() == false)
+                throw 404;
+            if (access(path.c_str(), R_OK) == FAILURE)
+                throw 403;
+            _makeDirectoryListing(path);
+            _setContentType("text/html");
+            _setContentLength();
+            _httpResponse.statusLine.code = 200;
+            _httpResponse.messageBody.clear();
+            makeHttpResponseFinal();
+            return;
+        }
+        // index 파일이 존재하면서 디렉터리가 아닌 경우 if문을 빠져나온다.
     }
     if (access(path.c_str(), R_OK) == FAILURE)
         throw 403;
-    if (stat(path.c_str(), &buf) == FAILURE)
-        throw 500;
-    _httpResponse.statusLine.code = 200;
-    _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(buf.st_size)));
     _setContentType(cycle, path);
+    _setContentLength(buf.st_size);
+    _httpResponse.statusLine.code = 200;
     makeHttpResponseFinal();
 }
 
@@ -252,20 +319,20 @@ void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpReq
     makeHttpResponseFinal();
 }
 
-void HttpResponseHandler::makeDefaultHttpResponse(Cycle* cycle)
+void HttpResponseHandler::makeErrorHttpResponse(Cycle* cycle)
 {
     const std::string& errorPage = cycle->getConfigInfo().getErrorPage(toString(_httpResponse.statusLine.code));
     int fd;
 
     if (access(errorPage.c_str(), R_OK) == FAILURE \
         || (fd = open(errorPage.c_str(), O_RDONLY)) == FAILURE) {
-        if (errorPage == ConfigInfo::getDefaultErrorPage()) {
+        if (errorPage == ConfigInfo::getDefaultPage(_httpResponse.statusLine.code)) {
             _httpResponse.statusLine.code = 500;
             makeHttpResponseFinal();
         }
         else {
-            cycle->getConfigInfo().setDefaultErrorPage();
-            makeDefaultHttpResponse(cycle);
+            cycle->getConfigInfo().setDefaultErrorPage(_httpResponse.statusLine.code);
+            makeErrorHttpResponse(cycle);
         }
     }
     else {
@@ -329,13 +396,13 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
 
     _httpResponse.statusLine.code = httpRequest.getCode();
     if (isErrorCode(_httpResponse.statusLine.code)) {
-        makeDefaultHttpResponse(cycle);
+        makeErrorHttpResponse(cycle);
         return;
     }
     if (configInfo.getIsRedirect()) {
         _httpResponse.statusLine.code = stringToType<unsigned short>(configInfo.getRedirect().first);
         _httpResponse.headerFields.insert(std::make_pair("Location", configInfo.getRedirect().second));
-        makeDefaultHttpResponse(cycle);
+        makeErrorHttpResponse(cycle);
         return;
     }
     try {
@@ -359,7 +426,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
     }
     catch (unsigned short code) {
         _httpResponse.statusLine.code = code;
-        makeDefaultHttpResponse(cycle);
+        makeErrorHttpResponse(cycle);
     }
 }
 
@@ -370,7 +437,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, const CgiResponse &cgiR
 
     _httpResponse.statusLine.code = cgiResponse.getStatusCode();
     if (isErrorCode(_httpResponse.statusLine.code)) {
-        makeDefaultHttpResponse(cycle);
+        makeErrorHttpResponse(cycle);
         return;
     }
 
