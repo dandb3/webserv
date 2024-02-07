@@ -21,7 +21,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
         case KqueueHandler::SOCKET_CGI:
             return EVENT_CGI_RES;
         case KqueueHandler::FILE_OPEN:
-            return EVENT_FILE;
+            return EVENT_FILE_READ;
         default:
             return EVENT_ERROR;
         }
@@ -31,6 +31,8 @@ char EventHandler::_getEventType(const struct kevent &kev)
             return EVENT_HTTP_RES;
         case KqueueHandler::SOCKET_CGI:
             return EVENT_CGI_REQ;
+        case KqueueHandler::FILE_OPEN:
+            return EVENT_FILE_WRITE;
         default:
             return EVENT_ERROR;
         }
@@ -180,6 +182,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     CgiRequestHandler& cgiRequestHandler = cycle->getCgiRequestHandler();
+    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
     try {
         cgiRequestHandler.sendCgiRequest(kev);
@@ -196,7 +199,8 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
             close(cycle->getCgiSendfd());
             cycle->setCgiSendfd(-1);
-            httpResponseHandler.makeHttpResponse(cycle, CgiResponse(code));
+            cgiResponseHandler.getCgiResponse().setStatusCode(code);
+            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
     }
@@ -230,7 +234,8 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
-            httpResponseHandler.makeHttpResponse(cycle, CgiResponse(code));
+            cgiResponseHandler.getCgiResponse().setStatusCode(code);
+            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
     }
@@ -251,7 +256,8 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             _setHttpResponseEvent(cycle);
             break;
         default:    /* in case of an error */
-            httpResponseHandler.makeHttpResponse(cycle, CgiResponse(502));
+            cgiResponseHandler.getCgiResponse().setStatusCode(502);
+            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
             break;
         }
@@ -267,7 +273,7 @@ void EventHandler::_servCgiProc(const struct kevent &kev)
     cycle->setCgiScriptPid(-1);
 }
 
-void EventHandler::_servFile(const struct kevent& kev)
+void EventHandler::_servFileRead(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
@@ -298,6 +304,11 @@ void EventHandler::_servFile(const struct kevent& kev)
     }
     else
         httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+}
+
+void EventHandler::_servFileWrite(const struct kevent &kev)
+{
+
 }
 
 void EventHandler::_servRTimer(const struct kevent &kev)
@@ -352,7 +363,8 @@ void EventHandler::_servCTimer(const struct kevent &kev)
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
         }
-        httpResponseHandler.makeHttpResponse(cycle, CgiResponse(504));
+        cgiResponseHandler.getCgiResponse().setStatusCode(504);
+        httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
         _setHttpResponseEvent(cycle);
     }
 }
@@ -392,6 +404,12 @@ void EventHandler::operate()
                 break;
             case EVENT_CGI_RES:
                 _servCgiResponse(eventList[i]);
+                break;
+            case EVENT_FILE_READ:
+                _servFileRead(eventList[i]);
+                break;
+            case EVENT_FILE_WRITE:
+                _servFileWrite(eventList[i]);
                 break;
             case EVENT_CGI_PROC:
                 _servCgiProc(eventList[i]);
