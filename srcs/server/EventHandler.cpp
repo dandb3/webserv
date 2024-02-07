@@ -160,6 +160,14 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
 
 void EventHandler::_servHttpResponse(const struct kevent& kev)
 {
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+
+    httpResponseHandler.sendHttpResponse(kev.ident, static_cast<size_t>(kev.data));
+    if (httpResponseHandler.getStatus() == HttpResponseHandler::RES_FINISH) {
+        cycle->reset();
+        
+    }
     /**
      * sendHttpResponse();
      * if eof()라면? (전송이 다 끝난다면)
@@ -240,6 +248,8 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
         }
     }
     if (cgiResponseHandler.eof()) {
+        if (cycle->getCgiScriptPid() != -1)
+            kill(cycle->getCgiScriptPid(), SIGKILL);
         close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
         _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);

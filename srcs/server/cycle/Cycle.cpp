@@ -1,3 +1,4 @@
+#include <csignal>
 #include "Cycle.hpp"
 
 std::map<int, Cycle> Cycle::_cycleStorage;
@@ -138,10 +139,17 @@ void Cycle::setClosed()
     _closed = true;
 }
 
-void Cycle::resetCycle()
+void Cycle::reset()
 {
-    // _httpRequestHandler = HttpRequestHandler();
-    // _httpResponseHandler = HttpResponseHandler();
-    _cgiRequestHandler = CgiRequestHandler();
-    _cgiResponseHandler = CgiResponseHandler();
+    _cgiSendfd = -1;
+    _cgiRecvfd = -1;
+    _readFile = -1;
+    _writeFiles.clear();
+    if (_cgiScriptPid != -1) {
+        kill(_cgiScriptPid, SIGKILL);
+        _cgiScriptPid = -1;
+    }
+    _httpResponseHandler.reset();
+    _cgiRequestHandler.reset();
+    _cgiResponseHandler.reset();
 }

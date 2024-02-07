@@ -88,7 +88,7 @@ public:
     {
         RES_IDLE,
         RES_BUSY,
-        RES_READY
+        RES_FINISH
     };
 
     HttpResponseHandler();
@@ -106,6 +106,7 @@ public:
     HttpResponse& getHttpResponse();
 
     bool isErrorCode(unsigned short code);
+    void reset();
 
 };
 

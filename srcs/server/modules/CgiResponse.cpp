@@ -51,7 +51,7 @@ std::vector<pair_t>& CgiResponse::getHeaderFields()
     return _headerFields;
 }
 
-const std::string& CgiResponse::getMessageBody() const
+std::string& CgiResponse::getMessageBody()
 {
     return _messageBody;
 }

@@ -24,12 +24,12 @@ void CgiRequest::setMessageBody(const std::string& messageBody)
     _messageBody = messageBody;
 }
 
-const std::vector<std::string>& CgiRequest::getMetaVariables() const
+std::vector<std::string>& CgiRequest::getMetaVariables()
 {
     return _metaVariables;
 }
 
-const std::string& CgiRequest::getMessageBody() const
+std::string& CgiRequest::getMessageBody()
 {
     return _messageBody;
 }

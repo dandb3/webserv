@@ -465,7 +465,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
         throw std::runtime_error("sendHttpResponse에서 write 실패");
     _pos += writeLen;
     if (_pos == size) {
-        _status = RES_IDLE;
+        _status = RES_FINISH;
         _pos = 0;
     }
 }
@@ -483,4 +483,15 @@ char HttpResponseHandler::getStatus() const
 HttpResponse& HttpResponseHandler::getHttpResponse()
 {
     return _httpResponse;
+}
+
+void HttpResponseHandler::reset()
+{
+    _response.clear();
+    _pos = 0;
+    _status = RES_IDLE;
+    _httpResponse.statusLine.code = 0;
+    _httpResponse.statusLine.text.clear();
+    _httpResponse.headerFields.clear();
+    _httpResponse.messageBody.clear();
 }

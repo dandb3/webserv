@@ -86,7 +86,7 @@ public:
     void setTimerType(bool type);
 	void setClosed();
 
-    void resetCycle();
+    void reset();
 };
 
 #endif

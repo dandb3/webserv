@@ -181,7 +181,7 @@ void CgiRequestHandler::_setMetaVariables(Cycle* cycle, HttpRequest& httpRequest
 //  setProtocolSpecific(_cgiRequest, requestLine, headerFields, messageBody);
 }
 
-char** CgiRequestHandler::_makeArgv() const
+char** CgiRequestHandler::_makeArgv()
 {
     char** result = new char*[2];
 
@@ -191,9 +191,9 @@ char** CgiRequestHandler::_makeArgv() const
     return result;
 }
 
-char** CgiRequestHandler::_makeEnvp() const
+char** CgiRequestHandler::_makeEnvp()
 {
-    const std::vector<std::string>& metaVariables = _cgiRequest.getMetaVariables();
+    std::vector<std::string>& metaVariables = _cgiRequest.getMetaVariables();
     char** result = new char*[metaVariables.size() + 1];
 
     for (size_t i = 0; i < metaVariables.size(); ++i) {
@@ -205,13 +205,13 @@ char** CgiRequestHandler::_makeEnvp() const
     return result;
 }
 
-void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ) const
+void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ)
 {
     close(servToCgi[0]);
     close(cgiToServ[1]);
 }
 
-void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
+void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ)
 {
     char **argv, **envp;
 
@@ -291,4 +291,12 @@ void CgiRequestHandler::callCgiScript(Cycle* cycle)
 bool CgiRequestHandler::eof() const
 {
     return _eof;
+}
+
+void CgiRequestHandler::reset()
+{
+    _cgiRequest.getMetaVariables().clear();
+    _cgiRequest.getMessageBody().clear();
+    _pos = 0;
+    _eof = false;
 }

@@ -36,7 +36,7 @@ public:
 
     unsigned short getStatusCode() const;
     std::vector<pair_t>& getHeaderFields();
-    const std::string& getMessageBody() const;
+    std::string& getMessageBody();
     char getType() const;
 
 };
@@ -58,6 +58,8 @@ public:
     CgiResponse& getCgiResponse();
     char getResponseType() const;
     bool eof() const;
+
+    void reset();
 
 };
 

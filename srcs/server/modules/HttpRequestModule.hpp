@@ -118,6 +118,7 @@ public:
 
     bool isInputReady() const;
     bool closed() const;
+
 };
 
 #endif

@@ -49,3 +49,12 @@ bool CgiResponseHandler::eof() const
 {
     return _eof;
 }
+
+void CgiResponseHandler::reset()
+{
+    _cgiResponse.setStatusCode(0);
+    _cgiResponse.getHeaderFields().clear();
+    _cgiResponse.getMessageBody().clear();
+    _rawCgiResponse.clear();
+    _eof = false;
+}
