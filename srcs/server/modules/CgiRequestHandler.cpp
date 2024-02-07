@@ -48,12 +48,18 @@ static void setGatewayInterface(CgiRequest& cgiRequest)
     cgiRequest.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 }
 
-static void setPathInfoAndTranslated(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
+static void setPathInfo(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
 {
-    std::string path = configInfo.getPath();
-    std::string root = configInfo.getRoot();
-    eng
-    cgiRequest.addMetaVariable("PATH_INFO", requestLine.getUri());
+    std::string pathInfo = configInfo.getPath().substr(configInfo.getRoot().size());
+
+    if (pathInfo.empty())
+        pathInfo = "/";
+    cgiRequest.addMetaVariable("PATH_INFO", pathInfo);
+}
+
+static void setPathTranslated(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
+{
+    cgiRequest.addMetaVariable("PATH_TRANSLATED", configInfo.getPath());
 }
 
 static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLine)
@@ -104,7 +110,7 @@ static void setScriptName(CgiRequest& cgiRequest)
 
 static void setServerName(CgiRequest& cgiRequest, Cycle* cycle)
 {
-    const std::string& serverName = cycle->getConfigInfo().getServerName();
+    std::string serverName = cycle->getConfigInfo().getServerName();
 
     if (!serverName.empty())
         cgiRequest.addMetaVariable("SERVER_NAME", serverName);
@@ -161,7 +167,8 @@ void CgiRequestHandler::_setMetaVariables(Cycle* cycle, HttpRequest& httpRequest
     setContentLength(_cgiRequest, messageBody);
     setContentType(_cgiRequest, headerFields);
     setGatewayInterface(_cgiRequest);
-    setPathInfoAndTranslated(_cgiRequest, cycle->getConfigInfo(), requestLine);
+    setPathInfo(_cgiRequest, cycle->getConfigInfo(), requestLine);
+    setPathTranslated(_cgiRequest, cycle->getConfigInfo(), requestLine);
     setQueryString(_cgiRequest, requestLine);
     setRemoteAddr(_cgiRequest, cycle);
     setRemoteHost(_cgiRequest, cycle);

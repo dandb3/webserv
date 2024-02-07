@@ -13,7 +13,8 @@ private:
     static const std::map<std::string, std::string> DEFAULT_PAGE;
 
     std::string _root;
-    std::string _path;       // root + uri
+    std::string _cgiPath;    // cgi인지를 판별하게 만드는 경로가 저장된다.
+    std::string _path;       // root + uri, 만약 CGI request로 넘어간다면 PATH_INFO에 넘겨주는 인자로 설정이 된다.
     bool _allowMethods[4]; // GET, HEAD, POST, DELETE
     std::string _index;
     // std::string _errorPage;
@@ -53,6 +54,7 @@ public:
     bool getAllowMethods(int index) const;
     std::string getIndex() const;
     std::string getErrorPage(std::string key) const;
+    std::string getServerName() const;
     bool getAutoIndex() const;
     t_directives getInfo() const;
     bool getIsRedirect() const;

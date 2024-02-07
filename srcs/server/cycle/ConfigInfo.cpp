@@ -178,10 +178,24 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     std::string path;
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
-    if (path.size() >= uri.size())
-        _path = _root;
-    else
-        _path = _root + uri.substr(path.size());
+    _path = _root + uri;
+
+    t_directives::iterator it;
+    std::string extension;
+    size_t cgiPos;
+    size_t start = path.size();
+
+    if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
+        extension = "." + it->second[0];
+        while ((cgiPos = uri.find(extension, start)) != std::string::npos) {
+            if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
+                _cgiPath = uri.substr(0, cgiPos + extension.size());
+                _path = _root + uri.substr(_cgiPath.size());
+                break;
+            }
+            start += extension.size();
+        }
+    }
 }
 
 void ConfigInfo::printConfigInfo() {
@@ -270,6 +284,15 @@ std::string ConfigInfo::getErrorPage(std::string key) const {
     return _errorPage.at(key);
 }
 
+std::string ConfigInfo::getServerName() const
+{
+    t_directives::const_iterator it;
+
+    if ((it = _info.find("server_name")) != _info.end() && !it->second.empty())
+        return it->second[0];
+    return "";
+}
+
 bool ConfigInfo::getAutoIndex() const {
     return _autoIndex;
 }
@@ -290,20 +313,10 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
 
 bool ConfigInfo::requestType() const
 {
-    std::string cgiExtension;
-    size_t extensionPos;
-    size_t start = _root.size();
-
-    if (_info.find("cgi") == _info.end() || _info.at("cgi").size() != 1)
+    if (_cgiPath.empty())
         return MAKE_HTTP_RESPONSE;
-
-    cgiExtension = "." + _info.at("cgi").at(0);
-    while ((extensionPos = _path.find(cgiExtension, start)) == std::string::npos) {
-        start += cgiExtension.size();
-        if (extensionPos + cgiExtension.size() == _path.size() || _path[start] == '/')
-            return MAKE_CGI_REQUEST;
-    }
-    return MAKE_HTTP_RESPONSE;
+    else
+        return MAKE_CGI_REQUEST;
 }
 
 void ConfigInfo::setDefaultErrorPage(unsigned short code) {
