@@ -150,7 +150,7 @@ void printParsedServer(ServerConfig &server) {
     std::cout << "[parseServer] " << "serverName: " << server.getServerName() << std::endl;
 }
 
-std::vector<std::pair<std::string, std::string> > &parseQuery(const std::string &query)
+std::vector<std::pair<std::string, std::string> > parseQuery(const std::string &query)
 {
     std::vector<std::pair<std::string, std::string> > queryV;
     std::string key, value;
@@ -177,7 +177,7 @@ std::vector<std::pair<std::string, std::string> > &parseQuery(const std::string 
     return queryV;
 }
 
-std::vector<std::string> &splitByDlm(const std::string &str, char dlm)
+std::vector<std::string> splitByDlm(const std::string &str, char dlm)
 {
     std::vector<std::string> ret;
     std::string token;
@@ -192,7 +192,7 @@ std::vector<std::string> &splitByDlm(const std::string &str, char dlm)
     return ret;
 }
 
-std::string &decodeUrl(const std::string &str)
+std::string decodeUrl(const std::string &str)
 {
     std::ostringstream decoded;
     std::string res;

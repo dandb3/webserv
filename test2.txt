@@ -1,6 +1,15 @@
-GET ./test2.txt HTTP/1.1
-Host: localhost
-User-Agent: curl/7.88.1
-Accept: */*
+------WebKitFormBoundaryABC123
+Content-Disposition: form-data; name="text"
 
-This is error
+Some text value
+------WebKitFormBoundaryABC123
+Content-Disposition: form-data; name="file"; filename="example.txt"
+Content-Type: text/plain
+
+Content+of+the+file+goes+here
+------WebKitFormBoundaryABC123
+Content-Disposition: form-data; name="file"; filename="example2.txt"
+Content-Type: application/x-www-form-urlencoded
+
+The+quick+brown+fox+jumps+over+the+lazy+dog+0123456789%21%40%23%24%25%5E%26*%28%29-%3D_%2B%5B%7B%5D%7D%5C%7C%3B%3A%27%22%2C%3C.%3E%2F%3F%7E%60
+------WebKitFormBoundaryABC123--

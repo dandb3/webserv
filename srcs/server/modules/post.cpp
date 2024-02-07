@@ -15,22 +15,25 @@ bool checkString(const std::string &str, const std::string &target, const size_t
 }
 
 // 최적화를 위하여 string 대신 vector<char> 이용함
-std::string &parseUrlencode(const std::string &encodedUrl)
+std::string parseUrlencode(const std::string &encodedUrl)
 {
     std::vector<std::pair<std::string, std::string> > query;
     std::vector<char> resultVec;
     std::string decodedUrl = decodeUrl(encodedUrl);
     query = parseQuery(decodedUrl);
 
-    for (std::vector<std::pair<std::string, std::string> >::iterator it = query.begin(); it != query.end(); it++) {
+    for (std::vector<std::pair<std::string, std::string> >::iterator it = query.begin(); it != query.end();) {
         for (size_t i = 0; i < it->first.length(); i++)
             resultVec.push_back(it->first[i]);
         resultVec.push_back(':');
         resultVec.push_back(' ');
         for (size_t i = 0; i < it->second.length(); i++)
             resultVec.push_back(it->second[i]);
-        resultVec.push_back('\r');
-        resultVec.push_back('\n');
+        
+        if (++it != query.end()) {
+            resultVec.push_back('\r');
+            resultVec.push_back('\n');
+        }
     }
 
     std::string resultString(resultVec.data(), resultVec.size());
@@ -47,7 +50,8 @@ void parseTextPlain(std::string &body)
 
 void parseContentDisposition(std::map<std::string, std::string> &params, const std::string &body, size_t &start)
 {
-    std::vector<std::string> contents = splitByDlm(body.substr(start), ';');
+    std::string dispositionLine = body.substr(start, body.find(CRLF, start) - start);
+    std::vector<std::string> contents = splitByDlm(dispositionLine, ';');
 
     for (std::vector<std::string>::iterator it = contents.begin(); it != contents.end(); it++) {
         if (checkString(*it, "Content-Disposition", 0)) {
@@ -56,7 +60,7 @@ void parseContentDisposition(std::map<std::string, std::string> &params, const s
                 throw 400;
             if (it->at(colonPos + 1) == ' ')
                 ++colonPos;
-            if (it->substr(colonPos) != "form-data")
+            if (it->substr(colonPos + 1) != "form-data")
                 throw 400;
         }
         else if (checkString(*it, "name=", 0)) {
@@ -69,7 +73,7 @@ void parseContentDisposition(std::map<std::string, std::string> &params, const s
             val.pop_back();
             params.insert(std::make_pair("filename", val));
         }
-    }    
+    }
 }
 
 void parseContentType(const std::string &body, size_t &curPos, std::string &boundaryContentType)
@@ -104,19 +108,27 @@ void parseMultiForm(const std::string &contentType, const std::string &body, std
         curPos = body.find(CRLF, endPos) + 2;
         endPos = body.find(boundary, curPos);
 
+        if (curPos == 1)
+            break;
+
         while (1) {
             if (content) {
                 std::string fileContent = body.substr(curPos, endPos - curPos - 1), fileName;
                 std::map<std::string, std::string>::iterator it = params.find("filename");
+
                 if (it == params.end())
                     fileName = "file" + toString(fileIndex++);
                 else
                     fileName = it->second;
 
-                if (boundaryContentType == "application/x-www-form-urlencoded")
-                    std::string fileContent = parseUrlencode(fileContent);
-                else if (boundaryContentType == "text/plain")
+                if (boundaryContentType == "application/x-www-form-urlencoded") {
+                    fileContent = parseUrlencode(fileContent);
                     parseTextPlain(fileContent);
+                    std::cout << "fileContent: " << fileContent << '\n';
+                }
+                else if (boundaryContentType == "text/plain") {
+                    parseTextPlain(fileContent);
+                }
                 files.insert(std::make_pair(fileName, fileContent));
                 
                 break;
@@ -144,10 +156,9 @@ void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, ConfigInfo
     std::string fileContent;
 
     if (contentType == "") {
-        if (body == "") // 실제 body가 없는 경우
+        if (body == "") { // 실제 body가 없는 경우
             _makeStatusLine(204);
-        else { // 실제 body가 있는 경우 -> binary로 해석
-            // _makeStatusLine(400);
+            return;
         }
     }
 
