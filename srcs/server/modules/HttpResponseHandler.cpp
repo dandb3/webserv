@@ -409,19 +409,24 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
     try {
         switch (method) {
         case GET:
+            if (!configInfo.getAllowMethods(0))
+                throw 405;
             _makeGETResponse(cycle, httpRequest);
             break;
         case HEAD:
+            if (!configInfo.getAllowMethods(1))
+                throw 405;
             _makeHEADResponse(cycle, httpRequest);
             break;
         case POST:
+            if (!configInfo.getAllowMethods(2))
+                throw 405;
             _makePOSTResponse(cycle, httpRequest);
             break;
         case DELETE:
+            if (!configInfo.getAllowMethods(3))
+                throw 405;
             _makeDELETEResponse(cycle, httpRequest);
-            break;
-        default:
-            throw 405;
             break;
         }
     }
