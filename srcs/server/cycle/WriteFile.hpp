@@ -1,0 +1,25 @@
+#ifndef WRITE_FILE
+#define WRITE_FILE
+
+#include <string>
+#include "../../webserv.hpp"
+
+class WriteFile
+{
+private:
+    std::string _path;
+    std::string _data;
+    size_t _pos;
+    bool _eof;
+
+public:
+    WriteFile(const std::string& path, const std::string& data);
+
+    int writeToFile(int fd, size_t size);
+
+    const std::string& getPath() const;
+    bool eof() const;
+
+};
+
+#endif

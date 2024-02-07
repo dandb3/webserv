@@ -287,6 +287,7 @@ void EventHandler::_servFileRead(const struct kevent& kev)
     if ((kev.flags & EV_EOF) && kev.data == 0) {
         close(kev.ident);
         cycle->setReadFile(-1);
+        httpResponse.statusLine.code = 200;
         httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
         httpResponseHandler.makeHttpResponseFinal(cycle);
         _setHttpResponseEvent(cycle);
@@ -312,7 +313,39 @@ void EventHandler::_servFileRead(const struct kevent& kev)
 
 void EventHandler::_servFileWrite(const struct kevent &kev)
 {
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+    HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
+    std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
+    std::map<int, WriteFile>::iterator it;
 
+    if ((it = writeFiles.find(kev.ident)) == writeFiles.end())
+        return;
+
+    WriteFile& writeFile = it->second;
+
+    if (writeFile.writeToFile(kev.ident, static_cast<size_t>(kev.data)) == FAILURE) {
+        for (it = writeFiles.begin(); it != writeFiles.end(); ++it) {
+            close(it->first);
+            std::remove(it->second.getPath().c_str()); // 이미 파일은 만들어진 상태이다. open(O_CREAT)을 했기 때문.
+            _kqueueHandler.deleteEventType(it->first);
+        }
+        writeFiles.clear();
+        httpResponse.statusLine.code = 500;
+        httpResponseHandler.makeErrorHttpResponse(cycle);
+        _setHttpResponseEvent(cycle);
+        return;
+    }
+    if (writeFile.eof()) {
+        close(kev.ident);
+        _kqueueHandler.deleteEventType(kev.ident);
+        writeFiles.erase(it);
+        if (writeFiles.empty()) {
+            httpResponse.statusLine.code = 201;
+            httpResponseHandler.makeHttpResponseFinal(cycle);
+            _setHttpResponseEvent(cycle);
+        }
+    }
 }
 
 void EventHandler::_servRTimer(const struct kevent &kev)
