@@ -1,6 +1,22 @@
 GET / HTTP/1.1
 Host: localhost
 User-Agent: curl/7.88.1
+Content-Length: 13
 Accept: */*
+Connection: keep-alive
 
-This is test1
+This is test1GET / HTTP/1.1
+Host: localhost
+User-Agent: jdoh/1.0
+Content-Length: 13
+Accept: */*
+Connection: keep-alive
+
+This is test2WHATISTHEMETHOD / HTTP/1.1
+Host: localhost
+User-Agent: jdoh/1.1
+Content-Length: 13
+Accept: */*
+Connection: closed
+
+This is test3

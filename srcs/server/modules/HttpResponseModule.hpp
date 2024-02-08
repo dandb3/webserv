@@ -32,18 +32,6 @@ public:
     StatusLine statusLine;
     std::multimap<std::string, std::string> headerFields;
     std::string messageBody;
-    
-    // HttpResponse();
-
-    // getter
-    // const StatusLine &getStatusLine() const;
-    // std::multimap<std::string, std::string> &getHeaderFields();
-    // const std::string &getMessageBody() const;
-
-    // // setter
-    // void setStatusLine(StatusLine &statusLine);
-    // void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
-    // void setMessageBody(std::string &messageBody);
 };
 
 class HttpResponseHandler
@@ -66,6 +54,10 @@ private:
 
     void _makeStatusLine();
     void _makeHeaderFields(Cycle* cycle);
+    void _setAllow();
+    void _setContentLength();
+    void _setDate();
+    void _setLastModified(const char *path);
 
     void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
     void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);

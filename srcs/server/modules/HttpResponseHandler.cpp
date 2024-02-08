@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <sys/stat.h>
+#include <cstring>
 #include "HttpResponseModule.hpp"
 #include "../../utils/utils.hpp"
 #include "../parse/parse.hpp"
@@ -42,6 +43,9 @@ void HttpResponseHandler::_makeStatusLine()
     case 403:
         _httpResponse.statusLine.text = "Forbidden";
         break;
+    case 400:
+        text = "Bad Request";
+        break;
     case 404:
         _httpResponse.statusLine.text = "Not Found";
         break;
@@ -66,11 +70,17 @@ void HttpResponseHandler::_makeStatusLine()
     case 502:
         _httpResponse.statusLine.text = "Bad Gateway";
         break;
+    case 500:
+        text = "Internal Server Error";
+        break;
     case 503:
         _httpResponse.statusLine.text = "Service Unavailable";
         break;
     case 504:
         _httpResponse.statusLine.text = "Gateway Timeout";
+        break;
+    case 505:
+        text = "HTTP Version Not Supported";
         break;
     default:
         _httpResponse.statusLine.text = "Not Set";
@@ -78,11 +88,16 @@ void HttpResponseHandler::_makeStatusLine()
     }
 }
 
+void HttpResponseHandler::_setAllow()
+{
+    _httpResponse.headerFields.insert(std::make_pair("Allow", "GET, HEAD, POST, DELETE"));
+}
+
 void HttpResponseHandler::_setLastModified(const char *path)
 {
     struct stat fileInfo;
 
-    if (path == std::string(""))
+    if (path[0] == '\0')
         return;
     if (stat(path, &fileInfo) == -1)
         return;
@@ -407,7 +422,7 @@ void HttpResponseHandler::makeHttpResponseFinal(Cycle* cycle)
 void HttpResponseHandler::_statusLineToString()
 {
     const std::pair<short, short> version = _httpResponse.statusLine.version;
-    const short code = _httpResponse.statusLine.code;
+
     std::string versionStr;
     std::string codeStr;
 
@@ -416,17 +431,15 @@ void HttpResponseHandler::_statusLineToString()
     versionStr.push_back('.');
     versionStr.push_back(static_cast<char>(version.second + '0'));
 
-    codeStr = toString(code);
+    codeStr = toString(_httpResponse.statusLine.code);
 
     _response = versionStr + " " + codeStr + " " + _httpResponse.statusLine.text + CRLF;
 }
 
 void HttpResponseHandler::_headerFieldsToString()
 {
-    std::multimap<std::string, std::string> headerFields = _httpResponse.headerFields;
-    std::multimap<std::string, std::string>::iterator it;
-
-    for (it = headerFields.begin(); it != headerFields.end(); it++) {
+    std::multimap<std::string, std::string>::iterator it = _httpResponse.headerFields.begin();
+    for (; it != _httpResponse.headerFields.end(); it++) {
         _response += it->first + ": " + it->second + CRLF;
     }
     _response += CRLF;
@@ -545,4 +558,9 @@ void HttpResponseHandler::reset()
     _httpResponse.statusLine.text.clear();
     _httpResponse.headerFields.clear();
     _httpResponse.messageBody.clear();
+}
+
+void HttpResponseHandler::makeHttpResponseMessage()
+{
+    
 }
