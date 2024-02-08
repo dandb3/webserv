@@ -4,6 +4,7 @@
 #include "HttpResponseModule.hpp"
 #include "../../utils/utils.hpp"
 #include "../parse/parse.hpp"
+#include "post.hpp"
 
 HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
 
@@ -40,11 +41,11 @@ void HttpResponseHandler::_makeStatusLine()
     case 204:
         _httpResponse.statusLine.text = "No Content";
         break;
+    case 400:
+        _httpResponse.statusLine.text = "Bad Request";
+        break;
     case 403:
         _httpResponse.statusLine.text = "Forbidden";
-        break;
-    case 400:
-        text = "Bad Request";
         break;
     case 404:
         _httpResponse.statusLine.text = "Not Found";
@@ -70,9 +71,6 @@ void HttpResponseHandler::_makeStatusLine()
     case 502:
         _httpResponse.statusLine.text = "Bad Gateway";
         break;
-    case 500:
-        text = "Internal Server Error";
-        break;
     case 503:
         _httpResponse.statusLine.text = "Service Unavailable";
         break;
@@ -80,7 +78,7 @@ void HttpResponseHandler::_makeStatusLine()
         _httpResponse.statusLine.text = "Gateway Timeout";
         break;
     case 505:
-        text = "HTTP Version Not Supported";
+        _httpResponse.statusLine.text = "HTTP Version Not Supported";
         break;
     default:
         _httpResponse.statusLine.text = "Not Set";
@@ -121,14 +119,17 @@ void HttpResponseHandler::_makeDirectoryListing(const std::string& path)
     if (dir == NULL)
         throw 500;
 
-    _httpResponse.messageBody = "<!DOCTYPE html>\n<html>\n<head>\n<title>Directory Listing</title>\n</head>\n<body>\n";
-    _httpResponse.messageBody += "<h1>Directory Listing: " + path + "</h1>\n<ul>\n";
+    std::stringstream bodyStream;
+    bodyStream << "<!DOCTYPE html>\n<html>\n<head>\n<title>Directory Listing</title>\n</head>\n<body>\n";
+    bodyStream << "<h1>Directory Listing: " << path << "</h1>\n<ul>\n";
 
     while ((entry = readdir(dir)) != NULL)
         if (entry->d_name[0] != '.')  // Skip hidden files/directories
-            _httpResponse.messageBody += std::string("<li><a href=\"") + entry->d_name + "\">" + entry->d_name + "</a></li>\n";
+            bodyStream << "<li><a href=\"" << entry->d_name << "\">" << entry->d_name << "</a></li>\n";
 
-    _httpResponse.messageBody += "</ul>\n</body>\n</html>\n";
+    bodyStream << "</ul>\n</body>\n</html>\n";
+
+    _httpResponse.messageBody = bodyStream.str();
 
     closedir(dir);
 }
@@ -202,6 +203,7 @@ void HttpResponseHandler::_setConnection(Cycle* cycle)
 
 void HttpResponseHandler::_makeHeaderFields(Cycle* cycle)
 {
+    _setAllow();
     _setConnection(cycle);
     _setDate();
 }
@@ -320,7 +322,7 @@ void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpReque
 
     if (contentType == "") {
         if (body == "") { // 실제 body가 없는 경우
-            _makeStatusLine(204);
+            _httpResponse.statusLine.code = 204;
             return;
         }
     }
@@ -419,38 +421,35 @@ void HttpResponseHandler::makeHttpResponseFinal(Cycle* cycle)
     _makeHeaderFields(cycle);
 }
 
-void HttpResponseHandler::_statusLineToString()
+void HttpResponseHandler::_statusLineToString(std::stringstream &responseStream)
 {
     const std::pair<short, short> version = _httpResponse.statusLine.version;
 
-    std::string versionStr;
-    std::string codeStr;
-
-    versionStr = "HTTP/";
-    versionStr.push_back(static_cast<char>(version.first + '0'));
-    versionStr.push_back('.');
-    versionStr.push_back(static_cast<char>(version.second + '0'));
-
-    codeStr = toString(_httpResponse.statusLine.code);
-
-    _response = versionStr + " " + codeStr + " " + _httpResponse.statusLine.text + CRLF;
+    responseStream << "HTTP/" << version.first << '.' << version.second << ' ';
+    responseStream << _httpResponse.statusLine.code << ' ';
+    responseStream << _httpResponse.statusLine.text << CRLF;
 }
 
-void HttpResponseHandler::_headerFieldsToString()
+void HttpResponseHandler::_headerFieldsToString(std::stringstream &responseStream)
 {
     std::multimap<std::string, std::string>::iterator it = _httpResponse.headerFields.begin();
-    for (; it != _httpResponse.headerFields.end(); it++) {
-        _response += it->first + ": " + it->second + CRLF;
-    }
-    _response += CRLF;
+
+    responseStream << _response;
+    for (; it != _httpResponse.headerFields.end(); ++it)
+        responseStream << it->first << ": " << it->second << CRLF;
+    responseStream << CRLF;
 }
 
 void HttpResponseHandler::_httpResponseToString()
 {
-    _statusLineToString();
-    _headerFieldsToString();
-    _response += _httpResponse.messageBody;
-    std::cout << "final result: " << _response << '\n';
+    std::stringstream responseStream;
+
+    _statusLineToString(responseStream);
+    _headerFieldsToString(responseStream);
+    responseStream << _httpResponse.messageBody;
+    
+    _response = responseStream.str();
+    // std::cout << "final result: " << _response << '\n';
 }
 
 void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -558,9 +557,4 @@ void HttpResponseHandler::reset()
     _httpResponse.statusLine.text.clear();
     _httpResponse.headerFields.clear();
     _httpResponse.messageBody.clear();
-}
-
-void HttpResponseHandler::makeHttpResponseMessage()
-{
-    
 }

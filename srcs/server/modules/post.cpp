@@ -1,43 +1,24 @@
 #include <cstring>
+#include <sstream>
 #include "HttpResponseModule.hpp"
 #include "../../utils/utils.hpp"
 
-bool checkString(const std::string &str, const std::string &target, const size_t &start)
-{
-    const size_t len = target.length();
-    if (str.length() < start + len)
-        return false;
-    for (size_t i = 0; i < len; i++) {
-        if (str[start + i] != target[i])
-            return false;
-    }
-    return true;
-}
-
-// 최적화를 위하여 string 대신 vector<char> 이용함
 std::string parseUrlencode(const std::string &encodedUrl)
 {
     std::vector<std::pair<std::string, std::string> > query;
-    std::vector<char> resultVec;
     std::string decodedUrl = decodeUrl(encodedUrl);
     query = parseQuery(decodedUrl);
 
+    std::stringstream resultStream;
+
     for (std::vector<std::pair<std::string, std::string> >::iterator it = query.begin(); it != query.end();) {
-        for (size_t i = 0; i < it->first.length(); i++)
-            resultVec.push_back(it->first[i]);
-        resultVec.push_back(':');
-        resultVec.push_back(' ');
-        for (size_t i = 0; i < it->second.length(); i++)
-            resultVec.push_back(it->second[i]);
-        
+        resultStream << it->first << ": " << it->second;
         if (++it != query.end()) {
-            resultVec.push_back('\r');
-            resultVec.push_back('\n');
+            resultStream << "\r\n";
         }
     }
 
-    std::string resultString(resultVec.data(), resultVec.size());
-    return resultString;
+    return resultStream.str();
 }
 
 void parseTextPlain(std::string &body)
@@ -48,7 +29,7 @@ void parseTextPlain(std::string &body)
     }
 }
 
-void parseContentDisposition(std::map<std::string, std::string> &params, const std::string &body, size_t &start)
+static void parseContentDisposition(std::map<std::string, std::string> &params, const std::string &body, size_t &start)
 {
     std::string dispositionLine = body.substr(start, body.find(CRLF, start) - start);
     std::vector<std::string> contents = splitByDlm(dispositionLine, ';');
@@ -76,7 +57,7 @@ void parseContentDisposition(std::map<std::string, std::string> &params, const s
     }
 }
 
-void parseContentType(const std::string &body, size_t &curPos, std::string &boundaryContentType)
+static void parseContentType(const std::string &body, size_t &curPos, std::string &boundaryContentType)
 {
     size_t colonPos = body.find(':', curPos);
     const size_t crlfPos = body.find(CRLF, curPos);
@@ -145,36 +126,5 @@ void parseMultiForm(const std::string &contentType, const std::string &body, std
             }
             curPos = body.find(CRLF, curPos) + 2;
         }
-    }
-}
-
-void HttpResponseHandler::_makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo)
-{
-    std::map<std::string, std::string> files;
-    const std::string contentType = httpRequest.getHeaderFields().find("Content-Type")->second;
-    const std::string body = httpRequest.getMessageBody();
-    const std::string fileName = httpRequest.getRequestLine().getUri();
-    std::string fileContent;
-
-    if (contentType == "") {
-        if (body == "") { // 실제 body가 없는 경우
-            _makeStatusLine(204);
-            return;
-        }
-    }
-
-    if (checkString(contentType, "multipart/form-data", 0)) {
-        parseMultiForm(contentType, body, files);
-    }
-    else {
-        if (checkString(contentType, "application/x-www-form-urlencoded", 0))
-            fileContent = parseUrlencode(body);
-        else if (checkString(contentType, "text/plain", 0)) {
-            fileContent = body;
-            parseTextPlain(fileContent);
-        }
-        else
-            fileContent = body;
-        files.insert(std::make_pair(fileName, fileContent));
     }
 }
