@@ -237,7 +237,7 @@ void ServerManager::operate()
                     EventInfo *data = (EventInfo *)curEvent.udata;
                     // EventInfo에 대한 fd string으로 변환
                     std::string fd = std::to_string(data->sockfd);
-                    ConfigInfo configInfo(data->ip, data->port, data->uri);
+                    ConfigInfo configInfo(data->ip, data->port, "", data->uri); // serverName은 일단 빈 문자열
                     std::string msg = configInfo.getPrintableConfigInfo();
                     std::string msg2 = createHttpRequestPage(data->data, msg);
                     int n = write(sockfd, msg2.c_str(), msg2.length());

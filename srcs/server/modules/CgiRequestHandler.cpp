@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <sstream>
 #include <cstring>
+#include <csignal>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -46,19 +48,31 @@ static void setGatewayInterface(CgiRequest& cgiRequest)
     cgiRequest.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 }
 
-static void setPathInfo(CgiRequest& cgiRequest, const RequestLine& requestLine)
+static void setPathInfo(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
 {
-    cgiRequest.addMetaVariable("PATH_INFO", requestLine.getRequestTarget());
+    std::string pathInfo = configInfo.getPath().substr(configInfo.getRoot().size());
+
+    if (pathInfo.empty())
+        pathInfo = "/";
+    cgiRequest.addMetaVariable("PATH_INFO", pathInfo);
 }
 
-static void setPathTranslated(CgiRequest& cgiRequest, Cycle* cycle, const RequestLine& requestLine)
+static void setPathTranslated(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
 {
-    cgiRequest.addMetaVariable("PATH_TRANSLATED", cycle->getConfigInfo().getPath());
+    cgiRequest.addMetaVariable("PATH_TRANSLATED", configInfo.getPath());
 }
 
 static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLine)
 {
-    cgiRequest.addMetaVariable("QUERY_STRING", restoreQuery(requestLine.getQuery()));
+    const std::vector<pair_t>& query = requestLine.getQuery();
+    std::string rawQuery;
+
+    for (size_t i = 0; i < query.size(); ++i) {
+        rawQuery += query[i].first + "=" + query[i].second;
+        if (i + 1 != query.size())
+            rawQuery += "&";
+    }
+    cgiRequest.addMetaVariable("QUERY_STRING", rawQuery);
 }
 
 static void setRemoteAddr(CgiRequest& cgiRequest, Cycle* cycle)
@@ -96,7 +110,7 @@ static void setScriptName(CgiRequest& cgiRequest)
 
 static void setServerName(CgiRequest& cgiRequest, Cycle* cycle)
 {
-    const std::string& serverName = cycle->getConfigInfo().getServerName();
+    std::string serverName = cycle->getConfigInfo().getServerName();
 
     if (!serverName.empty())
         cgiRequest.addMetaVariable("SERVER_NAME", serverName);
@@ -153,8 +167,8 @@ void CgiRequestHandler::_setMetaVariables(Cycle* cycle, HttpRequest& httpRequest
     setContentLength(_cgiRequest, messageBody);
     setContentType(_cgiRequest, headerFields);
     setGatewayInterface(_cgiRequest);
-    setPathInfo(_cgiRequest, requestLine);
-    setPathTranslated(_cgiRequest, cycle, requestLine);
+    setPathInfo(_cgiRequest, cycle->getConfigInfo(), requestLine);
+    setPathTranslated(_cgiRequest, cycle->getConfigInfo(), requestLine);
     setQueryString(_cgiRequest, requestLine);
     setRemoteAddr(_cgiRequest, cycle);
     setRemoteHost(_cgiRequest, cycle);
@@ -167,7 +181,7 @@ void CgiRequestHandler::_setMetaVariables(Cycle* cycle, HttpRequest& httpRequest
 //  setProtocolSpecific(_cgiRequest, requestLine, headerFields, messageBody);
 }
 
-char** CgiRequestHandler::_makeArgv() const
+char** CgiRequestHandler::_makeArgv()
 {
     char** result = new char*[2];
 
@@ -177,9 +191,9 @@ char** CgiRequestHandler::_makeArgv() const
     return result;
 }
 
-char** CgiRequestHandler::_makeEnvp() const
+char** CgiRequestHandler::_makeEnvp()
 {
-    const std::vector<std::string>& metaVariables = _cgiRequest.getMetaVariables();
+    std::vector<std::string>& metaVariables = _cgiRequest.getMetaVariables();
     char** result = new char*[metaVariables.size() + 1];
 
     for (size_t i = 0; i < metaVariables.size(); ++i) {
@@ -191,26 +205,26 @@ char** CgiRequestHandler::_makeEnvp() const
     return result;
 }
 
-void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ) const
+void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ)
 {
-    if (close(servToCgi[0]) == FAILURE || close(cgiToServ[1]) == FAILURE)
-        throw ERROR;
+    close(servToCgi[0]);
+    close(cgiToServ[1]);
 }
 
-void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ) const
+void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ)
 {
     char **argv, **envp;
 
-    if (dup2(servToCgi[0], STDIN_FILENO) == FAILURE \
-        || dup2(cgiToServ[1], STDOUT_FILENO) == FAILURE)
-        exit(1);
-    if (close(servToCgi[0]) == FAILURE || close(servToCgi[1]) == FAILURE \
-        || close(cgiToServ[0]) == FAILURE || close(cgiToServ[1]) == FAILURE)
-        exit(1);
+    dup2(servToCgi[0], STDIN_FILENO);
+    dup2(cgiToServ[1], STDOUT_FILENO);
+    close(servToCgi[0]);
+    close(servToCgi[1]);
+    close(cgiToServ[0]);
+    close(cgiToServ[1]);
     argv = _makeArgv();
     envp = _makeEnvp();
     if (execve(argv[0], argv, envp) == FAILURE)
-        exit(1);
+        std::exit(1);
 }
 
 /**
@@ -228,14 +242,15 @@ void CgiRequestHandler::makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest)
 
 void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
 {
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     const std::string& messageBody = _cgiRequest.getMessageBody();
     size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
 
     remainSize = messageBody.size() - _pos;
-    sendSize = (remainSize < maxSize) ? remainSize : maxSize;
+    sendSize = std::min(remainSize, maxSize);
 
     if (write(kev.ident, messageBody.c_str() + _pos, sendSize) == FAILURE)
-        throw ERROR;
+        throw 500;
     _pos += sendSize;
     if (remainSize <= maxSize)
         _eof = true;
@@ -246,16 +261,25 @@ void CgiRequestHandler::callCgiScript(Cycle* cycle)
     int servToCgi[2], cgiToServ[2];
     pid_t pid;
 
-    if (pipe(servToCgi) == FAILURE || pipe(cgiToServ) == FAILURE)
-        throw ERROR;
+    if (pipe(servToCgi) == FAILURE)
+        throw 500;
+    if (pipe(cgiToServ) == FAILURE) {
+        close(servToCgi[0]);
+        close(servToCgi[1]);
+        throw 500;
+    }
     // we don't know how cgi script acts, so let I/O fds blocking state.
-    if (fcntl(servToCgi[1], F_SETFL, O_NONBLOCK) == FAILURE \
-        || fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK) == FAILURE)
-        throw ERROR;
+    fcntl(servToCgi[1], F_SETFL, O_NONBLOCK);
+    fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK);
     cycle->setCgiSendfd(servToCgi[1]);
     cycle->setCgiRecvfd(cgiToServ[0]);
-    if ((pid = fork()) == FAILURE)
-        throw ERROR;
+    if ((pid = fork()) == FAILURE) {
+        close(servToCgi[0]);
+        close(servToCgi[1]);
+        close(cgiToServ[0]);
+        close(cgiToServ[1]);
+        throw 500;
+    }
     if (pid == 0)
         _childProcess(servToCgi, cgiToServ);
     else {
@@ -267,4 +291,12 @@ void CgiRequestHandler::callCgiScript(Cycle* cycle)
 bool CgiRequestHandler::eof() const
 {
     return _eof;
+}
+
+void CgiRequestHandler::reset()
+{
+    _cgiRequest.getMetaVariables().clear();
+    _cgiRequest.getMessageBody().clear();
+    _pos = 0;
+    _eof = false;
 }

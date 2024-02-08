@@ -88,24 +88,28 @@ void CgiResponseParser::_readLines(const std::string& raw)
         }
     }
     if (error)
-        throw error;
+        throw 502;
     _messageBody = raw.substr(start);
 }
 
 void CgiResponseParser::_parseLines()
 {
+    std::string fieldName, fieldValue;
     size_t fieldNameEnd, fieldValueStart;
 
     for (size_t i = 0; i + 1 < _lineV.size(); ++i) {
         if (!isGenericField(_lineV[i]))
-            throw 123123; // ERROR;
+            throw 502;
         fieldNameEnd = _lineV[i].find(':');
         fieldValueStart = fieldNameEnd + 1;
         eatOWS(_lineV[i], fieldValueStart);
-        _pairV.push_back(std::make_pair(_lineV[i].substr(0, fieldNameEnd), _lineV[i].substr(fieldValueStart)));
+        fieldName = _lineV[i].substr(0, fieldNameEnd);
+        fieldValue = _lineV[i].substr(fieldValueStart);
+        if (!fieldValue.empty())
+            _pairV.push_back(std::make_pair(_lineV[i].substr(0, fieldNameEnd), _lineV[i].substr(fieldValueStart)));
     }
     if (_pairV.empty())
-        throw 123123; // ERROR;
+        throw 502;
 }
 
 char CgiResponseParser::_determineType()
@@ -154,18 +158,15 @@ void CgiResponseParser::_insertResponse(CgiResponse& cgiResponse)
     switch (cgiResponse.getType()) {
     case CgiResponse::CLIENT_REDIR_RES:
         cgiResponse.setStatusCode(302);
-        cgiResponse.setReasonPhrase("Found");
         break;
     case CgiResponse::DOCUMENT_RES:
         if (it == _pairV.end()) {
             cgiResponse.setStatusCode(200);
-            cgiResponse.setReasonPhrase("OK");
             break;
         }
         /* fall-through */
     case CgiResponse::CLIENT_REDIRDOC_RES:
         cgiResponse.setStatusCode(stringToType<unsigned short>(it->second.substr(0, 3)));
-        cgiResponse.setReasonPhrase(it->second.substr(4));
         break;
     }
     if (it != _pairV.end())
@@ -180,7 +181,12 @@ void CgiResponseParser::parseCgiResponse(CgiResponse& cgiResponse, const std::st
     CgiResponseParser& parser = _getInstance();
 
     parser._init();
-    parser._readLines(raw);
-    parser._parseLines();
-    parser._insertResponse(cgiResponse);
+    try {
+        parser._readLines(raw);
+        parser._parseLines();
+        parser._insertResponse(cgiResponse);
+    }
+    catch (unsigned short code) {
+        cgiResponse.setType(CgiResponse::CGI_RESPONSE_ERROR);
+    }
 }

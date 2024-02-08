@@ -22,8 +22,8 @@ public:
 	void addMetaVariable(const std::string& key, const std::string& value);
 	void setMessageBody(const std::string& messageBody);
 
-	const std::vector<std::string>& getMetaVariables() const;
-	const std::string& getMessageBody() const;
+	std::vector<std::string>& getMetaVariables();
+	std::string& getMessageBody();
 
 };
 
@@ -35,10 +35,10 @@ private:
 	bool _eof;
 
 	void _setMetaVariables(Cycle* cycle, HttpRequest& httpRequest);
-	char** _makeArgv() const;
-	char** _makeEnvp() const;
-	void _parentProcess(int* servToCgi, int* cgiToServ) const;
-	void _childProcess(int* servToCgi, int* cgiToServ) const;
+	char** _makeArgv();
+	char** _makeEnvp();
+	void _parentProcess(int* servToCgi, int* cgiToServ);
+	void _childProcess(int* servToCgi, int* cgiToServ);
 
 public:
 	CgiRequestHandler();
@@ -49,6 +49,8 @@ public:
 	void callCgiScript(Cycle* cycle);
 
 	bool eof() const;
+
+    void reset();
 
 };
 

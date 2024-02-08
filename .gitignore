@@ -2,6 +2,7 @@
 a.out
 settings.json
 test*
+*.o
 a
 client
 .gitignore

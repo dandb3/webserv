@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include "CgiResponseModule.hpp"
 #include "HttpRequestModule.hpp"
-#include "../cycle/ConfigInfo.hpp"
+#include "../cycle/Cycle.hpp"
 #include "../../utils/utils.hpp"
 
 #define CRLF "\r\n"
@@ -19,80 +19,87 @@
 class StatusLine
 {
 public:
-	std::pair<short, short> version;
-	short code;
-	std::string text;
+    std::pair<short, short> version;
+    unsigned short code;
+    std::string text;
 
-	StatusLine &operator=(const StatusLine &ref);
+    StatusLine &operator=(const StatusLine &ref);
 };
 
 class HttpResponse
 {
 public:
-	StatusLine statusLine;
-	std::multimap<std::string, std::string> headerFields;
-	std::string messageBody;
-	
-	// HttpResponse();
-
-	// getter
-	// const StatusLine &getStatusLine() const;
-	// std::multimap<std::string, std::string> &getHeaderFields();
-	// const std::string &getMessageBody() const;
-
-	// // setter
-	// void setStatusLine(StatusLine &statusLine);
-	// void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
-	// void setMessageBody(std::string &messageBody);
+    StatusLine statusLine;
+    std::multimap<std::string, std::string> headerFields;
+    std::string messageBody;
 };
 
 class HttpResponseHandler
 {
 private:
-	std::string _response;
-	size_t _pos;
-	char _status;
+    std::string _response;
+    size_t _pos;
+    char _status;
 
-	HttpResponse _httpResponse;
+    HttpResponse _httpResponse;
 
-	void _setAllow();
-	void _setConnection(bool disConnected);
-	void _setContentLength();
-	void _setContentType(const std::string type);
-	void _setDate();
-	void _setLastModified(const char *path);
-	void _setLocation(std::string &location);
+    void _setConnection(Cycle* cycle);
+    void _setContentLength();
+    void _setContentLength(off_t size);
+    void _setContentType(Cycle* cycle, const std::string& path);
+    void _setContentType(const std::string& type);
+    void _setDate();
+    void _setLastModified(const char *path);
+    void _makeDirectoryListing(const std::string& path);
 
-	void _makeStatusLine(short code);
-	void _makeHeaderFields(ConfigInfo &configInfo);
+    void _makeStatusLine();
+    void _makeHeaderFields(Cycle* cycle);
+    void _setAllow();
+    void _setContentLength();
+    void _setDate();
+    void _setLastModified(const char *path);
 
-	void _makeGETResponse(HttpRequest &httpRequest, ConfigInfo &configInfo, bool isGET);
-	void _makePOSTResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
-	void _makeDELETEResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
+    void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest);
 
-	void _statusLineToString();
-	void _headerFieldsToString();
-	void _httpResponseToString();
+    void _statusLineToString();
+    void _headerFieldsToString();
+    void _httpResponseToString();
 
 public:
-	enum
-	{
-		GET,
-		HEAD,
-		POST,
-		DELETE
-	};
-	enum
-	{
-		RES_IDLE,
-		RES_BUSY,
-		RES_READY
-	};
-	HttpResponseHandler();
+    enum
+    {
+        GET,
+        HEAD,
+        POST,
+        DELETE
+    };
+    enum
+    {
+        RES_IDLE,
+        RES_BUSY,
+        RES_FINISH
+    };
 
-	void makeHttpResponse(HttpRequest &httpRequest, ConfigInfo &configInfo);
-	void makeHttpErrorResponse(short code);	
-	void sendHttpResponse(int fd, size_t size);
+    HttpResponseHandler();
+
+    void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void makeHttpResponse(Cycle* cycle, CgiResponse &cgiResponse);
+    void makeErrorHttpResponse(Cycle* cycle);
+    void makeHttpResponseFinal(Cycle* cycle);
+
+    void sendHttpResponse(int fd, size_t size);
+
+    void setStatus(char status);
+
+    char getStatus() const;
+    HttpResponse& getHttpResponse();
+
+    bool isErrorCode(unsigned short code);
+    void reset();
+
 };
 
 #endif

@@ -3,6 +3,10 @@
 CgiResponse::CgiResponse()
 {}
 
+CgiResponse::CgiResponse(unsigned short code)
+: _statusCode(code)
+{}
+
 CgiResponse::CgiResponse(const std::string& rawCgiResponse)
 {}
 
@@ -20,11 +24,6 @@ CgiResponse& CgiResponse::operator=(const CgiResponse& cgiResponse)
 void CgiResponse::setStatusCode(unsigned short statusCode)
 {
     _statusCode = statusCode;
-}
-
-void CgiResponse::setReasonPhrase(const std::string& reasonPhrase)
-{
-    _reasonPhrase = reasonPhrase;
 }
 
 void CgiResponse::addHeaderField(const pair_t& p)
@@ -47,17 +46,12 @@ unsigned short CgiResponse::getStatusCode() const
     return _statusCode;
 }
 
-const std::string& CgiResponse::getReasonPhrase() const
-{
-    return _reasonPhrase;
-}
-
-const std::map<std::string, std::string>& CgiResponse::getHeaderFields() const
+std::vector<pair_t>& CgiResponse::getHeaderFields()
 {
     return _headerFields;
 }
 
-const std::string& CgiResponse::getMessageBody() const
+std::string& CgiResponse::getMessageBody()
 {
     return _messageBody;
 }

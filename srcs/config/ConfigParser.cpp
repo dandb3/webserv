@@ -64,9 +64,9 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
  * 파싱 시에 key 값이 내가 찾는 값이 아닌경우 key가 무엇인지 알려주고 오류 처리 (해야할 것)
 */
 void ConfigParser::parse(std::string const &configPath, Config &config) {
-    std::cout << "read config file" << std::endl;
+    // std::cout << "read config file" << std::endl;
     std::string fileContent = FileReader::read_file(configPath); // 실패 시 throw
-    std::cout << "finish read config file" << std::endl;
+    // std::cout << "finish read config file" << std::endl;
     size_t i = 0;
     std::string key;
     while (i != std::string::npos && i < fileContent.size()) {
@@ -169,14 +169,15 @@ void ConfigParser::parseLocation(std::string const &fileContent, size_t &i, Serv
 }
 
 void ConfigParser::parseTypes(std::string const &filePath, Config &config) {
-    t_directives mime_types;
+    std::map<std::string, std::string> mime_types;
     std::string fileContent = FileReader::read_file(filePath); // 실패 시 throw
     size_t i = 0;
-    std::string key = getKey(fileContent, i);
+    std::string value = getKey(fileContent, i);
     while (i != std::string::npos && i < fileContent.size()) {
-        std::vector<std::string> value = getValues(fileContent, i, ';');
-        mime_types[key] = value;
-        key = getWord(fileContent, i);
+        std::vector<std::string> keys = getValues(fileContent, i, ';');
+        for (size_t idx = 0; idx < keys.size(); ++idx)
+            mime_types[keys[idx]] = value;
+        value = getWord(fileContent, i);
     }
     config.setMimeTypes(mime_types);
 }

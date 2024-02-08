@@ -19,6 +19,8 @@ private:
         EVENT_CGI_REQ,
         EVENT_CGI_RES,
         EVENT_CGI_PROC,
+        EVENT_FILE_READ,
+        EVENT_FILE_WRITE,
         EVENT_RTIMER,
         EVENT_KTIMER,
         EVENT_CTIMER,
@@ -28,6 +30,7 @@ private:
     KqueueHandler _kqueueHandler;
 
     char _getEventType(const struct kevent &kev);
+    void _setHttpResponseEvent(Cycle* cycle);
     void _setHttpRequestFromQ(Cycle* cycle);
     void _processHttpRequest(Cycle* cycle);
 
@@ -36,7 +39,9 @@ private:
     void _servHttpResponse(const struct kevent& kev);
     void _servCgiRequest(const struct kevent& kev);
     void _servCgiResponse(const struct kevent& kev);
-    void _servCgiProc(const struct kevent &kev);
+    void _servCgiProc(const struct kevent& kev);
+    void _servFileRead(const struct kevent& kev);
+    void _servFileWrite(const struct kevent& kev);
     void _servRTimer(const struct kevent& kev);
     void _servKTimer(const struct kevent& kev);
     void _servCTimer(const struct kevent& kev);

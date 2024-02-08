@@ -150,6 +150,16 @@ void printParsedServer(ServerConfig &server) {
     std::cout << "[parseServer] " << "serverName: " << server.getServerName() << std::endl;
 }
 
+std::string dirPath(const std::string& str)
+{
+    size_t lastSlash = str.find_last_of('/');
+
+    if (lastSlash == std::string::npos)
+        return "";
+
+    return str.substr(0, lastSlash);
+}
+
 std::vector<std::pair<std::string, std::string> > parseQuery(const std::string &query)
 {
     std::vector<std::pair<std::string, std::string> > queryV;

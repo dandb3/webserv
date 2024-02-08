@@ -8,8 +8,6 @@
 #include <vector>
 #include "../../webserv.hpp"
 
-#define BUF_SIZE 1024
-
 class RequestLine
 {
 private:
@@ -74,7 +72,6 @@ private:
         INPUT_ERROR_CLOSED
     };
 
-    char _buf[BUF_SIZE];
     char _status;
     size_t _contentLength;
     size_t _clientMaxBodySize;
@@ -115,11 +112,12 @@ public:
     void recvHttpRequest(int fd, size_t size);
     void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);
 
-    const HttpRequest& getHttpRequest() const;
+    HttpRequest& getHttpRequest();
     void setHttpRequest(const HttpRequest& httpRequest);
 
     bool isInputReady() const;
     bool closed() const;
+
 };
 
 #endif

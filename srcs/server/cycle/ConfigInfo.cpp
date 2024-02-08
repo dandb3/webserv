@@ -3,7 +3,13 @@
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
-const std::string ConfigInfo::DEFAULT_ERROR_PAGE = "/confTest/error/defaultError.html";
+const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
+    {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
+
+const std::string& ConfigInfo::getDefaultPage(unsigned short code)
+{
+    return ConfigInfo::DEFAULT_PAGE.at(toString(code));
+}
 
 /// @brief ip, port를 보고 matchedServer,
 ///        uri를 보고 matchedLocation을 찾아서 ConfigInfo 생성
@@ -14,16 +20,16 @@ ConfigInfo::ConfigInfo()
     for (size_t i = 0; i < 4; i++)
         _allowMethods[i] = true;
     _index = DEFAULT_INDEX;
-    _errorPage = DEFAULT_ERROR_PAGE;
     _autoIndex = false;
+    _isRedirect = false;
     _info.clear();
     _path = "";
 }
 
-ConfigInfo::ConfigInfo(in_addr_t ip, in_port_t port, std::string uri)
+ConfigInfo::ConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri)
 {
     *this = ConfigInfo();
-    initConfigInfo(ip, port, uri);
+    initConfigInfo(ip, port, serverName, uri);
 }
 
 ConfigInfo::~ConfigInfo()
@@ -45,26 +51,38 @@ ConfigInfo &ConfigInfo::operator=(const ConfigInfo &ConfigInfo)
     return *this;
 }
 
-// ip, port로 서버 찾기
-std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, in_port_t port) {
+// ip, port, serverName으로 서버 찾기
+std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, in_port_t port, std::string serverName) {
     Config &config = Config::getInstance();
     std::vector<ServerConfig> &server_v = config.getServerConfig();
     std::vector<ServerConfig>::iterator it = server_v.begin();
     std::vector<ServerConfig>::iterator matchedServer;
-    bool isMatched = false;
+    short matchedLevel = 0;
     for (; it != server_v.end(); it++) {
-        if (it->getIp().s_addr == 0 && it->getPort() == port) {
-            matchedServer = it;
-            isMatched = true;
+        if (matchedLevel < 2 && it->getIp().s_addr == 0 && it->getPort() == port) {
+            if (it->getServerName() == serverName) {
+                matchedServer = it;
+                matchedLevel = 2;
+            }
+            else if (matchedLevel == 0) {
+                matchedServer = it;
+                matchedLevel = 1;
+            }
         }
         if (it->getIp().s_addr == ip && it->getPort() == port) {
-            matchedServer = it;
-            isMatched = true;
-            break;
+            if (it->getServerName() == serverName) {
+                matchedServer = it;
+                matchedLevel = 4;
+                break;
+            }
+            if (matchedLevel != 3) {
+                matchedServer = it;
+                matchedLevel = 3;
+            }
         }
     }
-    if (!isMatched)
-        throw std::runtime_error("ConfigInfo 생성자에서 서버 찾기 실패");
+    if (matchedLevel == 0)
+        throw std::runtime_error("ConfigInfo 생성자에서 서버 찾기 실패: 매칭된 서버 없음");
     return matchedServer;
 }
 
@@ -108,6 +126,20 @@ void ConfigInfo::transferInfo(t_directives &directives) {
                     throw std::runtime_error("ConfigInfo 생성자에서 allow_methods 설정 실패");
             }
         }
+        else if (it->first == "error_page") { // test 필요
+            size_t sz = it->second.size();
+            std::string route = it->second[sz - 1];
+            for (int i = 0; i < sz - 1; i++) {
+                _errorPage[it->second[i]] = route;
+            }
+        }
+        else if (it->first == "return") { // 301 or 302이면 redirect 설정, 아니면 빈문자(나중에 에러처리용)
+            _isRedirect = true;
+            if (it->second.size() != 2 || (it->second[0] != "301" && it->second[0] != "302"))
+                _redirect = std::make_pair("", "");
+            else
+                _redirect = std::make_pair(it->second[0], it->second[1]);
+        }
         else {
             _info[it->first] = it->second;
         }
@@ -139,17 +171,31 @@ LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::
 }
 
 // matchedServer에서 먼저 데이터 넣고, matchedLocation에도 있으면 거기서 덮어씌우기
-void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string uri) {
-    ServerConfig &matchedServer = *findMatchedServer(ip, port);
+void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri) {
+    ServerConfig &matchedServer = *findMatchedServer(ip, port, serverName);
     transferInfo(matchedServer.getServerInfo());
     // LocationConfig location 찾기
     std::string path;
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
-    if (path.size() >= uri.size())
-        _path = _root;
-    else
-        _path = _root + uri.substr(path.size());
+    _path = _root + uri;
+
+    t_directives::iterator it;
+    std::string extension;
+    size_t cgiPos;
+    size_t start = path.size();
+
+    if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
+        extension = "." + it->second[0];
+        while ((cgiPos = uri.find(extension, start)) != std::string::npos) {
+            if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
+                _cgiPath = uri.substr(0, cgiPos + extension.size());
+                _path = _root + uri.substr(_cgiPath.size());
+                break;
+            }
+            start += extension.size();
+        }
+    }
 }
 
 void ConfigInfo::printConfigInfo() {
@@ -163,7 +209,10 @@ void ConfigInfo::printConfigInfo() {
     }
     std::cout << std::endl;
     std::cout << "index: " << _index << std::endl;
-    std::cout << "error_page: " << _errorPage << std::endl;
+    std::cout << "error_page" << std::endl;
+    for (std::map<std::string, std::string>::iterator it = _errorPage.begin(); it != _errorPage.end(); it++) {
+        std::cout << "num : " << it->first << ", route: " << it->second << std::endl;
+    }
     std::cout << "autoindex: " << _autoIndex << std::endl;
     std::cout << "info: " << std::endl;
     for (t_directives::iterator it = _info.begin(); it != _info.end(); it++) {
@@ -190,7 +239,10 @@ std::string ConfigInfo::getPrintableConfigInfo() {
     result << "\n";
 
     result << "index: " << _index << "\n";
-    result << "error_page: " << _errorPage << "\n";
+    result << "error_page" << std::endl;
+    for (std::map<std::string, std::string>::iterator it = _errorPage.begin(); it != _errorPage.end(); it++) {
+        result << "num : " << it->first << ", route: " << it->second << std::endl;
+    }
     result << "autoindex: " << _autoIndex << "\n";
 
     result << "\ninfo\n";
@@ -223,8 +275,22 @@ std::string ConfigInfo::getIndex() const {
     return _index;
 }
 
-std::string ConfigInfo::getErrorPage() const {
-    return _errorPage;
+std::string ConfigInfo::getErrorPage(std::string key) const {
+    if (_errorPage.find(key) == _errorPage.end()) {
+        if (DEFAULT_PAGE.find(key) == DEFAULT_PAGE.end())
+            throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
+        return DEFAULT_PAGE.at(key);
+    }
+    return _errorPage.at(key);
+}
+
+std::string ConfigInfo::getServerName() const
+{
+    t_directives::const_iterator it;
+
+    if ((it = _info.find("server_name")) != _info.end() && !it->second.empty())
+        return it->second[0];
+    return "";
 }
 
 bool ConfigInfo::getAutoIndex() const {
@@ -233,4 +299,26 @@ bool ConfigInfo::getAutoIndex() const {
 
 t_directives ConfigInfo::getInfo() const {
     return _info;
+}
+
+bool ConfigInfo::getIsRedirect() const {
+    return _isRedirect;
+}
+
+std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
+    if (!_isRedirect)
+        throw std::runtime_error("ConfigInfo에서 redirect 찾기 실패");
+    return _redirect;
+}
+
+bool ConfigInfo::requestType() const
+{
+    if (_cgiPath.empty())
+        return MAKE_HTTP_RESPONSE;
+    else
+        return MAKE_CGI_REQUEST;
+}
+
+void ConfigInfo::setDefaultErrorPage(unsigned short code) {
+    _errorPage[toString(code)] = getDefaultPage(code);
 }
