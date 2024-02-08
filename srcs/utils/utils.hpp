@@ -43,5 +43,6 @@ std::string toString(const T& val) {
 }
 
 void printParsedServer(ServerConfig &server);
+std::string dirPath(const std::string& str);
 
 #endif

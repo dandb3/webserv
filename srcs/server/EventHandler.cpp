@@ -56,14 +56,21 @@ char EventHandler::_getEventType(const struct kevent &kev)
 
 void EventHandler::_setHttpResponseEvent(Cycle* cycle)
 {
+    std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
     int readFile = cycle->getReadFile();
 
-    if (readFile == -1)
-        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-    else {
+    if (readFile != -1) {
         _kqueueHandler.addEvent(readFile, EVFILT_READ, cycle);
         _kqueueHandler.setEventType(readFile, KqueueHandler::FILE_OPEN);
     }
+    else if (!writeFiles.empty()) {
+        for (std::map<int, WriteFile>::iterator it = writeFiles.begin(); it != writeFiles.end(); ++it) {
+            _kqueueHandler.addEvent(it->first, EVFILT_WRITE, cycle);
+            _kqueueHandler.setEventType(it->first, KqueueHandler::FILE_OPEN);
+        }
+    }
+    else
+        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
 }
 
 void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
@@ -171,7 +178,7 @@ void EventHandler::_servHttpResponse(const struct kevent& kev)
             _setHttpRequestFromQ(cycle);
             _processHttpRequest(cycle);
         }
-        else if (cycle.closed()) {
+        else if (cycle->closed()) {
             _kqueueHandler.deleteEventType(kev.ident);
             close(kev.ident);
             Cycle::deleteCycle(cycle);

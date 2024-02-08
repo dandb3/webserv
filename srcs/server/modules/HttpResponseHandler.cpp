@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "HttpResponseModule.hpp"
+#include "../../utils/utils.hpp"
 #include "../parse/parse.hpp"
 
 HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
@@ -296,13 +297,63 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
 
 void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
-    
+    std::map<std::string, std::string> files;
+    const std::string contentType = httpRequest.getHeaderFields().find("Content-Type")->second;
+    const std::string body = httpRequest.getMessageBody();
+    const std::string fileName = httpRequest.getRequestLine().getUri();
+    std::string fileContent;
+
+    if (contentType == "") {
+        if (body == "") { // 실제 body가 없는 경우
+            _makeStatusLine(204);
+            return;
+        }
+    }
+
+    // 만약 같은 경로의 POST 요청이 존재한다면 throw 405;
+    if (checkString(contentType, "multipart/form-data", 0)) {
+        parseMultiForm(contentType, body, files);
+    }
+    else {
+        if (checkString(contentType, "application/x-www-form-urlencoded", 0))
+            fileContent = parseUrlencode(body);
+        else if (checkString(contentType, "text/plain", 0)) {
+            fileContent = body;
+            parseTextPlain(fileContent);
+        }
+        else
+            fileContent = body;
+        files.insert(std::make_pair(fileName, fileContent));
+    }
+
+    std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
+    std::map<std::string, std::string>::iterator it;
+    std::map<int, WriteFile>::iterator fileIt;
+    int fd;
+
+    for (it = files.begin(); it != files.end(); ++it) {
+        if (access(it->first.c_str(), F_OK) == SUCCESS)
+            throw 409;
+        if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE)
+            throw 409;
+    }
+    for (it = files.begin(); it != files.end(); ++it) {
+        fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
+        if (fd == FAILURE) {
+            for (fileIt = writeFiles.begin(); fileIt != writeFiles.end(); ++fileIt) {
+                close(fileIt->first);
+                std::remove(fileIt->second.getPath().c_str());
+            }
+            writeFiles.clear();
+            throw 500;
+        }
+        writeFiles.insert(std::make_pair(fd, WriteFile(it->first, it->second)));
+    }
 }
 
 void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest)
 {
     std::string path = cycle->getConfigInfo().getPath();
-    std::string dirPath = path.substr(0, path.find_last_of('/') + 1); // 경로 내에 '/'가 무조건 있다고 가정했음.
     struct stat buf;
 
     if (access(path.c_str(), F_OK) == FAILURE)
@@ -311,7 +362,7 @@ void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpReq
         throw 500;
     if (S_ISDIR(buf.st_mode))
         throw 403;
-    if (access(dirPath.c_str(), W_OK | X_OK) == FAILURE)
+    if (access(dirPath(path).c_str(), W_OK | X_OK) == FAILURE)
         throw 403;
     if (std::remove(path.c_str()) == FAILURE)
         throw 500;

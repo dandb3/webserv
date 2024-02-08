@@ -149,3 +149,13 @@ void printParsedServer(ServerConfig &server) {
     std::cout << "[parseServer] " << "port: " << server.getPort() << std::endl;
     std::cout << "[parseServer] " << "serverName: " << server.getServerName() << std::endl;
 }
+
+std::string dirPath(const std::string& str)
+{
+    size_t lastSlash = str.find_last_of('/');
+
+    if (lastSlash == std::string::npos)
+        return "";
+
+    return str.substr(0, lastSlash);
+}
