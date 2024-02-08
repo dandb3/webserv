@@ -16,19 +16,20 @@ private:
     short _method;
     std::string _uri;
     std::vector<std::pair<std::string, std::string> > _query;
+    std::string _fragment;
     std::pair<short, short> _version;
 
 public:
-    RequestLine &operator=(const RequestLine &ref);
-
     void setMethod(short method);
-    void setUri(std::string &uri);
+    void setUri(std::string uri);
     void setQuery(std::vector<std::pair<std::string, std::string> > &query);
+    void setFragment(std::string fragment);
     void setVersion(std::pair<short, short> version);
 
-    const short getMethod() const;
+    short getMethod() const;
     const std::string &getUri() const;
     const std::vector<std::pair<std::string, std::string> > &getQuery() const;
+    const std::string &getFragment() const;
     const std::pair<short, short> &getVersion() const;
 };
 
@@ -76,6 +77,7 @@ private:
     char _buf[BUF_SIZE];
     char _status;
     size_t _contentLength;
+    size_t _clientMaxBodySize;
 
     std::string _remain;
     std::vector<std::string> _lineV;
@@ -87,7 +89,6 @@ private:
     void _inputStart();
 
     void _inputRequestLine();
-    std::string _decodeUrl(std::string &str);
     void _parseRequestLine();
 
     void _inputHeaderField();
@@ -100,8 +101,6 @@ private:
     void _inputChunkedBody();
 
     void _pushRequest(std::queue<HttpRequest> &httpRequestQ);
-
-    std::vector<std::string> _splitByComma(std::string &str);
 public:
     enum
     {
@@ -111,7 +110,7 @@ public:
         POST,
         DELETE
     };
-    HttpRequestHandler();
+    HttpRequestHandler(size_t clientMaxBodySize);
 
     void recvHttpRequest(int fd, size_t size);
     void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);

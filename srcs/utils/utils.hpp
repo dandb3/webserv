@@ -32,7 +32,7 @@ T stringToType(const std::string& str)
     T result;
 
     ss >> result;
-    return T;
+    return result;
 }
 
 template <typename T>
@@ -43,5 +43,9 @@ std::string toString(const T& val) {
 }
 
 void printParsedServer(ServerConfig &server);
+
+std::vector<std::pair<std::string, std::string> > parseQuery(const std::string &query);
+std::vector<std::string> splitByDlm(const std::string &str, char dlm);
+std::string decodeUrl(const std::string &str);
 
 #endif

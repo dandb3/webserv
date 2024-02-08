@@ -93,6 +93,5 @@
 		"ios": "cpp",
 		"locale": "cpp",
 		"csignal": "cpp",
-		"event.h": "c"
 	}
 }
