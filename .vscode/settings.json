@@ -93,6 +93,5 @@
 		"ios": "cpp",
 		"locale": "cpp",
 		"csignal": "cpp",
-		"__functional_03": "cpp"
 	}
 }

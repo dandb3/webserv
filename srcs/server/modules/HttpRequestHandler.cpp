@@ -6,6 +6,14 @@
 HttpRequestHandler::HttpRequestHandler(size_t clientMaxBodySize) : _status(INPUT_READY), _clientMaxBodySize(clientMaxBodySize)
 {}
 
+void HttpRequestHandler::_inputEOF()
+{
+    if (_status == INPUT_READY)
+        _status = INPUT_NORMAL_CLOSED;
+    else
+        _status = INPUT_ERROR_CLOSED;
+}
+
 void HttpRequestHandler::_inputStart()
 {
     if (!_remain.empty())
@@ -311,12 +319,14 @@ void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
     std::multimap<std::string, std::string>::const_iterator it;
 
     httpRequestQ.push(_httpRequest);
-    /* case-insensitive하게 check해야 하는데.. */
-    it = headerFields.find("Connection");
-    if (it != headerFields.end() && isCaseInsensitiveSame(it->second, "closed"))
-        _status = INPUT_NORMAL_CLOSED;
-    else if (_status == PARSE_FINISHED)
-        _status = INPUT_READY;
+
+    if (_status != INPUT_ERROR_CLOSED) {
+        it = headerFields.find("Connection");
+        if (it != headerFields.end() && isCaseInsensitiveSame(it->second, "closed"))
+            _status = INPUT_NORMAL_CLOSED;
+        else
+            _status = INPUT_READY;
+    }
     _httpRequest = HttpRequest();
 }
 
@@ -337,8 +347,8 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
 {
-    if (eof && _httpRequest.getCode() == 0)
-        _status = INPUT_NORMAL_CLOSED;
+    if (eof)
+        _inputEOF();
     do {
         if (_status == INPUT_READY)
             _inputStart();
@@ -355,6 +365,20 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
         if (_status == PARSE_FINISHED || _status == INPUT_ERROR_CLOSED)
             _pushRequest(httpRequestQ);
     } while (_status == INPUT_READY);
+}
+
+const HttpRequest& HttpRequestHandler::getHttpRequest() const
+{
+    return _cycleHttpRequest;
+}
+void HttpRequestHandler::setHttpRequest(const HttpRequest& httpRequest)
+{
+    _cycleHttpRequest = httpRequest;
+}
+
+bool HttpRequestHandler::isInputReady() const
+{
+    return (_status == INPUT_READY);
 }
 
 bool HttpRequestHandler::closed() const

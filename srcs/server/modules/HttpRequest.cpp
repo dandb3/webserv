@@ -4,6 +4,10 @@ HttpRequest::HttpRequest()
 : _code(0)
 {}
 
+HttpRequest::HttpRequest(unsigned short code)
+: _code(code)
+{}
+
 HttpRequest::HttpRequest(RequestLine &requestLine, \
         std::multimap<std::string, std::string> &headerFields, std::string &messageBody) 
         : _requestLine(requestLine), _headerFields(headerFields), _messageBody(messageBody) {}
