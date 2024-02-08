@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <sstream>
 #include <sys/stat.h>
 #include <ctime>
 #include <iomanip>
@@ -64,8 +65,8 @@ private:
     void _makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest);
     void _makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest);
 
-    void _statusLineToString();
-    void _headerFieldsToString();
+    void _statusLineToString(std::stringstream &responseStream);
+    void _headerFieldsToString(std::stringstream &responseStream);
     void _httpResponseToString();
 
 public:
