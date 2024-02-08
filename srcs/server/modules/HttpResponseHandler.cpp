@@ -40,11 +40,11 @@ void HttpResponseHandler::_makeStatusLine()
     case 204:
         _httpResponse.statusLine.text = "No Content";
         break;
+    case 400:
+        _httpResponse.statusLine.text = "Bad Request";
+        break;
     case 403:
         _httpResponse.statusLine.text = "Forbidden";
-        break;
-    case 400:
-        text = "Bad Request";
         break;
     case 404:
         _httpResponse.statusLine.text = "Not Found";
@@ -70,9 +70,6 @@ void HttpResponseHandler::_makeStatusLine()
     case 502:
         _httpResponse.statusLine.text = "Bad Gateway";
         break;
-    case 500:
-        text = "Internal Server Error";
-        break;
     case 503:
         _httpResponse.statusLine.text = "Service Unavailable";
         break;
@@ -80,7 +77,7 @@ void HttpResponseHandler::_makeStatusLine()
         _httpResponse.statusLine.text = "Gateway Timeout";
         break;
     case 505:
-        text = "HTTP Version Not Supported";
+        _httpResponse.statusLine.text = "HTTP Version Not Supported";
         break;
     default:
         _httpResponse.statusLine.text = "Not Set";
@@ -320,7 +317,8 @@ void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpReque
 
     if (contentType == "") {
         if (body == "") { // 실제 body가 없는 경우
-            _makeStatusLine(204);
+            _httpResponse.statusLine.code = 200;
+            makeHttpResponseFinal(cycle);
             return;
         }
     }
@@ -417,6 +415,9 @@ void HttpResponseHandler::makeHttpResponseFinal(Cycle* cycle)
 {
     _makeStatusLine();
     _makeHeaderFields(cycle);
+    _statusLineToString();
+    _headerFieldsToString();
+    _httpResponseToString();
 }
 
 void HttpResponseHandler::_statusLineToString()
@@ -558,9 +559,4 @@ void HttpResponseHandler::reset()
     _httpResponse.statusLine.text.clear();
     _httpResponse.headerFields.clear();
     _httpResponse.messageBody.clear();
-}
-
-void HttpResponseHandler::makeHttpResponseMessage()
-{
-    
 }
