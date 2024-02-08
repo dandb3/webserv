@@ -124,11 +124,12 @@ void parseMultiForm(const std::string &contentType, const std::string &body, std
                 if (boundaryContentType == "application/x-www-form-urlencoded") {
                     fileContent = parseUrlencode(fileContent);
                     parseTextPlain(fileContent);
-                    std::cout << "fileContent: " << fileContent << '\n';
                 }
                 else if (boundaryContentType == "text/plain") {
                     parseTextPlain(fileContent);
                 }
+                if (files.find(fileName) == files.end())
+                    throw 409;
                 files.insert(std::make_pair(fileName, fileContent));
                 
                 break;
