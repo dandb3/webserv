@@ -262,6 +262,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
     fcntl(fd, F_SETFL, O_NONBLOCK);
     cycle->setReadFile(fd);
     _setContentType(cycle, path);
+    _setLastModified(path.c_str());
 }
 
 void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -312,6 +313,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
         throw 403;
     _setContentType(cycle, path);
     _setContentLength(buf.st_size);
+    _setLastModified(path.c_str());
     _httpResponse.statusLine.code = 200;
     makeHttpResponseFinal(cycle);
 }
