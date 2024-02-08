@@ -334,7 +334,7 @@ void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpReque
         }
     }
 
-    // 만약 같은 경로의 POST 요청이 존재한다면 throw 405;
+    // 만약 같은 경로의 POST 요청이 존재한다면 throw 409;
     if (checkString(contentType, "multipart/form-data", 0)) {
         parseMultiForm(contentType, body, files);
     }
