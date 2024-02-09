@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <netinet/in.h>
+#include "server/ServerManager.hpp"
 
 #define FAILURE -1
 #define SUCCESS 0
