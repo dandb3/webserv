@@ -37,7 +37,6 @@ bool isFragmentURI(const std::string& str);
 bool isStatusCode(const std::string& str, size_t pos);
 void eatReasonPhrase(const std::string& str, size_t& pos);
 
-
 std::vector<std::pair<std::string, std::string> > parseQuery(const std::string &query);
 std::vector<std::string> splitByDlm(const std::string &str, char dlm);
 std::string decodeUrl(const std::string &str);

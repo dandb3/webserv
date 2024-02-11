@@ -17,6 +17,9 @@
 
 #define CRLF "\r\n"
 
+class Cycle;
+class CgiResponse;
+
 class StatusLine
 {
 public:
@@ -44,6 +47,7 @@ private:
 
     HttpResponse _httpResponse;
 
+    void _setAllow(ConfigInfo& configInfo);
     void _setConnection(Cycle* cycle);
     void _setContentLength();
     void _setContentLength(off_t size);
@@ -55,10 +59,6 @@ private:
 
     void _makeStatusLine();
     void _makeHeaderFields(Cycle* cycle);
-    void _setAllow(ConfigInfo& configInfo);
-    void _setContentLength();
-    void _setDate();
-    void _setLastModified(const char *path);
 
     void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
     void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);

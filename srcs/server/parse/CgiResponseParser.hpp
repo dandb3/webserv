@@ -4,6 +4,9 @@
 #include <vector>
 #include "parse.hpp"
 #include "../modules/CgiResponseModule.hpp"
+#include "../../utils/utils.hpp"
+
+class CgiResponse;
 
 /**
  * singleton으로 구성.

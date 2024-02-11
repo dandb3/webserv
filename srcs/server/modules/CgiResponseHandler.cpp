@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <unistd.h>
 #include "CgiResponseModule.hpp"
-#include "../cycle/Cycle.hpp"
 #include "../../webserv.hpp"
 
 CgiResponseHandler::CgiResponseHandler()

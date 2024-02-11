@@ -6,7 +6,10 @@
 #include <map>
 #include <unistd.h>
 #include <vector>
+#include "../cycle/Cycle.hpp"
 #include "../../webserv.hpp"
+
+class Cycle;
 
 class RequestLine
 {
@@ -107,7 +110,7 @@ public:
         POST,
         DELETE
     };
-    HttpRequestHandler(size_t clientMaxBodySize);
+    HttpRequestHandler();
 
     void recvHttpRequest(int fd, size_t size);
     void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);

@@ -1,17 +1,15 @@
 #ifndef CONFIGPARSER_HPP
 #define CONFIGPARSER_HPP
 
-#include "../utils/FileReader.hpp"
-#include "../utils/utils.hpp"
-#include "ServerConfig.hpp"
-#include "LocationConfig.hpp"
-#include "Config.hpp"
 #include <arpa/inet.h>
 #include <iostream>
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
+#include "../utils/FileReader.hpp"
+#include "../utils/utils.hpp"
+#include "Config.hpp"
 
 class Config;
 

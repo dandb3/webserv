@@ -62,7 +62,6 @@ public:
     bool requestType() const;
 
     void setDefaultErrorPage(unsigned short code);
- 
 };
 
 #endif

@@ -1,10 +1,17 @@
 #include "ConfigInfo.hpp"
 #include <sstream>
 
+const std::pair<const std::string, std::string> default_pages[] = {
+    std::make_pair("400", "/defaultPage/400_BadRequest.html"),
+    std::make_pair("401", "/defaultPage/401_Unauthorized.html"),
+    std::make_pair("403", "/defaultPage/403_Forbidden.html"),
+    std::make_pair("404", "/defaultPage/404_NotFound.html"),
+    std::make_pair("500", "/defaultPage/500_InternalServerError.html")
+};
+
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
-const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
-    {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
+const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE(default_pages, default_pages + sizeof(default_pages) / sizeof(default_pages[0]));
 
 const std::string& ConfigInfo::getDefaultPage(unsigned short code)
 {

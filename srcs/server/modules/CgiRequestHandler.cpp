@@ -6,13 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "../../utils/utils.hpp"
-#include "HttpRequestModule.hpp"
 #include "CgiRequestModule.hpp"
-
-/* 제거 예정 */
-#ifndef HTTP_REQUEST_MODULE_HPP
-#include <map>
-#endif
 
 /* -------------------------- CGI request meta-variable setters -------------------------- */
 static void setAuthType(CgiRequest& cgiRequest, const std::multimap<std::string, std::string>& headerFields)
@@ -132,13 +126,6 @@ static void setServerSoftware(CgiRequest& cgiRequest)
 {
     cgiRequest.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
 }
-
-/* 그냥 구현 안 해도 될 듯.
-static void setProtocolSpecific(CgiRequest& cgiRequest, const RequestLine& requestLine, const std::multimap<std::string, std::string>& headerFields, const std::string& messageBody)
-{
-    
-}
-*/
 
 /* -------------------- class CgiRequestHandler -------------------- */
 CgiRequestHandler::CgiRequestHandler()

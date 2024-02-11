@@ -1,10 +1,10 @@
 #include <sstream>
 #include "HttpRequestModule.hpp"
-#include "../cycle/Cycle.hpp"
 #include "../parse/parse.hpp"
 #include "../../utils/utils.hpp"
 
-HttpRequestHandler::HttpRequestHandler(size_t clientMaxBodySize) : _status(INPUT_READY), _clientMaxBodySize(clientMaxBodySize)
+HttpRequestHandler::HttpRequestHandler()
+    : _status(INPUT_READY), _clientMaxBodySize(10000000)
 {}
 
 void HttpRequestHandler::_inputEOF()

@@ -4,6 +4,10 @@
 # include <map>
 # include <string>
 # include "../parse/CgiResponseParser.hpp"
+# include "../cycle/Cycle.hpp"
+
+class Cycle;
+class CgiResponseParser;
 
 class CgiResponse
 {

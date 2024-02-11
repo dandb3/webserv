@@ -13,7 +13,6 @@
 #include <fcntl.h>
 #include <algorithm>
 #include "../config/Config.hpp"
-#include "KqueueHandler.hpp"
 #include "EventHandler.hpp"
 
 #define GETV_SIZE 10

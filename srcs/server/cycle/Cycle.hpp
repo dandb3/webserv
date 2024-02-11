@@ -13,13 +13,18 @@
 
 #define BUF_SIZE 1024UL
 
+class HttpRequestHandler;
+class HttpResponseHandler;
+class CgiRequestHandler;
+class CgiResponseHandler;
+class WriteFile;
+
 /**
  * closed 상태에서 request queue에 있는 것이 다 비어있고,
  * keep-alive가 아님 || EOF이고 (_closed 변수로 관리됨, 파싱 중에 Connection 헤더 필드를 읽거나, EOF를 감지하게 되면 set된다.),
  * HttpResponse가 전송 완료인 경우
  * cycle 객체는 할당 해제된다.
  */
-
 class Cycle
 {
 public:

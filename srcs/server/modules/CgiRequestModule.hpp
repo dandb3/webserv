@@ -9,6 +9,8 @@
 
 # define CGI_PATH "undefined"
 
+class Cycle;
+
 class CgiRequest
 {
 private:
@@ -24,7 +26,6 @@ public:
 
 	std::vector<std::string>& getMetaVariables();
 	std::string& getMessageBody();
-
 };
 
 class CgiRequestHandler
