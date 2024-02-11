@@ -160,67 +160,14 @@ std::string dirPath(const std::string& str)
     return str.substr(0, lastSlash);
 }
 
-std::vector<std::pair<std::string, std::string> > parseQuery(const std::string &query)
+bool checkString(const std::string &str, const std::string &target, const size_t &start)
 {
-    std::vector<std::pair<std::string, std::string> > queryV;
-    std::string key, value;
-    size_t equalPos, amperPos, start = 0;
-
-    while (start != query.length()) {
-        if ((equalPos = query.find('=', start + 1)) == std::string::npos) {
-            queryV.clear();
-            return queryV;
-        }
-
-        if ((amperPos = query.find('&', equalPos + 1)) == std::string::npos)
-            amperPos = query.length();
-
-        if (start == 0)
-            --start;
-        key = query.substr(start + 1, equalPos - start - 1);
-        value = query.substr(equalPos + 1, amperPos - equalPos - 1);
-        queryV.push_back(std::make_pair(key, value));
-
-        start = amperPos;
+    const size_t len = target.length();
+    if (str.length() < start + len)
+        return false;
+    for (size_t i = 0; i < len; i++) {
+        if (str[start + i] != target[i])
+            return false;
     }
-
-    return queryV;
-}
-
-std::vector<std::string> splitByDlm(const std::string &str, char dlm)
-{
-    std::vector<std::string> ret;
-    std::string token;
-    std::istringstream iss(str);
-
-    while (std::getline(iss, token, dlm)) {
-        if (token[0] == ' ')
-            ret.push_back(token.substr(1));
-        else
-            ret.push_back(token);
-    }
-    return ret;
-}
-
-std::string decodeUrl(const std::string &str)
-{
-    std::ostringstream decoded;
-    std::string res;
-
-    for (size_t i = 0; i < str.length(); i++) {
-        if (str[i] == '%') {
-            if (i + 2 < str.length() && isxdigit(str[i + 1]) && isxdigit(str[i + 2])) {
-                char decodedChar = static_cast<char>(strtol(str.substr(i + 1, 2).c_str(), nullptr, 16));
-                decoded << decodedChar;
-                i += 2;
-            }
-            else
-                decoded << str[i];
-        }
-        else
-            decoded << str[i];
-    }
-
-    res = decoded.str();
-    return res;
+    return true;
 }

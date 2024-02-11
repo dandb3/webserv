@@ -45,8 +45,6 @@ std::string toString(const T& val) {
 void printParsedServer(ServerConfig &server);
 std::string dirPath(const std::string& str);
 
-std::vector<std::pair<std::string, std::string> > parseQuery(const std::string &query);
-std::vector<std::string> splitByDlm(const std::string &str, char dlm);
-std::string decodeUrl(const std::string &str);
+bool checkString(const std::string &str, const std::string &target, const size_t &start);
 
 #endif
