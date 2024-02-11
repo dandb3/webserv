@@ -413,11 +413,6 @@ void EventHandler::_servCTimer(const struct kevent &kev)
     }
 }
 
-void EventHandler::_servError(const struct kevent &kev)
-{
-
-}
-
 void EventHandler::initEvent(const std::vector<int> &listenFds)
 {
     for (size_t i = 0; i < listenFds.size(); ++i) {
@@ -457,9 +452,6 @@ void EventHandler::operate()
                 break;
             case EVENT_CGI_PROC:
                 _servCgiProc(eventList[i]);
-                break;
-            default:
-                _servError(eventList[i]);
                 break;
             }
         }

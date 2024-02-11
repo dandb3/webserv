@@ -55,7 +55,7 @@ private:
 
     void _makeStatusLine();
     void _makeHeaderFields(Cycle* cycle);
-    void _setAllow();
+    void _setAllow(ConfigInfo& configInfo);
     void _setContentLength();
     void _setDate();
     void _setLastModified(const char *path);

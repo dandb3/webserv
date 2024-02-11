@@ -86,9 +86,18 @@ void HttpResponseHandler::_makeStatusLine()
     }
 }
 
-void HttpResponseHandler::_setAllow()
+void HttpResponseHandler::_setAllow(ConfigInfo& configInfo)
 {
-    _httpResponse.headerFields.insert(std::make_pair("Allow", "GET, HEAD, POST, DELETE"));
+    const char* methods[4] = {"GET", "HEAD", "POST", "DELETE"};
+    std::string value;
+
+    for (int i = 0; i < 4; ++i) {
+        if (configInfo.getAllowMethods(i))
+            value += std::string(methods[i]) + ", ";
+    }
+    if (!value.empty())
+        value.resize(value.size() - 2);
+    _httpResponse.headerFields.insert(std::make_pair("Allow", value));
 }
 
 void HttpResponseHandler::_setLastModified(const char *path)
@@ -258,6 +267,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
     fcntl(fd, F_SETFL, O_NONBLOCK);
     cycle->setReadFile(fd);
     _setContentType(cycle, path);
+    _setLastModified(path.c_str());
 }
 
 void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
@@ -308,6 +318,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
         throw 403;
     _setContentType(cycle, path);
     _setContentLength(buf.st_size);
+    _setLastModified(path.c_str());
     _httpResponse.statusLine.code = 200;
     makeHttpResponseFinal(cycle);
 }
@@ -322,12 +333,13 @@ void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpReque
 
     if (contentType == "") {
         if (body == "") { // 실제 body가 없는 경우
-            _httpResponse.statusLine.code = 204;
+            _httpResponse.statusLine.code = 200;
+            makeHttpResponseFinal(cycle);
             return;
         }
     }
 
-    // 만약 같은 경로의 POST 요청이 존재한다면 throw 405;
+    // 만약 같은 경로의 POST 요청이 존재한다면 throw 409;
     if (checkString(contentType, "multipart/form-data", 0)) {
         parseMultiForm(contentType, body, files);
     }
@@ -419,6 +431,9 @@ void HttpResponseHandler::makeHttpResponseFinal(Cycle* cycle)
 {
     _makeStatusLine();
     _makeHeaderFields(cycle);
+    _statusLineToString();
+    _headerFieldsToString();
+    _httpResponseToString();
 }
 
 void HttpResponseHandler::_statusLineToString(std::stringstream &responseStream)
@@ -472,23 +487,31 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
     try {
         switch (method) {
         case GET:
-            if (!configInfo.getAllowMethods(0))
+            if (!configInfo.getAllowMethods(0)) {
+                _setAllow(configInfo);
                 throw 405;
+            }
             _makeGETResponse(cycle, httpRequest);
             break;
         case HEAD:
-            if (!configInfo.getAllowMethods(1))
+            if (!configInfo.getAllowMethods(1)) {
+                _setAllow(configInfo);
                 throw 405;
+            }
             _makeHEADResponse(cycle, httpRequest);
             break;
         case POST:
-            if (!configInfo.getAllowMethods(2))
+            if (!configInfo.getAllowMethods(2)) {
+                _setAllow(configInfo);
                 throw 405;
+            }
             _makePOSTResponse(cycle, httpRequest);
             break;
         case DELETE:
-            if (!configInfo.getAllowMethods(3))
+            if (!configInfo.getAllowMethods(3)) {
+                _setAllow(configInfo);
                 throw 405;
+            }
             _makeDELETEResponse(cycle, httpRequest);
             break;
         }
