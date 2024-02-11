@@ -21,7 +21,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
         case KqueueHandler::SOCKET_CGI:
             return EVENT_CGI_RES;
         case KqueueHandler::FILE_OPEN:
-            return EVENT_FILE;
+            return EVENT_FILE_READ;
         default:
             return EVENT_ERROR;
         }
@@ -31,6 +31,8 @@ char EventHandler::_getEventType(const struct kevent &kev)
             return EVENT_HTTP_RES;
         case KqueueHandler::SOCKET_CGI:
             return EVENT_CGI_REQ;
+        case KqueueHandler::FILE_OPEN:
+            return EVENT_FILE_WRITE;
         default:
             return EVENT_ERROR;
         }
@@ -54,14 +56,21 @@ char EventHandler::_getEventType(const struct kevent &kev)
 
 void EventHandler::_setHttpResponseEvent(Cycle* cycle)
 {
+    std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
     int readFile = cycle->getReadFile();
 
-    if (readFile == -1)
-        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
-    else {
+    if (readFile != -1) {
         _kqueueHandler.addEvent(readFile, EVFILT_READ, cycle);
         _kqueueHandler.setEventType(readFile, KqueueHandler::FILE_OPEN);
     }
+    else if (!writeFiles.empty()) {
+        for (std::map<int, WriteFile>::iterator it = writeFiles.begin(); it != writeFiles.end(); ++it) {
+            _kqueueHandler.addEvent(it->first, EVFILT_WRITE, cycle);
+            _kqueueHandler.setEventType(it->first, KqueueHandler::FILE_OPEN);
+        }
+    }
+    else
+        _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
 }
 
 void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
@@ -81,9 +90,9 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
-    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getUri()); // 얘도 수정 필요. getURI() 함수..
+    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
     switch (configInfo.requestType()) {
-    case ConfigInfo::CGI_REQUEST:
+    case ConfigInfo::MAKE_CGI_REQUEST:
         CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
@@ -91,7 +100,8 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
             creqHdlr.callCgiScript(cycle);
         }
         catch (unsigned short code) {
-            httpResponseHandler.makeHttpResponse(HttpRequest(code));
+            httpRequest.setCode(code);
+            httpResponseHandler.makeHttpResponse(cycle, httpRequest);
             _setHttpResponseEvent(cycle);
             break;
         }
@@ -100,12 +110,10 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
-        _kqueueHandler.changeEvent(cyle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
+        _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
         break;
-    case ConfigInfo::HTTP_RESPONSE:
-        HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-
-        httpResponseHandler.makeHttpResponse(); // 수정 필요. 인자 들어가는거 맞춰서.
+    case ConfigInfo::MAKE_HTTP_RESPONSE:
+        httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
         _setHttpResponseEvent(cycle);
         break;
     }
@@ -159,21 +167,23 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
 
 void EventHandler::_servHttpResponse(const struct kevent& kev)
 {
-    /**
-     * sendHttpResponse();
-     * if eof()라면? (전송이 다 끝난다면)
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
 
-
-     *     cycle 초기화 (httpResponseHandler의 status를 IDLE로 바꿈. 도 포함)
-     *     deleteEvent(); (혹은 disable?)
-
-     *     if queue가 비어있지 않다면?
-     *         _processHttpRequest(cycle);
-     *     else if Cycle이 closed상태라면?
-     *         cycle 할당 해제
-     *         모두 다 없앤다.
-     *         
-    */
+    httpResponseHandler.sendHttpResponse(kev.ident, static_cast<size_t>(kev.data));
+    if (httpResponseHandler.getStatus() == HttpResponseHandler::RES_FINISH) {
+        _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+        cycle->reset();
+        if (!cycle->getHttpRequestQueue().empty()) {
+            _setHttpRequestFromQ(cycle);
+            _processHttpRequest(cycle);
+        }
+        else if (cycle->closed()) {
+            _kqueueHandler.deleteEventType(kev.ident);
+            close(kev.ident);
+            Cycle::deleteCycle(cycle);
+        }
+    }
 }
 
 void EventHandler::_servCgiRequest(const struct kevent& kev)
@@ -181,6 +191,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     CgiRequestHandler& cgiRequestHandler = cycle->getCgiRequestHandler();
+    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
     try {
         cgiRequestHandler.sendCgiRequest(kev);
@@ -197,7 +208,8 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
             close(cycle->getCgiSendfd());
             cycle->setCgiSendfd(-1);
-            httpResponseHandler.makeHttpResponse(cycle, CgiResponse(code));
+            cgiResponseHandler.getCgiResponse().setStatusCode(code);
+            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
     }
@@ -231,18 +243,21 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
-            httpResponseHandler.makeHttpResponse(cycle, CgiResponse(code));
+            cgiResponseHandler.getCgiResponse().setStatusCode(code);
+            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
     }
     if (cgiResponseHandler.eof()) {
+        if (cycle->getCgiScriptPid() != -1)
+            kill(cycle->getCgiScriptPid(), SIGKILL);
         close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
         _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
         cgiResponseHandler.makeCgiResponse();
         switch (cgiResponseHandler.getResponseType()) {
         case CgiResponse::LOCAL_REDIR_RES:
-            httpRequestHandler.setURI(); // 구현해야 함.
+            httpRequestHandler.getHttpRequest().getRequestLine().setUri(cgiResponseHandler.getCgiResponse().getHeaderFields().at(0).second); // 구현해야 함.
             _processHttpRequest(cycle);
             break;
         case CgiResponse::DOCUMENT_RES:
@@ -252,7 +267,8 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             _setHttpResponseEvent(cycle);
             break;
         default:    /* in case of an error */
-            httpResponseHandler.makeHttpResponse(cycle, CgiResponse(502));
+            cgiResponseHandler.getCgiResponse().setStatusCode(502);
+            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
             break;
         }
@@ -268,7 +284,7 @@ void EventHandler::_servCgiProc(const struct kevent &kev)
     cycle->setCgiScriptPid(-1);
 }
 
-void EventHandler::_servFile(const struct kevent& kev)
+void EventHandler::_servFileRead(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
@@ -278,8 +294,9 @@ void EventHandler::_servFile(const struct kevent& kev)
     if ((kev.flags & EV_EOF) && kev.data == 0) {
         close(kev.ident);
         cycle->setReadFile(-1);
+        httpResponse.statusLine.code = 200;
         httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
-        httpResponseHandler.makeHttpResponseFinal();
+        httpResponseHandler.makeHttpResponseFinal(cycle);
         _setHttpResponseEvent(cycle);
     }
     else if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
@@ -288,17 +305,54 @@ void EventHandler::_servFile(const struct kevent& kev)
         close(kev.ident);
         cycle->setReadFile(-1);
         if (httpResponseHandler.isErrorCode(httpResponse.statusLine.code)) {
-            httpResponseHandler.makeHttpResponseFinal();
+            httpResponseHandler.makeHttpResponseFinal(cycle);
             _setHttpResponseEvent(cycle);
         }
         else {
             httpResponse.statusLine.code = 500;
-            httpResponseHandler.makeHttpErrorResponse(cycle);
+            httpResponseHandler.makeErrorHttpResponse(cycle);
             _setHttpResponseEvent(cycle);
         }
     }
     else
         httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+}
+
+void EventHandler::_servFileWrite(const struct kevent &kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+    HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
+    std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
+    std::map<int, WriteFile>::iterator it;
+
+    if ((it = writeFiles.find(kev.ident)) == writeFiles.end())
+        return;
+
+    WriteFile& writeFile = it->second;
+
+    if (writeFile.writeToFile(kev.ident, static_cast<size_t>(kev.data)) == FAILURE) {
+        for (it = writeFiles.begin(); it != writeFiles.end(); ++it) {
+            close(it->first);
+            std::remove(it->second.getPath().c_str()); // 이미 파일은 만들어진 상태이다. open(O_CREAT)을 했기 때문.
+            _kqueueHandler.deleteEventType(it->first);
+        }
+        writeFiles.clear();
+        httpResponse.statusLine.code = 500;
+        httpResponseHandler.makeErrorHttpResponse(cycle);
+        _setHttpResponseEvent(cycle);
+        return;
+    }
+    if (writeFile.eof()) {
+        close(kev.ident);
+        _kqueueHandler.deleteEventType(kev.ident);
+        writeFiles.erase(it);
+        if (writeFiles.empty()) {
+            httpResponse.statusLine.code = 201;
+            httpResponseHandler.makeHttpResponseFinal(cycle);
+            _setHttpResponseEvent(cycle);
+        }
+    }
 }
 
 void EventHandler::_servRTimer(const struct kevent &kev)
@@ -353,14 +407,10 @@ void EventHandler::_servCTimer(const struct kevent &kev)
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
         }
-        httpResponseHandler.makeHttpResponse(cycle, CgiResponse(504));
+        cgiResponseHandler.getCgiResponse().setStatusCode(504);
+        httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
         _setHttpResponseEvent(cycle);
     }
-}
-
-void EventHandler::_servError(const struct kevent &kev)
-{
-
 }
 
 void EventHandler::initEvent(const std::vector<int> &listenFds)
@@ -394,11 +444,14 @@ void EventHandler::operate()
             case EVENT_CGI_RES:
                 _servCgiResponse(eventList[i]);
                 break;
+            case EVENT_FILE_READ:
+                _servFileRead(eventList[i]);
+                break;
+            case EVENT_FILE_WRITE:
+                _servFileWrite(eventList[i]);
+                break;
             case EVENT_CGI_PROC:
                 _servCgiProc(eventList[i]);
-                break;
-            default:
-                _servError(eventList[i]);
                 break;
             }
         }

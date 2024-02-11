@@ -3,8 +3,9 @@
 
 #include <map>
 #include <queue>
-#include "../../webserv.hpp"
 #include "ConfigInfo.hpp"
+#include "WriteFile.hpp"
+#include "../../webserv.hpp"
 #include "../modules/HttpRequestModule.hpp"
 #include "../modules/HttpResponseModule.hpp"
 #include "../modules/CgiRequestModule.hpp"
@@ -40,7 +41,7 @@ private:
     int _cgiSendfd;
     int _cgiRecvfd;
     int _readFile;
-    std::set<int> _writeFiles;
+    std::map<int, WriteFile> _writeFiles;
     pid_t _cgiScriptPid;
     bool _timerType; // set if it is a request timer
     bool _closed;
@@ -68,7 +69,7 @@ public:
     int getCgiSendfd() const;
     int getCgiRecvfd() const;
     int getReadFile() const;
-    std::set<int>& getWriteFiles();
+    std::map<int, WriteFile>& getWriteFiles();
     pid_t getCgiScriptPid() const;
     bool getTimerType() const;
     bool closed() const;
@@ -86,7 +87,7 @@ public:
     void setTimerType(bool type);
 	void setClosed();
 
-    void resetCycle();
+    void reset();
 };
 
 #endif

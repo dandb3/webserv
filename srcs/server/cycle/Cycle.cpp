@@ -1,3 +1,4 @@
+#include <csignal>
 #include "Cycle.hpp"
 
 std::map<int, Cycle> Cycle::_cycleStorage;
@@ -9,7 +10,8 @@ char* Cycle::getBuf()
 }
 
 Cycle::Cycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
-: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
+: _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), \
+    _cgiSendfd(-1), _cgiRecvfd(-1), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
 {}
 
 Cycle *Cycle::newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
@@ -63,7 +65,7 @@ int Cycle::getReadFile() const
     return _readFile;
 }
 
-std::set<int>& Cycle::getWriteFiles()
+std::map<int, WriteFile>& Cycle::getWriteFiles()
 {
     return _writeFiles;
 }
@@ -138,10 +140,17 @@ void Cycle::setClosed()
     _closed = true;
 }
 
-void Cycle::resetCycle()
+void Cycle::reset()
 {
-    // _httpRequestHandler = HttpRequestHandler();
-    // _httpResponseHandler = HttpResponseHandler();
-    _cgiRequestHandler = CgiRequestHandler();
-    _cgiResponseHandler = CgiResponseHandler();
+    _cgiSendfd = -1;
+    _cgiRecvfd = -1;
+    _readFile = -1;
+    _writeFiles.clear();
+    if (_cgiScriptPid != -1) {
+        kill(_cgiScriptPid, SIGKILL);
+        _cgiScriptPid = -1;
+    }
+    _httpResponseHandler.reset();
+    _cgiRequestHandler.reset();
+    _cgiResponseHandler.reset();
 }

@@ -6,9 +6,9 @@ const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
 const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
     {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
 
-const std::string& ConfigInfo::getDefaultErrorPage()
+const std::string& ConfigInfo::getDefaultPage(unsigned short code)
 {
-    return ConfigInfo::DEFAULT_ERROR_PAGE;
+    return ConfigInfo::DEFAULT_PAGE.at(toString(code));
 }
 
 /// @brief ip, port를 보고 matchedServer,
@@ -178,10 +178,24 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     std::string path;
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
-    if (path.size() >= uri.size())
-        _path = _root;
-    else
-        _path = _root + uri.substr(path.size());
+    _path = _root + uri;
+
+    t_directives::iterator it;
+    std::string extension;
+    size_t cgiPos;
+    size_t start = path.size();
+
+    if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
+        extension = "." + it->second[0];
+        while ((cgiPos = uri.find(extension, start)) != std::string::npos) {
+            if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
+                _cgiPath = uri.substr(0, cgiPos + extension.size());
+                _path = _root + uri.substr(_cgiPath.size());
+                break;
+            }
+            start += extension.size();
+        }
+    }
 }
 
 void ConfigInfo::printConfigInfo() {
@@ -270,6 +284,15 @@ std::string ConfigInfo::getErrorPage(std::string key) const {
     return _errorPage.at(key);
 }
 
+std::string ConfigInfo::getServerName() const
+{
+    t_directives::const_iterator it;
+
+    if ((it = _info.find("server_name")) != _info.end() && !it->second.empty())
+        return it->second[0];
+    return "";
+}
+
 bool ConfigInfo::getAutoIndex() const {
     return _autoIndex;
 }
@@ -288,6 +311,14 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
     return _redirect;
 }
 
-void ConfigInfo::setDefaultErrorPage() {
-    _errorPage = getDefaultErrorPage();
+bool ConfigInfo::requestType() const
+{
+    if (_cgiPath.empty())
+        return MAKE_HTTP_RESPONSE;
+    else
+        return MAKE_CGI_REQUEST;
+}
+
+void ConfigInfo::setDefaultErrorPage(unsigned short code) {
+    _errorPage[toString(code)] = getDefaultPage(code);
 }

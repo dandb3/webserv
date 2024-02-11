@@ -20,7 +20,7 @@ private:
     /* data */
     t_directives _httpInfo;
     std::vector<ServerConfig> _serverList;
-    t_directives _mimeTypes; // 나중에 어떻게 사용하는지 보고 자료구조 변경할 듯
+    std::map<std::string, std::string> _mimeTypes; // 나중에 어떻게 사용하는지 보고 자료구조 변경할 듯
 
     std::string _configPath;
 
@@ -46,7 +46,7 @@ public:
 
     std::vector<ServerConfig> &getServerConfig();
 
-    t_directives &getMimeTypes();
+    std::map<std::string, std::string> &getMimeTypes();
 
     // setter
     void setHttpInfo(t_directives &httpInfo);
@@ -54,7 +54,7 @@ public:
 
     void setServerConfig(std::vector<ServerConfig> &serverList);
     void setServer(ServerConfig &server);
-    void setMimeTypes(t_directives &mimeTypes);
+    void setMimeTypes(std::map<std::string, std::string> &mimeTypes);
 };
 
 #endif

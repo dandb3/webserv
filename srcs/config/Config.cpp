@@ -66,7 +66,7 @@ std::vector<ServerConfig> &Config::getServerConfig() {
     return this->_serverList;
 }
 
-t_directives &Config::getMimeTypes() {
+std::map<std::string, std::string> &Config::getMimeTypes() {
     return this->_mimeTypes;
 }
 
@@ -88,6 +88,6 @@ void Config::setServer(ServerConfig &server) {
     this->_serverList.push_back(server);
 }
 
-void Config::setMimeTypes(t_directives &mimeTypes) {
+void Config::setMimeTypes(std::map<std::string, std::string> &mimeTypes) {
     this->_mimeTypes = mimeTypes;
 }

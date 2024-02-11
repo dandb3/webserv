@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <sstream>
 #include <sys/stat.h>
 #include <ctime>
 #include <iomanip>
@@ -32,18 +33,6 @@ public:
     StatusLine statusLine;
     std::multimap<std::string, std::string> headerFields;
     std::string messageBody;
-    
-    // HttpResponse();
-
-    // getter
-    // const StatusLine &getStatusLine() const;
-    // std::multimap<std::string, std::string> &getHeaderFields();
-    // const std::string &getMessageBody() const;
-
-    // // setter
-    // void setStatusLine(StatusLine &statusLine);
-    // void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
-    // void setMessageBody(std::string &messageBody);
 };
 
 class HttpResponseHandler
@@ -57,20 +46,27 @@ private:
 
     void _setConnection(Cycle* cycle);
     void _setContentLength();
+    void _setContentLength(off_t size);
     void _setContentType(Cycle* cycle, const std::string& path);
+    void _setContentType(const std::string& type);
     void _setDate();
     void _setLastModified(const char *path);
+    void _makeDirectoryListing(const std::string& path);
 
     void _makeStatusLine();
     void _makeHeaderFields(Cycle* cycle);
+    void _setAllow(ConfigInfo& configInfo);
+    void _setContentLength();
+    void _setDate();
+    void _setLastModified(const char *path);
 
     void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
     void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);
     void _makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest);
     void _makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest);
 
-    void _statusLineToString();
-    void _headerFieldsToString();
+    void _statusLineToString(std::stringstream &responseStream);
+    void _headerFieldsToString(std::stringstream &responseStream);
     void _httpResponseToString();
 
 public:
@@ -85,15 +81,15 @@ public:
     {
         RES_IDLE,
         RES_BUSY,
-        RES_READY
+        RES_FINISH
     };
 
     HttpResponseHandler();
 
     void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
-    void makeHttpResponse(Cycle* cycle, const CgiResponse &cgiResponse);
-    void makeHttpErrorResponse(Cycle* cycle);
-    void makeHttpResponseFinal();
+    void makeHttpResponse(Cycle* cycle, CgiResponse &cgiResponse);
+    void makeErrorHttpResponse(Cycle* cycle);
+    void makeHttpResponseFinal(Cycle* cycle);
 
     void sendHttpResponse(int fd, size_t size);
 
@@ -103,6 +99,7 @@ public:
     HttpResponse& getHttpResponse();
 
     bool isErrorCode(unsigned short code);
+    void reset();
 
 };
 

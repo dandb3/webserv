@@ -1,6 +1,0 @@
-GET / HTTP/1.1
-Host: localhost
-User-Agent: curl/7.88.1
-Accept: */*
-
-This is test1

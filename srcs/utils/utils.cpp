@@ -149,3 +149,25 @@ void printParsedServer(ServerConfig &server) {
     std::cout << "[parseServer] " << "port: " << server.getPort() << std::endl;
     std::cout << "[parseServer] " << "serverName: " << server.getServerName() << std::endl;
 }
+
+std::string dirPath(const std::string& str)
+{
+    size_t lastSlash = str.find_last_of('/');
+
+    if (lastSlash == std::string::npos)
+        return "";
+
+    return str.substr(0, lastSlash);
+}
+
+bool checkString(const std::string &str, const std::string &target, const size_t &start)
+{
+    const size_t len = target.length();
+    if (str.length() < start + len)
+        return false;
+    for (size_t i = 0; i < len; i++) {
+        if (str[start + i] != target[i])
+            return false;
+    }
+    return true;
+}

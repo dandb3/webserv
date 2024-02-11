@@ -2,8 +2,9 @@
 #include "HttpRequestModule.hpp"
 #include "../cycle/Cycle.hpp"
 #include "../parse/parse.hpp"
+#include "../../utils/utils.hpp"
 
-HttpRequestHandler::HttpRequestHandler() : _status(INPUT_READY)
+HttpRequestHandler::HttpRequestHandler(size_t clientMaxBodySize) : _status(INPUT_READY), _clientMaxBodySize(clientMaxBodySize)
 {}
 
 void HttpRequestHandler::_inputEOF()
@@ -32,55 +33,6 @@ void HttpRequestHandler::_inputRequestLine()
     _lineV.push_back(_remain.substr(0, end));
     _remain = _remain.substr(end + 2);
     _parseRequestLine();
-}
-
-void HttpRequestHandler::_parseQuery(RequestLine &requestLine, std::string &query)
-{
-    std::vector<std::pair<std::string, std::string> > queryV;
-    std::string key, value;
-    size_t equalPos, amperPos, start = 0;
-
-    while (start != query.length()) {
-        if ((equalPos = query.find('=', start + 1)) == std::string::npos) { // GET 요청에 문법 오류(error 발생)
-            _status = INPUT_ERROR_CLOSED;
-            _httpRequest.setCode(400);
-            return;
-        }
-
-        if ((amperPos = query.find('&', equalPos + 1)) == std::string::npos)
-            amperPos = query.length();
-
-        if (start == 0)
-            --start;
-        key = query.substr(start + 1, equalPos - start - 1);
-        value = query.substr(equalPos + 1, amperPos - equalPos - 1);
-        queryV.push_back(std::make_pair(key, value));
-
-        start = amperPos;
-    }
-
-    requestLine.setQuery(queryV);
-}
-
-std::string HttpRequestHandler::_decodeUrl(std::string &str)
-{
-    std::ostringstream decoded;
-
-    for (size_t i = 0; i < str.length(); i++) {
-        if (str[i] == '%') {
-            if (i + 2 < str.length() && isxdigit(str[i + 1]) && isxdigit(str[i + 2])) {
-                char decodedChar = static_cast<char>(strtol(str.substr(i + 1, 2).c_str(), nullptr, 16));
-                decoded << decodedChar;
-                i += 2;
-            }
-            else
-                decoded << str[i];
-        }
-        else
-            decoded << str[i];
-    }
-
-    return decoded.str();
 }
 
 void HttpRequestHandler::_parseRequestLine()
@@ -121,32 +73,52 @@ void HttpRequestHandler::_parseRequestLine()
     requestLine.setMethod(method);
 
     // set uri & query
-    token = _decodeUrl(tokens[1]);
+    token = decodeUrl(tokens[1]);
     if (token.length() > 8000) { // uri가 긴 경우 -> 414 (URI too long) (8000 octets 넘어가는 경우)
         _httpRequest.setCode(414);
         return;
     }
 
     std::vector<std::pair<std::string, std::string> > queryV;
-    size_t pos = token.find('?');
-    if (pos == std::string::npos)
-        requestLine.setUri(token);
-    else {
-        std::string uri = token.substr(0, pos);
-        std::string queries = token.substr(pos + 1);
-        requestLine.setUri(uri);
-        _parseQuery(requestLine, queries);
+    size_t qPos = token.find('?'), fPos = token.find('#');
+    if (qPos == std::string::npos) {
+        if (fPos == std::string::npos)
+            requestLine.setUri(token);
+        else
+            requestLine.setUri(token.substr(0, fPos));
     }
+    else {
+        std::vector<std::pair<std::string, std::string> > queryV;
+        std::string queries;
 
+        requestLine.setUri(token.substr(0, qPos));
+        if (fPos == std::string::npos)
+            queries = token.substr(qPos + 1);
+        else
+            queries = token.substr(qPos + 1, fPos - qPos - 1);
+        queryV = parseQuery(queries);
+        if (queryV.empty()) {
+            _status = INPUT_ERROR_CLOSED;
+            _httpRequest.setCode(400);
+            return;
+        }
+    }
+    if (fPos != std::string::npos)
+        requestLine.setFragment(token.substr(fPos + 1));
+    
     // set HTTP version
     token = tokens[2];
-    if (token.substr(0, 5) != "HTTP/" || token.length() != 8) { // 정의되어있지 않음(내가 못찾은 거일수도) -> 400 error?
+    if (token.substr(0, 5) != "HTTP/" || token.length() != 8 || token[6] != '.') { // 정의되어있지 않음 -> 400 error
         _httpRequest.setCode(400);
         return;
     }
 
-    requestLine.setVersion(std::make_pair(static_cast<short>(token[5] - '0'), static_cast<short>(token[7] - '0')));
-
+    short first = static_cast<short>(token[5] - '0');
+    short second = static_cast<short>(token[7] - '0');
+    if (first != 1 || second != 1)
+        _httpRequest.setCode(505); // HTTP version not supported (1.1만 지원)
+    requestLine.setVersion(std::make_pair(first, second));
+    
     _httpRequest.setRequestLine(requestLine);
     _status = INPUT_HEADER_FIELD;
 }
@@ -162,10 +134,11 @@ void HttpRequestHandler::_inputHeaderField()
     while ((end = _remain.find(CRLF, start)) != std::string::npos) {
         if (start == end) {
             lastCRLF = true;
+            _remain = _remain.substr(2);
             break;
         }
         lastWhitespace = (whitespace.find(_remain[end - 1]) != std::string::npos);
-        _lineV.push_back(_remain.substr(start, end - start + 1 - lastWhitespace));
+        _lineV.push_back(_remain.substr(start, end - start - lastWhitespace));
         start = end + 2;
     }
 
@@ -181,7 +154,7 @@ void HttpRequestHandler::_parseHeaderField()
     std::string key, value;
     size_t pos;
 
-    for (int i = 0; i < _lineV.size(); i++) {
+    for (size_t i = 0; i < _lineV.size(); i++) {
         if ((pos = _lineV[i].find(':')) == std::string::npos) { // maybe a obs-fold -> 400 ERROR
             _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
@@ -200,6 +173,7 @@ void HttpRequestHandler::_parseHeaderField()
     }
 
     _httpRequest.setHeaderFields(headerFields);
+    
     _status = INPUT_MESSAGE_BODY;
 }
 
@@ -224,6 +198,11 @@ void HttpRequestHandler::_inputMessageBody()
             return;
         }
         _extractContentLength(contentLengthCount);
+        if (_contentLength > _clientMaxBodySize) {
+            _status = INPUT_ERROR_CLOSED;
+            _httpRequest.setCode(413);
+            return;
+        }
         _status = INPUT_DEFAULT_BODY;
         _inputDefaultBody();
     }
@@ -261,7 +240,7 @@ void HttpRequestHandler::_extractContentLength(int contentLengthCount)
         }
     }
 
-    std::vector<std::string> lengthV = _splitByComma(lengthStr);
+    std::vector<std::string> lengthV = splitByDlm(lengthStr, ',');
     if (lengthV.size() != 1) {
         for (size_t i = 1; i < lengthV.size(); i++) {
             if (lengthV[0] != lengthV[i]) { // 400 error
@@ -306,8 +285,14 @@ void HttpRequestHandler::_inputChunkedBody()
     start = 0;
     while (1) {
         if ((end = _remain.find(CRLF, start)) == std::string::npos) {
-            if (_remain[start] == '0' && mode == LENGTH)
+            if (_remain[start] == '0' && mode == LENGTH) {
+                if (_httpRequest.getMessageBody().length() > _clientMaxBodySize) {
+                    _status = INPUT_ERROR_CLOSED;
+                    _httpRequest.setCode(413);
+                    return;
+                }
                 _status = PARSE_FINISHED;
+            }
             break;
         }
             
@@ -335,7 +320,7 @@ void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
     std::multimap<std::string, std::string>::const_iterator it;
 
     httpRequestQ.push(_httpRequest);
-    /* case-insensitive하게 check해야 하는데.. */
+
     if (_status != INPUT_ERROR_CLOSED) {
         it = headerFields.find("Connection");
         if (it != headerFields.end() && isCaseInsensitiveSame(it->second, "closed"))
@@ -343,6 +328,7 @@ void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
         else
             _status = INPUT_READY;
     }
+    _httpRequest = HttpRequest();
 }
 
 void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
@@ -399,19 +385,4 @@ bool HttpRequestHandler::isInputReady() const
 bool HttpRequestHandler::closed() const
 {
     return (_status == INPUT_NORMAL_CLOSED || _status == INPUT_ERROR_CLOSED);
-}
-
-std::vector<std::string> HttpRequestHandler::_splitByComma(std::string &str)
-{
-    std::vector<std::string> ret;
-    std::string token;
-    std::istringstream iss(str);
-
-    while (std::getline(iss, token, ',')) {
-        if (token[0] == ' ')
-            ret.push_back(token.substr(1));
-        else
-            ret.push_back(token);
-    }
-    return ret;
 }

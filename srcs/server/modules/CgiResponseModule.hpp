@@ -35,8 +35,8 @@ public:
     void setType(char type);
 
     unsigned short getStatusCode() const;
-    const std::vector<pair_t>& getHeaderFields() const;
-    const std::string& getMessageBody() const;
+    std::vector<pair_t>& getHeaderFields();
+    std::string& getMessageBody();
     char getType() const;
 
 };
@@ -55,9 +55,11 @@ public:
     void recvCgiResponse(const struct kevent& kev);
     void makeCgiResponse();
 
-    const CgiResponse& getCgiResponse() const;
+    CgiResponse& getCgiResponse();
     char getResponseType() const;
     bool eof() const;
+
+    void reset();
 
 };
 

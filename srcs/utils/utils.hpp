@@ -32,7 +32,7 @@ T stringToType(const std::string& str)
     T result;
 
     ss >> result;
-    return T;
+    return result;
 }
 
 template <typename T>
@@ -43,5 +43,8 @@ std::string toString(const T& val) {
 }
 
 void printParsedServer(ServerConfig &server);
+std::string dirPath(const std::string& str);
+
+bool checkString(const std::string &str, const std::string &target, const size_t &start);
 
 #endif
