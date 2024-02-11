@@ -333,7 +333,7 @@ void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpReque
 
     if (contentType == "") {
         if (body == "") { // 실제 body가 없는 경우
-            _httpResponse.statusLine.code = 200;
+            _httpResponse.statusLine.code = 204;
             makeHttpResponseFinal(cycle);
             return;
         }
