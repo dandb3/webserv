@@ -80,5 +80,6 @@ void ServerManager::initServer()
 
 void ServerManager::operate()
 {
+    initServer();
     _eventHandler.operate();
 }
