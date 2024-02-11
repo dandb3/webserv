@@ -212,7 +212,7 @@ void HttpResponseHandler::_setConnection(Cycle* cycle)
 
 void HttpResponseHandler::_makeHeaderFields(Cycle* cycle)
 {
-    _setAllow();
+    _setAllow(cycle->getConfigInfo());
     _setConnection(cycle);
     _setDate();
 }
@@ -429,10 +429,10 @@ void HttpResponseHandler::makeErrorHttpResponse(Cycle* cycle)
 */
 void HttpResponseHandler::makeHttpResponseFinal(Cycle* cycle)
 {
+    std::stringstream responseStream;
+
     _makeStatusLine();
     _makeHeaderFields(cycle);
-    _statusLineToString();
-    _headerFieldsToString();
     _httpResponseToString();
 }
 
