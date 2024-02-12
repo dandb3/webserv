@@ -301,7 +301,7 @@ void HttpRequestHandler::_inputChunkedBody()
             mode = STRING;
         }
         else {
-            if (length != static_cast<long long>(end - start)g) { // 400 error
+            if (length != static_cast<long long>(end - start)) { // 400 error
                 _status = INPUT_ERROR_CLOSED;
                 _httpRequest.setCode(400);
                 return;

@@ -4,6 +4,8 @@
 #include <sys/wait.h>
 #include "EventHandler.hpp"
 
+#include <iostream> // for test
+
 EventHandler::EventHandler()
 {}
 
