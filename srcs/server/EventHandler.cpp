@@ -43,7 +43,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_TIMER:
         cycle = reinterpret_cast<Cycle*>(kev.udata);
 
-        if (kev.ident == cycle->getHttpSockfd()) {
+        if (static_cast<int>(kev.ident) == cycle->getHttpSockfd()) {
             if (cycle->getTimerType() == Cycle::TIMER_REQUEST)
                 return EVENT_RTIMER;
             else

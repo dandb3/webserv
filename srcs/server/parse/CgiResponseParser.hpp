@@ -35,8 +35,6 @@ private:
     std::vector<int> _fieldCnt;
 
     CgiResponseParser();
-    CgiResponseParser(const CgiResponseParser& cgiResponseParser);
-    CgiResponseParser& operator=(const CgiResponseParser& cgiResponseParser);
     ~CgiResponseParser();
 
     void _init();

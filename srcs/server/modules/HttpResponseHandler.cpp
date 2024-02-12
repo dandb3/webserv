@@ -5,7 +5,7 @@
 #include "../parse/parse.hpp"
 #include "post.hpp"
 
-HttpResponseHandler::HttpResponseHandler() : _status(RES_IDLE), _pos(0) {}
+HttpResponseHandler::HttpResponseHandler() : _pos(0), _status(RES_IDLE) {}
 
 bool HttpResponseHandler::isErrorCode(unsigned short code)
 {
@@ -162,15 +162,18 @@ void HttpResponseHandler::_setDate()
 }
 
 // 수정 필요, mimeTypes의 구조.
-void HttpResponseHandler::_setContentType(ICycle* cycle, const std::string& path)
+void HttpResponseHandler::_setContentType(bool isPath, const std::string& str)
 {
-    ConfigInfo& configInfo = cycle->getConfigInfo();
+    if (!isPath) {
+        _httpResponse.headerFields.insert(std::make_pair("Content-Type", str));
+        return;
+    }
     std::map<std::string, std::string>& mimeTypes = Config::getInstance().getMimeTypes();
     std::string extension;
     std::string contentType;
     size_t extensionPos;
 
-    extension = path.substr(path.find_last_of('/') + 1); // path에 '/'가 존재한다고 가정.
+    extension = str.substr(str.find_last_of('/') + 1); // path에 '/'가 존재한다고 가정.
     if ((extensionPos = extension.find_last_of('.')) == std::string::npos) { // 확장자가 없는 경우
         contentType = "application/octet-stream";
     }
@@ -182,11 +185,6 @@ void HttpResponseHandler::_setContentType(ICycle* cycle, const std::string& path
             contentType = mimeTypes.at(extension);
     }
     _httpResponse.headerFields.insert(std::make_pair("Content-Type", contentType));
-}
-
-void HttpResponseHandler::_setContentType(const std::string& type)
-{
-    _httpResponse.headerFields.insert(std::make_pair("Content-Type", type));
 }
 
 void HttpResponseHandler::_setContentLength()
@@ -216,7 +214,7 @@ void HttpResponseHandler::_makeHeaderFields(ICycle* cycle)
     _setDate();
 }
 
-void HttpResponseHandler::_makeGETResponse(ICycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
 {
     std::string path = cycle->getConfigInfo().getPath();
     std::string prevPath;
@@ -237,7 +235,7 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle, HttpRequest &httpReque
             if (access(prevPath.c_str(), R_OK) == FAILURE)
                 throw 403;
             _makeDirectoryListing(prevPath);
-            _setContentType("text/html");
+            _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
             makeHttpResponseFinal(cycle);
@@ -251,7 +249,7 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle, HttpRequest &httpReque
             if (access(path.c_str(), R_OK) == FAILURE)
                 throw 403;
             _makeDirectoryListing(path);
-            _setContentType("text/html");
+            _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
             makeHttpResponseFinal(cycle);
@@ -265,11 +263,11 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle, HttpRequest &httpReque
         throw 500;
     fcntl(fd, F_SETFL, O_NONBLOCK);
     cycle->setReadFile(fd);
-    _setContentType(cycle, path);
+    _setContentType(true, path);
     _setLastModified(path.c_str());
 }
 
-void HttpResponseHandler::_makeHEADResponse(ICycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::_makeHEADResponse(ICycle* cycle)
 {
     std::string path = cycle->getConfigInfo().getPath();
     std::string prevPath;
@@ -289,7 +287,7 @@ void HttpResponseHandler::_makeHEADResponse(ICycle* cycle, HttpRequest &httpRequ
             if (access(prevPath.c_str(), R_OK) == FAILURE)
                 throw 403;
             _makeDirectoryListing(prevPath);
-            _setContentType("text/html");
+            _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
             _httpResponse.messageBody.clear();
@@ -304,7 +302,7 @@ void HttpResponseHandler::_makeHEADResponse(ICycle* cycle, HttpRequest &httpRequ
             if (access(path.c_str(), R_OK) == FAILURE)
                 throw 403;
             _makeDirectoryListing(path);
-            _setContentType("text/html");
+            _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
             _httpResponse.messageBody.clear();
@@ -315,7 +313,7 @@ void HttpResponseHandler::_makeHEADResponse(ICycle* cycle, HttpRequest &httpRequ
     }
     if (access(path.c_str(), R_OK) == FAILURE)
         throw 403;
-    _setContentType(cycle, path);
+    _setContentType(true, path);
     _setContentLength(buf.st_size);
     _setLastModified(path.c_str());
     _httpResponse.statusLine.code = 200;
@@ -379,7 +377,7 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
     }
 }
 
-void HttpResponseHandler::_makeDELETEResponse(ICycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::_makeDELETEResponse(ICycle* cycle)
 {
     std::string path = cycle->getConfigInfo().getPath();
     struct stat buf;
@@ -417,7 +415,7 @@ void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
     else {
         fcntl(fd, F_SETFL, O_NONBLOCK);
         cycle->setReadFile(fd);
-        _setContentType(cycle, errorPage);
+        _setContentType(true, errorPage);
     }
 }
 
@@ -469,7 +467,6 @@ void HttpResponseHandler::_httpResponseToString()
 void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpRequest)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
-    const std::string& path = configInfo.getPath();
     const short method = httpRequest.getRequestLine().getMethod();
 
     _httpResponse.statusLine.code = httpRequest.getCode();
@@ -490,14 +487,14 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
                 _setAllow(configInfo);
                 throw 405;
             }
-            _makeGETResponse(cycle, httpRequest);
+            _makeGETResponse(cycle);
             break;
         case HEAD:
             if (!configInfo.getAllowMethods(1)) {
                 _setAllow(configInfo);
                 throw 405;
             }
-            _makeHEADResponse(cycle, httpRequest);
+            _makeHEADResponse(cycle);
             break;
         case POST:
             if (!configInfo.getAllowMethods(2)) {
@@ -511,7 +508,7 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
                 _setAllow(configInfo);
                 throw 405;
             }
-            _makeDELETEResponse(cycle, httpRequest);
+            _makeDELETEResponse(cycle);
             break;
         }
     }

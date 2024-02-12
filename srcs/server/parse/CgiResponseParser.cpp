@@ -47,14 +47,6 @@ CgiResponseParser CgiResponseParser::_cgiResponseParser;
 CgiResponseParser::CgiResponseParser()
 {}
 
-CgiResponseParser::CgiResponseParser(const CgiResponseParser& cgiResponseParser)
-{}
-
-CgiResponseParser& CgiResponseParser::operator=(const CgiResponseParser& cgiResponseParser)
-{
-    return *this;
-}
-
 CgiResponseParser::~CgiResponseParser()
 {}
 

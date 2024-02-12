@@ -136,7 +136,7 @@ void ConfigInfo::transferInfo(t_directives &directives) {
         else if (it->first == "error_page") { // test 필요
             size_t sz = it->second.size();
             std::string route = it->second[sz - 1];
-            for (int i = 0; i < sz - 1; i++) {
+            for (size_t i = 0; i < sz - 1; i++) {
                 _errorPage[it->second[i]] = route;
             }
         }

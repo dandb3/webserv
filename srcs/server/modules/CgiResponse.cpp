@@ -8,7 +8,9 @@ CgiResponse::CgiResponse(unsigned short code)
 {}
 
 CgiResponse::CgiResponse(const std::string& rawCgiResponse)
-{}
+{
+    _messageBody = rawCgiResponse;
+}
 
 CgiResponse& CgiResponse::operator=(const CgiResponse& cgiResponse)
 {
