@@ -11,6 +11,8 @@ char EventHandler::_getEventType(const struct kevent &kev)
 {
     if (kev.flags & EV_ERROR)
         return EVENT_ERROR;
+    
+    Cycle *cycle = NULL;
     switch (kev.filter) {
     case EVFILT_READ:
         switch (_kqueueHandler.getEventType(kev.ident)) {
@@ -39,7 +41,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_PROC:
         return EVENT_CGI_PROC;
     case EVFILT_TIMER:
-        Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+        cycle = reinterpret_cast<Cycle*>(kev.udata);
 
         if (kev.ident == cycle->getHttpSockfd()) {
             if (cycle->getTimerType() == Cycle::TIMER_REQUEST)
@@ -92,7 +94,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
     switch (configInfo.requestType()) {
-    case ConfigInfo::MAKE_CGI_REQUEST:
+    case ConfigInfo::MAKE_CGI_REQUEST: {
         CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
@@ -112,10 +114,13 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
         break;
+    }
     case ConfigInfo::MAKE_HTTP_RESPONSE:
         httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
         _setHttpResponseEvent(cycle);
         break;
+    default:
+        return;
     }
 }
 

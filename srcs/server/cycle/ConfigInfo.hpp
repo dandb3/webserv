@@ -59,7 +59,7 @@ public:
     t_directives getInfo() const;
     bool getIsRedirect() const;
     std::pair<std::string, std::string> getRedirect() const;
-    bool requestType() const;
+    short requestType() const;
 
     void setDefaultErrorPage(unsigned short code);
 };

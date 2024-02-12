@@ -1,10 +1,11 @@
 #ifndef CGI_RESPONSE_PARSER_HPP
 #define CGI_RESPONSE_PARSER_HPP
 
+#include <string>
 #include <vector>
 #include "parse.hpp"
-#include "../modules/CgiResponseModule.hpp"
 #include "../../utils/utils.hpp"
+#include "../modules/CgiResponseModule.hpp"
 
 class CgiResponse;
 

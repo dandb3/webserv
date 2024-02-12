@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include "KqueueHandler.hpp"
 
 // 클래스 초기화

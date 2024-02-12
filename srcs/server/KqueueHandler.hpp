@@ -1,5 +1,5 @@
-#ifndef KQUEUEHANDLER_HPP
-#define KQUEUEHANDLER_HPP
+#ifndef KQUEUE_HANDLER_HPP
+#define KQUEUE_HANDLER_HPP
 
 #include <sys/event.h>
 #include <sys/time.h>

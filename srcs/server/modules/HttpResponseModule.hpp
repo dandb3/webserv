@@ -2,7 +2,6 @@
 #define HTTP_RESPONSE_MODULE_HPP
 
 #include <string>
-#include <map>
 #include <utility>
 #include <sstream>
 #include <sys/stat.h>
@@ -12,31 +11,13 @@
 #include <unistd.h>
 #include "CgiResponseModule.hpp"
 #include "HttpRequestModule.hpp"
-#include "../cycle/Cycle.hpp"
+#include "../cycle/ICycle.hpp"
 #include "../../utils/utils.hpp"
+#include "HttpResponse.hpp"
 
 #define CRLF "\r\n"
 
-class Cycle;
 class CgiResponse;
-
-class StatusLine
-{
-public:
-    std::pair<short, short> version;
-    unsigned short code;
-    std::string text;
-
-    StatusLine &operator=(const StatusLine &ref);
-};
-
-class HttpResponse
-{
-public:
-    StatusLine statusLine;
-    std::multimap<std::string, std::string> headerFields;
-    std::string messageBody;
-};
 
 class HttpResponseHandler
 {
@@ -48,22 +29,22 @@ private:
     HttpResponse _httpResponse;
 
     void _setAllow(ConfigInfo& configInfo);
-    void _setConnection(Cycle* cycle);
+    void _setConnection(ICycle* cycle);
     void _setContentLength();
     void _setContentLength(off_t size);
-    void _setContentType(Cycle* cycle, const std::string& path);
+    void _setContentType(ICycle* cycle, const std::string& path);
     void _setContentType(const std::string& type);
     void _setDate();
     void _setLastModified(const char *path);
     void _makeDirectoryListing(const std::string& path);
 
     void _makeStatusLine();
-    void _makeHeaderFields(Cycle* cycle);
+    void _makeHeaderFields(ICycle* cycle);
 
-    void _makeGETResponse(Cycle* cycle, HttpRequest &httpRequest);
-    void _makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest);
-    void _makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest);
-    void _makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest);
+    void _makeGETResponse(ICycle* cycle, HttpRequest &httpRequest);
+    void _makeHEADResponse(ICycle* cycle, HttpRequest &httpRequest);
+    void _makePOSTResponse(ICycle* cycle, HttpRequest &httpRequest);
+    void _makeDELETEResponse(ICycle* cycle, HttpRequest &httpRequest);
 
     void _statusLineToString(std::stringstream &responseStream);
     void _headerFieldsToString(std::stringstream &responseStream);
@@ -86,10 +67,10 @@ public:
 
     HttpResponseHandler();
 
-    void makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest);
-    void makeHttpResponse(Cycle* cycle, CgiResponse &cgiResponse);
-    void makeErrorHttpResponse(Cycle* cycle);
-    void makeHttpResponseFinal(Cycle* cycle);
+    void makeHttpResponse(ICycle* cycle, HttpRequest &httpRequest);
+    void makeHttpResponse(ICycle* cycle, CgiResponse &cgiResponse);
+    void makeErrorHttpResponse(ICycle* cycle);
+    void makeHttpResponseFinal(ICycle* cycle);
 
     void sendHttpResponse(int fd, size_t size);
 

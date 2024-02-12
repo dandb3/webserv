@@ -162,7 +162,7 @@ void HttpResponseHandler::_setDate()
 }
 
 // 수정 필요, mimeTypes의 구조.
-void HttpResponseHandler::_setContentType(Cycle* cycle, const std::string& path)
+void HttpResponseHandler::_setContentType(ICycle* cycle, const std::string& path)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
     std::map<std::string, std::string>& mimeTypes = Config::getInstance().getMimeTypes();
@@ -200,7 +200,7 @@ void HttpResponseHandler::_setContentLength(off_t size)
 }
 
 // 수정 필요
-void HttpResponseHandler::_setConnection(Cycle* cycle)
+void HttpResponseHandler::_setConnection(ICycle* cycle)
 {
     _httpResponse.headerFields.erase("Connection");
     if (cycle->getHttpRequestQueue().empty() && cycle->closed())
@@ -209,14 +209,14 @@ void HttpResponseHandler::_setConnection(Cycle* cycle)
         _httpResponse.headerFields.insert(std::make_pair("Connection", "keep-alive"));
 }
 
-void HttpResponseHandler::_makeHeaderFields(Cycle* cycle)
+void HttpResponseHandler::_makeHeaderFields(ICycle* cycle)
 {
     _setAllow(cycle->getConfigInfo());
     _setConnection(cycle);
     _setDate();
 }
 
-void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::_makeGETResponse(ICycle* cycle, HttpRequest &httpRequest)
 {
     std::string path = cycle->getConfigInfo().getPath();
     std::string prevPath;
@@ -269,7 +269,7 @@ void HttpResponseHandler::_makeGETResponse(Cycle* cycle, HttpRequest &httpReques
     _setLastModified(path.c_str());
 }
 
-void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::_makeHEADResponse(ICycle* cycle, HttpRequest &httpRequest)
 {
     std::string path = cycle->getConfigInfo().getPath();
     std::string prevPath;
@@ -322,7 +322,7 @@ void HttpResponseHandler::_makeHEADResponse(Cycle* cycle, HttpRequest &httpReque
     makeHttpResponseFinal(cycle);
 }
 
-void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequest)
 {
     std::map<std::string, std::string> files;
     const std::string contentType = httpRequest.getHeaderFields().find("Content-Type")->second;
@@ -379,7 +379,7 @@ void HttpResponseHandler::_makePOSTResponse(Cycle* cycle, HttpRequest &httpReque
     }
 }
 
-void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::_makeDELETEResponse(ICycle* cycle, HttpRequest &httpRequest)
 {
     std::string path = cycle->getConfigInfo().getPath();
     struct stat buf;
@@ -398,7 +398,7 @@ void HttpResponseHandler::_makeDELETEResponse(Cycle* cycle, HttpRequest &httpReq
     makeHttpResponseFinal(cycle);
 }
 
-void HttpResponseHandler::makeErrorHttpResponse(Cycle* cycle)
+void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
 {
     const std::string& errorPage = cycle->getConfigInfo().getErrorPage(toString(_httpResponse.statusLine.code));
     int fd;
@@ -426,7 +426,7 @@ void HttpResponseHandler::makeErrorHttpResponse(Cycle* cycle)
  * message-body를 기반으로 Content-Length 설정 및 기본 header-fields 설정 (date, 등등)
  * message-body는 그냥 그대로 유지한다.
 */
-void HttpResponseHandler::makeHttpResponseFinal(Cycle* cycle)
+void HttpResponseHandler::makeHttpResponseFinal(ICycle* cycle)
 {
     std::stringstream responseStream;
 
@@ -466,7 +466,7 @@ void HttpResponseHandler::_httpResponseToString()
     // std::cout << "final result: " << _response << '\n';
 }
 
-void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpRequest)
+void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpRequest)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
     const std::string& path = configInfo.getPath();
@@ -521,7 +521,7 @@ void HttpResponseHandler::makeHttpResponse(Cycle* cycle, HttpRequest &httpReques
     }
 }
 
-void HttpResponseHandler::makeHttpResponse(Cycle* cycle, CgiResponse &cgiResponse)
+void HttpResponseHandler::makeHttpResponse(ICycle* cycle, CgiResponse &cgiResponse)
 {
     const std::vector<pair_t>& cgiHeaderFields = cgiResponse.getHeaderFields();
     std::vector<pair_t>::const_iterator it = cgiHeaderFields.begin();

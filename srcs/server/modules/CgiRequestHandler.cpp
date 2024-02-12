@@ -69,12 +69,12 @@ static void setQueryString(CgiRequest& cgiRequest, const RequestLine& requestLin
     cgiRequest.addMetaVariable("QUERY_STRING", rawQuery);
 }
 
-static void setRemoteAddr(CgiRequest& cgiRequest, Cycle* cycle)
+static void setRemoteAddr(CgiRequest& cgiRequest, ICycle* cycle)
 {
     cgiRequest.addMetaVariable("REMOTE_ADDR", ft_inet_ntoa(cycle->getRemoteIp()));
 }
 
-static void setRemoteHost(CgiRequest& cgiRequest, Cycle* cycle)
+static void setRemoteHost(CgiRequest& cgiRequest, ICycle* cycle)
 {
     cgiRequest.addMetaVariable("REMOTE_HOST", ft_inet_ntoa(cycle->getRemoteIp()));
 }
@@ -102,7 +102,7 @@ static void setScriptName(CgiRequest& cgiRequest)
     cgiRequest.addMetaVariable("SCRIPT_NAME", CGI_PATH);
 }
 
-static void setServerName(CgiRequest& cgiRequest, Cycle* cycle)
+static void setServerName(CgiRequest& cgiRequest, ICycle* cycle)
 {
     std::string serverName = cycle->getConfigInfo().getServerName();
 
@@ -112,7 +112,7 @@ static void setServerName(CgiRequest& cgiRequest, Cycle* cycle)
         cgiRequest.addMetaVariable("SERVER_NAME", ft_inet_ntoa(cycle->getLocalIp()));
 }
 
-static void setServerPort(CgiRequest& cgiRequest, Cycle* cycle)
+static void setServerPort(CgiRequest& cgiRequest, ICycle* cycle)
 {
     cgiRequest.addMetaVariable("SERVER_PORT", ft_itoa(static_cast<int>(cycle->getLocalPort())));
 }
@@ -143,7 +143,7 @@ CgiRequestHandler& CgiRequestHandler::operator=(const CgiRequestHandler& cgiRequ
     return *this;
 }
 
-void CgiRequestHandler::_setMetaVariables(Cycle* cycle, HttpRequest& httpRequest)
+void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpRequest)
 {
     const RequestLine& requestLine = httpRequest.getRequestLine();
     const std::string& messageBody = httpRequest.getMessageBody();
@@ -221,7 +221,7 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ)
  * -> 파싱부에서 헤더필드를 다 읽어온 다음에 각 항목별로 Syntax Check를 해 주어야 한다.
 */
 
-void CgiRequestHandler::makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest)
+void CgiRequestHandler::makeCgiRequest(ICycle* cycle, HttpRequest& httpRequest)
 {
     _setMetaVariables(cycle, httpRequest);
     _cgiRequest.setMessageBody(httpRequest.getMessageBody());
@@ -229,7 +229,7 @@ void CgiRequestHandler::makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest)
 
 void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    ICycle* cycle = reinterpret_cast<ICycle*>(kev.udata);
     const std::string& messageBody = _cgiRequest.getMessageBody();
     size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
 
@@ -243,7 +243,7 @@ void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
         _eof = true;
 }
 
-void CgiRequestHandler::callCgiScript(Cycle* cycle)
+void CgiRequestHandler::callCgiScript(ICycle* cycle)
 {
     int servToCgi[2], cgiToServ[2];
     pid_t pid;

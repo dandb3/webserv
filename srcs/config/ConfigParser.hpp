@@ -1,5 +1,5 @@
-#ifndef CONFIGPARSER_HPP
-#define CONFIGPARSER_HPP
+#ifndef CONFIG_PARSER_HPP
+#define CONFIG_PARSER_HPP
 
 #include <arpa/inet.h>
 #include <iostream>

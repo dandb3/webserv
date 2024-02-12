@@ -6,7 +6,7 @@
 #    By: sunwsong <sunwsong@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/19 17:38:04 by sunwsong          #+#    #+#              #
-#    Updated: 2024/02/11 14:43:13 by sunwsong         ###   ########.fr        #
+#    Updated: 2024/02/12 16:47:56 by sunwsong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,8 @@ SRCS		=	./srcs/config/ServerConfig.cpp \
 				./srcs/config/ConfigParser.cpp \
 				./srcs/server/KqueueHandler.cpp \
 				./srcs/server/ServerManager.cpp \
+				./srcs/server/EventHandler.cpp \
+				./srcs/server/cycle/ICycle.cpp \
 				./srcs/server/cycle/Cycle.cpp \
 				./srcs/server/cycle/WriteFile.cpp \
 				./srcs/server/cycle/ConfigInfo.cpp \
@@ -31,10 +33,8 @@ SRCS		=	./srcs/config/ServerConfig.cpp \
 				./srcs/server/modules/StatusLine.cpp \
 				./srcs/server/modules/RequestLine.cpp \
 				./srcs/server/modules/HttpRequestHandler.cpp \
-				./srcs/server/EventHandler.cpp \
 				./srcs/utils/utils.cpp \
 				./srcs/utils/FileReader.cpp \
-				./srcs/exception/Exception.cpp \
 				./srcs/main.cpp
 
 OBJS		= ${SRCS:.cpp=.o}

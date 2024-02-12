@@ -1,6 +1,5 @@
 #include "CgiResponseParser.hpp"
 
-
 static bool isContentType(const pair_t& p)
 {
     return (isCaseInsensitiveSame(p.first, "Content-Type") && isMediaType(p.second));
