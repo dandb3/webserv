@@ -2,9 +2,6 @@
 #include <csignal>
 #include "ServerManager.hpp"
 
-// test
-#include "cycle/ConfigInfo.hpp"
-
 ServerManager::ServerManager()
 {
     Config::getInstance();

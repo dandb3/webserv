@@ -10,8 +10,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "../config/ServerConfig.hpp"
+#include "../webserv.hpp"
 
-#define WHITESPACE " \t\n\r\f\v"
 #define DELIMITER " \t\n\r\f\v;"
 #define SEPARATOR " \t\n\r\f\v{};"
 

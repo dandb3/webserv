@@ -1,5 +1,5 @@
-#ifndef WRITE_FILE
-#define WRITE_FILE
+#ifndef WRITE_FILE_HPP
+#define WRITE_FILE_HPP
 
 #include <string>
 #include "../../webserv.hpp"

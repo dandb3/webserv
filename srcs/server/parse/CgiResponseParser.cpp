@@ -1,7 +1,4 @@
-#include <vector>
-#include "parse.hpp"
 #include "CgiResponseParser.hpp"
-#include "../../utils/utils.hpp"
 
 static bool isContentType(const pair_t& p)
 {

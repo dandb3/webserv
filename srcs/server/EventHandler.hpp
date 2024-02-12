@@ -3,10 +3,12 @@
 
 #include <vector>
 #include "../webserv.hpp"
-#include "cycle/Cycle.hpp"
+#include "./cycle/Cycle.hpp"
 #include "KqueueHandler.hpp"
 
 #define TIMER_PERIOD 5
+
+class Cycle;
 
 class EventHandler
 {

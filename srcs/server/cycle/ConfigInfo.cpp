@@ -1,10 +1,17 @@
-#include "ConfigInfo.hpp"
 #include <sstream>
+#include "ConfigInfo.hpp"
+
+const std::pair<const std::string, std::string> defaultPages[] = {
+    std::make_pair("400", "/defaultPage/400_BadRequest.html"),
+    std::make_pair("401", "/defaultPage/401_Unauthorized.html"),
+    std::make_pair("403", "/defaultPage/403_Forbidden.html"),
+    std::make_pair("404", "/defaultPage/404_NotFound.html"),
+    std::make_pair("500", "/defaultPage/500_InternalServerError.html")
+};
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
 const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
-const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE = { {"400", "/defaultPage/400_BadRequest.html"}, {"401", "/defaultPage/401_Unauthorized.html"}, \
-    {"403", "/defaultPage/403_Forbidden.html"}, {"404", "/defaultPage/404_NotFound.html"}, {"500", "/defaultPage/500_InternalServerError.html"} };
+const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE(defaultPages, defaultPages + sizeof(defaultPages) / sizeof(defaultPages[0]));
 
 const std::string& ConfigInfo::getDefaultPage(unsigned short code)
 {
@@ -311,12 +318,11 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
     return _redirect;
 }
 
-bool ConfigInfo::requestType() const
+short ConfigInfo::requestType() const
 {
     if (_cgiPath.empty())
         return MAKE_HTTP_RESPONSE;
-    else
-        return MAKE_CGI_REQUEST;
+    return MAKE_CGI_REQUEST;
 }
 
 void ConfigInfo::setDefaultErrorPage(unsigned short code) {

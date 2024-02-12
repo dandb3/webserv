@@ -3,58 +3,11 @@
 
 #include <queue>
 #include <string>
-#include <map>
 #include <unistd.h>
 #include <vector>
 #include "../../webserv.hpp"
-
-class RequestLine
-{
-private:
-    short _method;
-    std::string _uri;
-    std::vector<std::pair<std::string, std::string> > _query;
-    std::string _fragment;
-    std::pair<short, short> _version;
-
-public:
-    void setMethod(short method);
-    void setUri(std::string uri);
-    void setQuery(std::vector<std::pair<std::string, std::string> > &query);
-    void setFragment(std::string fragment);
-    void setVersion(std::pair<short, short> version);
-
-    short getMethod() const;
-    const std::string &getUri() const;
-    const std::vector<std::pair<std::string, std::string> > &getQuery() const;
-    const std::string &getFragment() const;
-    const std::pair<short, short> &getVersion() const;
-};
-
-class HttpRequest
-{
-private:
-    unsigned short _code;
-    RequestLine _requestLine;
-    std::multimap<std::string, std::string> _headerFields;
-    std::string _messageBody;
-
-public:
-    HttpRequest();
-    HttpRequest(unsigned short code);
-    HttpRequest(RequestLine &requestLine,
-                std::multimap<std::string, std::string> &headerFields, std::string &messageBody);
-
-    void setCode(unsigned short code);
-    void setRequestLine(RequestLine &requestLine);
-    void setHeaderFields(std::multimap<std::string, std::string> &headerFields);
-    void setMessageBody(std::string &messageBody);
-
-    unsigned short getCode() const;
-    RequestLine &getRequestLine();
-    std::multimap<std::string, std::string> &getHeaderFields();
-    std::string &getMessageBody();
-};
+#include "../cycle/ICycle.hpp"
+#include "HttpRequest.hpp"
 
 class HttpRequestHandler
 {
@@ -107,7 +60,7 @@ public:
         POST,
         DELETE
     };
-    HttpRequestHandler(size_t clientMaxBodySize);
+    HttpRequestHandler();
 
     void recvHttpRequest(int fd, size_t size);
     void parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ);

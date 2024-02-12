@@ -1,5 +1,5 @@
-#ifndef SERVERCONFIG_HPP
-#define SERVERCONFIG_HPP
+#ifndef SERVER_CONFIG_HPP
+#define SERVER_CONFIG_HPP
 
 #include <map>
 #include <arpa/inet.h>

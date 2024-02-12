@@ -9,7 +9,7 @@
 #include "ServerConfig.hpp"
 #include "ConfigParser.hpp"
 
-// class ConfigParser;
+class ConfigParser;
 
 typedef std::map<std::string, std::vector<std::string> > t_directives; // map<simple directive>
 

@@ -3,29 +3,15 @@
 
 # include <vector>
 # include <string>
+# include <sys/event.h>
 # include "../../webserv.hpp"
-# include "../cycle/Cycle.hpp"
+# include "../cycle/ICycle.hpp"
 # include "HttpRequestModule.hpp"
+# include "CgiRequest.hpp"
 
 # define CGI_PATH "undefined"
 
-class CgiRequest
-{
-private:
-	std::vector<std::string> _metaVariables;
-	std::string _messageBody;
-
-public:
-	CgiRequest();
-	CgiRequest& operator=(const CgiRequest& cgiRequest);
-
-	void addMetaVariable(const std::string& key, const std::string& value);
-	void setMessageBody(const std::string& messageBody);
-
-	std::vector<std::string>& getMetaVariables();
-	std::string& getMessageBody();
-
-};
+class Cycle;
 
 class CgiRequestHandler
 {
@@ -34,7 +20,7 @@ private:
 	size_t _pos;
 	bool _eof;
 
-	void _setMetaVariables(Cycle* cycle, HttpRequest& httpRequest);
+	void _setMetaVariables(ICycle* cycle, HttpRequest& httpRequest);
 	char** _makeArgv();
 	char** _makeEnvp();
 	void _parentProcess(int* servToCgi, int* cgiToServ);
@@ -44,9 +30,9 @@ public:
 	CgiRequestHandler();
 	CgiRequestHandler& operator=(const CgiRequestHandler& cgiRequestHandler);
 
-	void makeCgiRequest(Cycle* cycle, HttpRequest& httpRequest);
+	void makeCgiRequest(ICycle* cycle, HttpRequest& httpRequest);
 	void sendCgiRequest(const struct kevent& kev);
-	void callCgiScript(Cycle* cycle);
+	void callCgiScript(ICycle* cycle);
 
 	bool eof() const;
 

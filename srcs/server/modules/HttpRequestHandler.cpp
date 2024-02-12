@@ -1,10 +1,10 @@
 #include <sstream>
 #include "HttpRequestModule.hpp"
-#include "../cycle/Cycle.hpp"
 #include "../parse/parse.hpp"
 #include "../../utils/utils.hpp"
 
-HttpRequestHandler::HttpRequestHandler(size_t clientMaxBodySize) : _status(INPUT_READY), _clientMaxBodySize(clientMaxBodySize)
+HttpRequestHandler::HttpRequestHandler()
+    : _status(INPUT_READY), _clientMaxBodySize(10000000) // 임시temp??
 {}
 
 void HttpRequestHandler::_inputEOF()
@@ -337,13 +337,12 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 
     // configuration의 client-body size도 고려해야 함
     // 곧 쳐야 됨
-    if ((readLen = read(fd, Cycle::getBuf(), std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
+    if ((readLen = read(fd, ICycle::getBuf(), std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
         _httpRequest.setCode(500);
         _status = INPUT_ERROR_CLOSED;
         return;
     }
-    // readLen == 0인 경우의 처리?
-    _remain.append(Cycle::getBuf(), static_cast<size_t>(readLen));
+    _remain.append(ICycle::getBuf(), static_cast<size_t>(readLen));
 }
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)

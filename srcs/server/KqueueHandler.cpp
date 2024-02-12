@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include "KqueueHandler.hpp"
 
 // 클래스 초기화
@@ -53,7 +52,7 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void *udata)
     _eventsToAdd.push_back(kev);
 }
 
-void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags = 0, intptr_t data = 0, void *udata = NULL)
+void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata)
 {
     struct kevent kev;
 
