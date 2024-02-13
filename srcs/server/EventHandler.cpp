@@ -356,7 +356,6 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
 
     WriteFile& writeFile = it->second;
 
-    std::cout << "write to file\n";
     if (writeFile.writeToFile(kev.ident, static_cast<size_t>(kev.data)) == FAILURE) {
         for (it = writeFiles.begin(); it != writeFiles.end(); ++it) {
             close(it->first);
@@ -456,35 +455,27 @@ void EventHandler::operate()
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
             switch (_getEventType(eventList[i])) {
             case EVENT_LISTEN:
-                std::cout << "EVENT_LISTEN" << std::endl;
                 _servListen(eventList[i]);
                 break;
             case EVENT_HTTP_REQ:
-                std::cout << "EVENT_HTTP_REQ" << std::endl;
                 _servHttpRequest(eventList[i]);
                 break;
             case EVENT_HTTP_RES:
-                std::cout << "EVENT_HTTP_RES" << std::endl;
                 _servHttpResponse(eventList[i]);
                 break;
             case EVENT_CGI_REQ:
-                std::cout << "EVENT_CGI_REQ" << std::endl;
                 _servCgiRequest(eventList[i]);
                 break;
             case EVENT_CGI_RES:
-                std::cout << "EVENT_CGI_RES" << std::endl;
                 _servCgiResponse(eventList[i]);
                 break;
             case EVENT_FILE_READ:
-                std::cout << "EVENT_FILE_READ" << std::endl;
                 _servFileRead(eventList[i]);
                 break;
             case EVENT_FILE_WRITE:
-                std::cout << "EVENT_FILE_WRITE" << std::endl;
                 _servFileWrite(eventList[i]);
                 break;
             case EVENT_CGI_PROC:
-                std::cout << "EVENT_CGI_PROC" << std::endl;
                 _servCgiProc(eventList[i]);
                 break;
             }

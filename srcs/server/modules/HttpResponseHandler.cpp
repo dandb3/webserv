@@ -223,7 +223,9 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
     struct stat buf;
     int fd;
 
-    path = "var/www/html/index.html"; // test
+    path+="index.html";
+    path = path.substr(1);
+    std::cout << "path: " << path << '\n';
     if (access(path.c_str(), F_OK) == FAILURE)
         throw 404;
     if (stat(path.c_str(), &buf) == FAILURE)
