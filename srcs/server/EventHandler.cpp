@@ -317,6 +317,8 @@ void EventHandler::_servFileRead(const struct kevent& kev)
     HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
     ssize_t readLen;
 
+    std::cout << "kev.data: " << kev.data << "\n";
+    std::cout << "kev.flags: " << kev.flags << "\n";
     if ((kev.flags & EV_EOF) && kev.data == 0) {
         close(kev.ident);
         cycle->setReadFile(-1);
@@ -357,7 +359,6 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
 
     WriteFile& writeFile = it->second;
 
-    std::cout << "write to file\n";
     if (writeFile.writeToFile(kev.ident, static_cast<size_t>(kev.data)) == FAILURE) {
         for (it = writeFiles.begin(); it != writeFiles.end(); ++it) {
             close(it->first);
@@ -455,7 +456,7 @@ void EventHandler::operate()
     while (true) {
         _kqueueHandler.eventCatch();
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
-            std::cout << "event type: " << static_cast<int>(_getEventType(eventList[i])) << "\n";
+            //std::cout << "event type: " << static_cast<int>(_getEventType(eventList[i])) << "\n";
             switch (_getEventType(eventList[i])) {
             case EVENT_LISTEN:
                 _servListen(eventList[i]);
