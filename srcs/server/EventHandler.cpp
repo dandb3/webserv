@@ -96,9 +96,13 @@ void EventHandler::_checkClientBodySize(Cycle* cycle)
     if (httpRequest.getCode() != 0)
         return;
 
-    t_directives::iterator it = configInfo.getInfo().find("client_max_body_size");
-    const size_t maxBodySize = static_cast<size_t>(strtoul(it->second[0].c_str(), NULL, 10));
+    // Store the result of configInfo.getInfo() in a variable
+    const t_directives& info = configInfo.getInfo();
+    // Now use the variable to retrieve the iterator
+    t_directives::const_iterator it = info.find("client_max_body_size");
 
+    // Check if the key exists
+    const size_t maxBodySize = static_cast<size_t>(strtoul(it->second[0].c_str(), NULL, 10));
     if (httpRequest.getMessageBody().length() > maxBodySize)
         httpRequest.setCode(413);
 }
@@ -111,9 +115,11 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), \
         httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
-    _checkClientBodySize(cycle);
-
+    if (httpRequest.getCode() == 0)
+        _checkClientBodySize(cycle);
+    std::cout << "configInfo.requestType(): " << configInfo.requestType() << "\n";
     if (configInfo.requestType() == ConfigInfo::MAKE_HTTP_RESPONSE || httpRequest.getCode() != 0) {
+        std::cout << "make http response go\n";
         httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
         _setHttpResponseEvent(cycle);
     }
@@ -351,6 +357,7 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
 
     WriteFile& writeFile = it->second;
 
+    std::cout << "write to file\n";
     if (writeFile.writeToFile(kev.ident, static_cast<size_t>(kev.data)) == FAILURE) {
         for (it = writeFiles.begin(); it != writeFiles.end(); ++it) {
             close(it->first);
@@ -448,6 +455,7 @@ void EventHandler::operate()
     while (true) {
         _kqueueHandler.eventCatch();
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
+            std::cout << "event type: " << static_cast<int>(_getEventType(eventList[i])) << "\n";
             switch (_getEventType(eventList[i])) {
             case EVENT_LISTEN:
                 _servListen(eventList[i]);
