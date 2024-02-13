@@ -321,9 +321,9 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
     return _redirect;
 }
 
-short ConfigInfo::requestType() const
+short ConfigInfo::requestType(HttpRequest& httpRequest) const
 {
-    if (_cgiPath.empty())
+    if ((httpRequest.getCode() >= 400 && httpRequest.getCode() < 600) || _isRedirect || _cgiPath.empty())
         return MAKE_HTTP_RESPONSE;
     return MAKE_CGI_REQUEST;
 }
