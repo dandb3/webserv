@@ -550,7 +550,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
     if (write(fd, _response.c_str() + _pos, writeLen) == FAILURE)
         throw std::runtime_error("sendHttpResponse에서 write 실패");
     _pos += writeLen;
-    if (_pos == size) {
+    if (_pos == _response.size()) {
         _status = RES_FINISH;
         _pos = 0;
     }
