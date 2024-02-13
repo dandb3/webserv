@@ -3,6 +3,8 @@
 #include "../parse/parse.hpp"
 #include "../../utils/utils.hpp"
 
+#include <iostream> // for test ??
+
 HttpRequestHandler::HttpRequestHandler()
     : _status(INPUT_READY)
 {}
@@ -338,7 +340,7 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
 {
     if (eof)
         _inputEOF();
-    do {
+    // do {
         if (_status == INPUT_READY)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
@@ -353,7 +355,7 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
             _inputChunkedBody();
         if (_status == PARSE_FINISHED || _status == INPUT_ERROR_CLOSED)
             _pushRequest(httpRequestQ);
-    } while (_status == INPUT_READY);
+    // } while (_status == INPUT_READY);
 }
 
 HttpRequest& HttpRequestHandler::getHttpRequest()

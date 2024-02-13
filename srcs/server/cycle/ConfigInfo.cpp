@@ -1,6 +1,8 @@
 #include <sstream>
 #include "ConfigInfo.hpp"
 
+#include <iostream> // for test ??
+
 const std::pair<const std::string, std::string> defaultPages[] = {
     std::make_pair("400", "/defaultPage/400_BadRequest.html"),
     std::make_pair("401", "/defaultPage/401_Unauthorized.html"),
@@ -66,7 +68,7 @@ std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, 
     std::vector<ServerConfig>::iterator matchedServer;
     short matchedLevel = 0;
     for (; it != server_v.end(); it++) {
-        if (matchedLevel < 2 && it->getIp().s_addr == 0 && it->getPort() == port) {
+        if (matchedLevel < 2 && it->getIp().s_addr == 0 && it->getPort() == htons(port)) {
             if (it->getServerName() == serverName) {
                 matchedServer = it;
                 matchedLevel = 2;
@@ -76,7 +78,7 @@ std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, 
                 matchedLevel = 1;
             }
         }
-        if (it->getIp().s_addr == ip && it->getPort() == port) {
+        if (it->getIp().s_addr == htonl(ip) && it->getPort() == htons(port)) {
             if (it->getServerName() == serverName) {
                 matchedServer = it;
                 matchedLevel = 4;

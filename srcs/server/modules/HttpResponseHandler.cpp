@@ -5,6 +5,8 @@
 #include "../parse/parse.hpp"
 #include "post.hpp"
 
+#include <iostream> // test ??
+
 HttpResponseHandler::HttpResponseHandler() : _pos(0), _status(RES_IDLE) {}
 
 bool HttpResponseHandler::isErrorCode(unsigned short code)
@@ -221,10 +223,12 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
     struct stat buf;
     int fd;
 
+    path = "var/www/html/index.html"; // test
     if (access(path.c_str(), F_OK) == FAILURE)
         throw 404;
     if (stat(path.c_str(), &buf) == FAILURE)
         throw 500;
+    
     if (S_ISDIR(buf.st_mode)) {
         prevPath = path;
         path += cycle->getConfigInfo().getIndex();
