@@ -88,15 +88,36 @@ void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
     hreqQ.pop();
 }
 
+void EventHandler::_checkClientBodySize(Cycle* cycle)
+{
+    ConfigInfo& configInfo = cycle->getConfigInfo();
+    HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
+
+    if (httpRequest.getCode() != 0)
+        return;
+
+    t_directives::iterator it = configInfo.getInfo().find("client_max_body_size");
+    const size_t maxBodySize = static_cast<size_t>(strtoul(it->second[0].c_str(), NULL, 10));
+
+    if (httpRequest.getMessageBody().length() > maxBodySize)
+        httpRequest.setCode(413);
+}
+
 void EventHandler::_processHttpRequest(Cycle* cycle)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
-    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
-    switch (configInfo.requestType()) {
-    case ConfigInfo::MAKE_CGI_REQUEST: {
+    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), \
+        httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
+    _checkClientBodySize(cycle);
+
+    if (configInfo.requestType() == ConfigInfo::MAKE_HTTP_RESPONSE || httpRequest.getCode() != 0) {
+        httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
+        _setHttpResponseEvent(cycle);
+    }
+    else {
         CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
@@ -107,7 +128,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
             httpRequest.setCode(code);
             httpResponseHandler.makeHttpResponse(cycle, httpRequest);
             _setHttpResponseEvent(cycle);
-            break;
+            return;
         }
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
         _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
@@ -115,14 +136,6 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
-        break;
-    }
-    case ConfigInfo::MAKE_HTTP_RESPONSE:
-        httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
-        _setHttpResponseEvent(cycle);
-        break;
-    default:
-        return;
     }
 }
 

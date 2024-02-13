@@ -4,7 +4,7 @@
 #include "../../utils/utils.hpp"
 
 HttpRequestHandler::HttpRequestHandler()
-    : _status(INPUT_READY), _clientMaxBodySize(10000000) // 임시temp??
+    : _status(INPUT_READY)
 {}
 
 void HttpRequestHandler::_inputEOF()
@@ -198,11 +198,6 @@ void HttpRequestHandler::_inputMessageBody()
             return;
         }
         _extractContentLength(contentLengthCount);
-        if (_contentLength > _clientMaxBodySize) {
-            _status = INPUT_ERROR_CLOSED;
-            _httpRequest.setCode(413);
-            return;
-        }
         _status = INPUT_DEFAULT_BODY;
         _inputDefaultBody();
     }
@@ -285,14 +280,8 @@ void HttpRequestHandler::_inputChunkedBody()
     start = 0;
     while (1) {
         if ((end = _remain.find(CRLF, start)) == std::string::npos) {
-            if (_remain[start] == '0' && mode == LENGTH) {
-                if (_httpRequest.getMessageBody().length() > _clientMaxBodySize) {
-                    _status = INPUT_ERROR_CLOSED;
-                    _httpRequest.setCode(413);
-                    return;
-                }
+            if (_remain[start] == '0' && mode == LENGTH)
                 _status = PARSE_FINISHED;
-            }
             break;
         }
             
