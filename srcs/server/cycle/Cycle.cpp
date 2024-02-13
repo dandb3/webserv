@@ -12,9 +12,9 @@ Cycle *Cycle::newCycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteI
     _cycleStorage.insert(std::make_pair(httpSockfd, Cycle(localIp, localPort, remoteIp, httpSockfd)));
 #ifdef DEBUG
 std::cout << "newCycle() called" << std::endl;
-std::cout << "localIp: " << std::hex << localIp << ft_inet_ntoa(localIp) << std::endl;
+std::cout << "localIp: " << ft_inet_ntoa(localIp) << std::endl;
 std::cout << "localPort: " << localPort << std::endl;
-std::cout << "remoteIp: " << std::hex << remoteIp << ft_inet_ntoa(remoteIp) << std::endl;
+std::cout << "remoteIp: " << ft_inet_ntoa(remoteIp) << std::endl;
 std::cout << "httpSockfd: " << httpSockfd << std::endl;
 #endif
     return &_cycleStorage.at(httpSockfd);
