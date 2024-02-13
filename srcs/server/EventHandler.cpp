@@ -115,11 +115,10 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), \
         httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
+
     if (httpRequest.getCode() == 0)
         _checkClientBodySize(cycle);
-    std::cout << "configInfo.requestType(): " << configInfo.requestType() << "\n";
-    if (configInfo.requestType() == ConfigInfo::MAKE_HTTP_RESPONSE || httpRequest.getCode() != 0) {
-        std::cout << "make http response go\n";
+    if (configInfo.requestType(httpRequest) == ConfigInfo::MAKE_HTTP_RESPONSE) {
         httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
         _setHttpResponseEvent(cycle);
     }
