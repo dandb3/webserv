@@ -185,7 +185,10 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     std::string path;
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
-    _path = _root + uri;
+    if (_root.back() == '/' && uri.front() == '/')
+        _path = _root.substr(0, _root.size() - 1) + uri;
+    else
+        _path = _root + uri;
 
     t_directives::iterator it;
     std::string extension;
