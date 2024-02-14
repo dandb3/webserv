@@ -197,24 +197,27 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
     if (_root.back() == '/' && uri.front() == '/')
-        _path = _root.substr(0, _root.size() - 1) + uri;
+        _path = _root + uri.substr(1);
     else
         _path = _root + uri;
 
     t_directives::iterator it;
     std::string extension;
+    std::string cgiUri;
     size_t cgiPos;
     size_t start = path.size();
 
     if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
         extension = "." + it->second[0];
-        while ((cgiPos = uri.find(extension, start)) != std::string::npos) {
+        if ((cgiPos = uri.find(extension, start)) != std::string::npos) {
             if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
                 _cgiPath = uri.substr(0, cgiPos + extension.size());
-                _path = _root + uri.substr(_cgiPath.size());
-                break;
+                cgiUri = uri.substr(_cgiPath.size());
+                if (_root.back() == '/' && cgiUri.front() == '/')
+                    _path = _root + cgiUri.substr(1);
+                else
+                    _path = _root + cgiUri;
             }
-            start += extension.size();
         }
     }
 }
