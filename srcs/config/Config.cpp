@@ -12,9 +12,7 @@ Config::Config() {
 
 Config::Config(std::string const &configPath) {
     // parseConfig(configPath);
-    std::cout << "configPath: " << configPath << std::endl;
     ConfigParser::parse(configPath, *this);
-    std::cout << "parse finish" << std::endl;
     _configPath = configPath;
 }
 

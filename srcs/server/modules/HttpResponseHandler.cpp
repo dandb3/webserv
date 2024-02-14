@@ -467,7 +467,6 @@ void HttpResponseHandler::_httpResponseToString()
     responseStream << _httpResponse.messageBody;
     
     _response = responseStream.str();
-    // std::cout << "final result: " << _response << '\n';
 }
 
 void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpRequest)

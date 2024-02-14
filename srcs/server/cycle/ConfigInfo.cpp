@@ -210,6 +210,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     }
 }
 
+// for test
 void ConfigInfo::printConfigInfo() {
     std::cout << "root: " << _root << std::endl;
     std::cout << "path: " << _path << std::endl;

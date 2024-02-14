@@ -49,7 +49,6 @@ void ServerManager::initServer()
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd == -1)
             throw std::runtime_error("socket error");
-        std::cout << "socket: " << sockfd << std::endl;
 
         memset(&servaddr, 0, sizeof(servaddr));
         servaddr.sin_family = AF_INET;
