@@ -13,7 +13,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
 {
     if (kev.flags & EV_ERROR)
         return EVENT_ERROR;
-    
+
     Cycle *cycle = NULL;
     switch (kev.filter) {
     case EVFILT_READ:
@@ -289,6 +289,8 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
         _kqueueHandler.deleteEventType(kev.ident);
         _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
         cgiResponseHandler.makeCgiResponse();
+        if (httpRequestHandler.getHttpRequest().getRequestLine().getMethod() == HttpRequestHandler::HEAD)
+            cgiResponseHandler.getCgiResponse().getMessageBody().clear();
         switch (cgiResponseHandler.getResponseType()) {
         case CgiResponse::LOCAL_REDIR_RES:
             httpRequestHandler.getHttpRequest().getRequestLine().setUri(cgiResponseHandler.getCgiResponse().getHeaderFields().at(0).second); // 구현해야 함.
@@ -464,27 +466,51 @@ void EventHandler::operate()
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
             switch (_getEventType(eventList[i])) {
             case EVENT_LISTEN:
+#ifdef DEBUG
+                std::cout << "Listen event catched" << std::endl;
+#endif
                 _servListen(eventList[i]);
                 break;
             case EVENT_HTTP_REQ:
+#ifdef DEBUG
+                std::cout << "Http request event catched" << std::endl;
+#endif
                 _servHttpRequest(eventList[i]);
                 break;
             case EVENT_HTTP_RES:
+#ifdef DEBUG
+                std::cout << "Http response event catched" << std::endl;
+#endif
                 _servHttpResponse(eventList[i]);
                 break;
             case EVENT_CGI_REQ:
+#ifdef DEBUG
+                std::cout << "Cgi request event catched" << std::endl;
+#endif
                 _servCgiRequest(eventList[i]);
                 break;
             case EVENT_CGI_RES:
+#ifdef DEBUG
+                std::cout << "Cgi response event catched" << std::endl;
+#endif
                 _servCgiResponse(eventList[i]);
                 break;
             case EVENT_FILE_READ:
+#ifdef DEBUG
+                std::cout << "File read event catched" << std::endl;
+#endif
                 _servFileRead(eventList[i]);
                 break;
             case EVENT_FILE_WRITE:
+#ifdef DEBUG
+                std::cout << "File write event catched" << std::endl;
+#endif
                 _servFileWrite(eventList[i]);
                 break;
             case EVENT_CGI_PROC:
+#ifdef DEBUG
+                std::cout << "Cgi proc event catched" << std::endl;
+#endif
                 _servCgiProc(eventList[i]);
                 break;
             }
