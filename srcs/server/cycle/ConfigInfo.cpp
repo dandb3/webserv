@@ -1,6 +1,8 @@
 #include <sstream>
 #include "ConfigInfo.hpp"
 
+#include <iostream> // for test ??
+
 const std::pair<const std::string, std::string> defaultPages[] = {
     std::make_pair("400", "/defaultPage/400_BadRequest.html"),
     std::make_pair("401", "/defaultPage/401_Unauthorized.html"),
@@ -75,7 +77,7 @@ std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, 
     std::vector<ServerConfig>::iterator matchedServer;
     short matchedLevel = 0;
     for (; it != server_v.end(); it++) {
-        if (matchedLevel < 2 && it->getIp().s_addr == 0 && it->getPort() == port) {
+        if (matchedLevel < 2 && it->getIp().s_addr == 0 && it->getPort() == htons(port)) {
             if (it->getServerName() == serverName) {
                 matchedServer = it;
                 matchedLevel = 2;
@@ -85,7 +87,7 @@ std::vector<ServerConfig>::iterator ConfigInfo::findMatchedServer(in_addr_t ip, 
                 matchedLevel = 1;
             }
         }
-        if (it->getIp().s_addr == ip && it->getPort() == port) {
+        if (it->getIp().s_addr == htonl(ip) && it->getPort() == htons(port)) {
             if (it->getServerName() == serverName) {
                 matchedServer = it;
                 matchedLevel = 4;
@@ -145,7 +147,7 @@ void ConfigInfo::transferInfo(t_directives &directives) {
         else if (it->first == "error_page") { // test 필요
             size_t sz = it->second.size();
             std::string route = it->second[sz - 1];
-            for (int i = 0; i < sz - 1; i++) {
+            for (size_t i = 0; i < sz - 1; i++) {
                 _errorPage[it->second[i]] = route;
             }
         }
@@ -194,7 +196,10 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     std::string path;
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
-    _path = _root + uri;
+    if (_root.back() == '/' && uri.front() == '/')
+        _path = _root.substr(0, _root.size() - 1) + uri;
+    else
+        _path = _root + uri;
 
     t_directives::iterator it;
     std::string extension;
@@ -214,6 +219,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     }
 }
 
+// for test
 void ConfigInfo::printConfigInfo() {
     std::cout << "root: " << _root << std::endl;
     std::cout << "path: " << _path << std::endl;
@@ -327,9 +333,9 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
     return _redirect;
 }
 
-short ConfigInfo::requestType() const
+short ConfigInfo::requestType(HttpRequest& httpRequest) const
 {
-    if (_cgiPath.empty())
+    if ((httpRequest.getCode() != 0) || _isRedirect || _cgiPath.empty())
         return MAKE_HTTP_RESPONSE;
     return MAKE_CGI_REQUEST;
 }

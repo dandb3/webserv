@@ -27,7 +27,6 @@ private:
 
     char _status;
     size_t _contentLength;
-    size_t _clientMaxBodySize;
 
     std::string _remain;
     std::vector<std::string> _lineV;

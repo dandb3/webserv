@@ -42,7 +42,7 @@ static void setGatewayInterface(CgiRequest& cgiRequest)
     cgiRequest.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 }
 
-static void setPathInfo(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
+static void setPathInfo(CgiRequest& cgiRequest, ConfigInfo& configInfo)
 {
     std::string pathInfo = configInfo.getPath().substr(configInfo.getRoot().size());
 
@@ -51,7 +51,7 @@ static void setPathInfo(CgiRequest& cgiRequest, ConfigInfo& configInfo, const Re
     cgiRequest.addMetaVariable("PATH_INFO", pathInfo);
 }
 
-static void setPathTranslated(CgiRequest& cgiRequest, ConfigInfo& configInfo, const RequestLine& requestLine)
+static void setPathTranslated(CgiRequest& cgiRequest, ConfigInfo& configInfo)
 {
     cgiRequest.addMetaVariable("PATH_TRANSLATED", configInfo.getPath());
 }
@@ -154,8 +154,8 @@ void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpReques
     setContentLength(_cgiRequest, messageBody);
     setContentType(_cgiRequest, headerFields);
     setGatewayInterface(_cgiRequest);
-    setPathInfo(_cgiRequest, cycle->getConfigInfo(), requestLine);
-    setPathTranslated(_cgiRequest, cycle->getConfigInfo(), requestLine);
+    setPathInfo(_cgiRequest, cycle->getConfigInfo());
+    setPathTranslated(_cgiRequest, cycle->getConfigInfo());
     setQueryString(_cgiRequest, requestLine);
     setRemoteAddr(_cgiRequest, cycle);
     setRemoteHost(_cgiRequest, cycle);
@@ -229,7 +229,6 @@ void CgiRequestHandler::makeCgiRequest(ICycle* cycle, HttpRequest& httpRequest)
 
 void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
 {
-    ICycle* cycle = reinterpret_cast<ICycle*>(kev.udata);
     const std::string& messageBody = _cgiRequest.getMessageBody();
     size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
 

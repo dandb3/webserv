@@ -3,6 +3,7 @@
 
 #include <netinet/in.h>
 #include "../../config/Config.hpp"
+#include "../modules/HttpRequest.hpp"
 typedef std::map<std::string, std::vector<std::string> > t_directives;
 
 class ConfigInfo
@@ -59,7 +60,7 @@ public:
     t_directives getInfo() const;
     bool getIsRedirect() const;
     std::pair<std::string, std::string> getRedirect() const;
-    short requestType() const;
+    short requestType(HttpRequest& httpRequest) const;
 
     void setDefaultErrorPage(unsigned short code);
 };

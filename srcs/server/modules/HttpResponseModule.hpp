@@ -32,8 +32,7 @@ private:
     void _setConnection(ICycle* cycle);
     void _setContentLength();
     void _setContentLength(off_t size);
-    void _setContentType(ICycle* cycle, const std::string& path);
-    void _setContentType(const std::string& type);
+    void _setContentType(bool isPath, const std::string& str);
     void _setDate();
     void _setLastModified(const char *path);
     void _makeDirectoryListing(const std::string& path);
@@ -41,10 +40,10 @@ private:
     void _makeStatusLine();
     void _makeHeaderFields(ICycle* cycle);
 
-    void _makeGETResponse(ICycle* cycle, HttpRequest &httpRequest);
-    void _makeHEADResponse(ICycle* cycle, HttpRequest &httpRequest);
+    void _makeGETResponse(ICycle* cycle);
+    void _makeHEADResponse(ICycle* cycle);
     void _makePOSTResponse(ICycle* cycle, HttpRequest &httpRequest);
-    void _makeDELETEResponse(ICycle* cycle, HttpRequest &httpRequest);
+    void _makeDELETEResponse(ICycle* cycle);
     void _makeRedirectHttpResponse(ICycle* cycle);
 
     void _statusLineToString(std::stringstream &responseStream);

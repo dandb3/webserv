@@ -26,12 +26,12 @@ ServerManager::ServerManager(std::string config_path)
 void ServerManager::initServer()
 {
     Config &config = Config::getInstance();
-    std::vector<ServerConfig> &server_v = config.getServerConfig();
-    std::vector<ServerConfig>::iterator it = server_v.begin();
-    std::set<std::pair<in_addr_t, int> > server_set;
+    std::vector<ServerConfig> &serverVec = config.getServerConfig();
+    std::vector<ServerConfig>::iterator it = serverVec.begin();
+    std::set<std::pair<in_addr_t, int> > serverSet;
     std::vector<int> listenFds;
 
-    for (; it != server_v.end(); it++) {
+    for (; it != serverVec.end(); it++) {
         // getVariable 실패 시 어떻게 처리할지 고민
         // default 값 설정해서 실패 안나게 할까? or 예외 처리?
 
@@ -43,13 +43,12 @@ void ServerManager::initServer()
             continue;
 
         // 이미 해당 ip, port로 서버가 생성된 경우 -> 서버 생성하지 않고 넘어가기
-        if (server_set.find(std::make_pair(it->getIp().s_addr, it->getPort())) != server_set.end())
+        if (serverSet.find(std::make_pair(it->getIp().s_addr, it->getPort())) != serverSet.end())
             continue;
 
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd == -1)
             throw std::runtime_error("socket error");
-        std::cout << "socket: " << sockfd << std::endl;
 
         memset(&servaddr, 0, sizeof(servaddr));
         servaddr.sin_family = AF_INET;
@@ -67,7 +66,7 @@ void ServerManager::initServer()
             throw std::runtime_error("listen error");
         if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
             throw std::runtime_error("fcntl error");
-        server_set.insert(std::make_pair(it->getIp().s_addr, it->getPort()));
+        serverSet.insert(std::make_pair(it->getIp().s_addr, it->getPort()));
         listenFds.push_back(sockfd);
     }
     _eventHandler.initEvent(listenFds);
