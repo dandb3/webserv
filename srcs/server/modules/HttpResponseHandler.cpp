@@ -442,10 +442,8 @@ void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
 
     if (access(errorPage.c_str(), R_OK) == FAILURE \
         || (fd = open(errorPage.c_str(), O_RDONLY)) == FAILURE) {
-        if (errorPage == ConfigInfo::getDefaultPage(_httpResponse.statusLine.code)) {
-            _httpResponse.statusLine.code = 500;
+        if (errorPage == ConfigInfo::getDefaultPage(_httpResponse.statusLine.code))
             makeHttpResponseFinal(cycle);
-        }
         else {
             cycle->getConfigInfo().setDefaultErrorPage(_httpResponse.statusLine.code);
             makeErrorHttpResponse(cycle);

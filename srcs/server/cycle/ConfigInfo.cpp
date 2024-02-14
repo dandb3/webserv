@@ -35,13 +35,18 @@ ConfigInfo::ConfigInfo()
 {
     // ip, port을 보고 match되는 config를 찾아서 생성자 호출
     _root = DEFAULT_ROOT;
+    _cgiPath = "";
+    _path = "";
     for (size_t i = 0; i < 4; i++)
         _allowMethods[i] = true;
     _index = DEFAULT_INDEX;
+    _errorPage.clear();
     _autoIndex = false;
     _isRedirect = false;
+    _requestTimeout = DEFAULT_TIMEOUT;
+    _keepaliveTimeout = DEFAULT_TIMEOUT;
+    _redirect = std::make_pair("", "");
     _info.clear();
-    _path = "";
 }
 
 ConfigInfo::ConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri)
@@ -59,12 +64,17 @@ ConfigInfo &ConfigInfo::operator=(const ConfigInfo &ConfigInfo)
     if (this == &ConfigInfo)
         return *this;
     _root = ConfigInfo._root;
+    _cgiPath = ConfigInfo._cgiPath;
     _path = ConfigInfo._path;
-    _errorPage = ConfigInfo._errorPage;
     for (size_t i = 0; i < 4; i++)
         _allowMethods[i] = ConfigInfo._allowMethods[i];
     _index = ConfigInfo._index;
+    _errorPage = ConfigInfo._errorPage;
     _autoIndex = ConfigInfo._autoIndex;
+    _isRedirect = ConfigInfo._isRedirect;
+    _requestTimeout = ConfigInfo._requestTimeout;
+    _keepaliveTimeout = ConfigInfo._keepaliveTimeout;
+    _redirect = ConfigInfo._redirect;
     _info = ConfigInfo._info;
     return *this;
 }
@@ -158,6 +168,14 @@ void ConfigInfo::transferInfo(t_directives &directives) {
             else
                 _redirect = std::make_pair(it->second[0], it->second[1]);
         }
+        else if (it->first == "request_timeout") {
+            if (it->second.size() == 1)
+                _requestTimeout = stringToType<intptr_t>(it->second[0]);
+        }
+        else if (it->first == "keepalive_timeout") {
+            if (it->second.size() == 1)
+                _keepaliveTimeout = stringToType<intptr_t>(it->second[0]);
+        }
         else {
             _info[it->first] = it->second;
         }
@@ -197,24 +215,21 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
     if (_root.back() == '/' && uri.front() == '/')
-        _path = _root.substr(0, _root.size() - 1) + uri;
+        _path = _root + uri.substr(1);
     else
         _path = _root + uri;
 
     t_directives::iterator it;
     std::string extension;
     size_t cgiPos;
-    size_t start = path.size();
 
     if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
         extension = "." + it->second[0];
-        while ((cgiPos = uri.find(extension, start)) != std::string::npos) {
+        if ((cgiPos = uri.find(extension, path.size())) != std::string::npos) {
             if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
                 _cgiPath = uri.substr(0, cgiPos + extension.size());
-                _path = _root + uri.substr(_cgiPath.size());
-                break;
+                _path = _root + uri.substr(_cgiPath.size() + 1);
             }
-            start += extension.size();
         }
     }
 }
@@ -325,6 +340,16 @@ t_directives ConfigInfo::getInfo() const {
 
 bool ConfigInfo::getIsRedirect() const {
     return _isRedirect;
+}
+
+intptr_t ConfigInfo::getRequestTimeout() const
+{
+    return _requestTimeout;
+}
+
+intptr_t ConfigInfo::getKeepaliveTimeout() const
+{
+    return _keepaliveTimeout;
 }
 
 std::pair<std::string, std::string> ConfigInfo::getRedirect() const {

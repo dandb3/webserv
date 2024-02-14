@@ -52,7 +52,7 @@ void printMessageBody()
     SERVER_PROTOCOL
     PATH_INFO
 */
-int main(int argc, char* argv[], char* envp[])
+int main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[], char* envp[])
 {
     int envCnt = 0;
     while (envp[envCnt] != NULL)

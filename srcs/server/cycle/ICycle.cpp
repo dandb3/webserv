@@ -10,7 +10,7 @@ char* ICycle::getBuf()
 
 ICycle::ICycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
 : _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), \
-    _cgiSendfd(-1), _cgiRecvfd(-1), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _timerType(TIMER_KEEP_ALIVE), _closed(false)
+    _cgiSendfd(-1), _cgiRecvfd(-1), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _closed(false)
 {}
 
 ConfigInfo& ICycle::getConfigInfo()
@@ -63,11 +63,6 @@ pid_t ICycle::getCgiScriptPid() const
     return _cgiScriptPid;
 }
 
-bool ICycle::getTimerType() const
-{
-    return _timerType;
-}
-
 bool ICycle::closed() const
 {
     return _closed;
@@ -91,11 +86,6 @@ void ICycle::setReadFile(int fd)
 void ICycle::setCgiScriptPid(pid_t pid)
 {
     _cgiScriptPid = pid;
-}
-
-void ICycle::setTimerType(bool type)
-{
-    _timerType = type;
 }
 
 void ICycle::setClosed()

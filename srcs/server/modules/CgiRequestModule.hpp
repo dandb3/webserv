@@ -21,10 +21,10 @@ private:
 	bool _eof;
 
 	void _setMetaVariables(ICycle* cycle, HttpRequest& httpRequest);
-	char** _makeArgv();
+	char** _makeArgv(const std::string& cgiPath);
 	char** _makeEnvp();
 	void _parentProcess(int* servToCgi, int* cgiToServ);
-	void _childProcess(int* servToCgi, int* cgiToServ);
+	void _childProcess(int* servToCgi, int* cgiToServ, const std::string& cgiPath);
 
 public:
 	CgiRequestHandler();
