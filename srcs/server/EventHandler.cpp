@@ -316,17 +316,7 @@ void EventHandler::_servFileRead(const struct kevent& kev)
     HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
     ssize_t readLen;
 
-    std::cout << "kev.data: " << kev.data << "\n";
-    std::cout << "kev.flags: " << kev.flags << "\n";
-    if ((kev.flags & EV_EOF) && kev.data == 0) {
-        close(kev.ident);
-        cycle->setReadFile(-1);
-        httpResponse.statusLine.code = 200;
-        httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
-        httpResponseHandler.makeHttpResponseFinal(cycle);
-        _setHttpResponseEvent(cycle);
-    }
-    else if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
+    if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
         httpResponse.headerFields.clear();
         httpResponse.messageBody.clear();
         close(kev.ident);
@@ -341,8 +331,16 @@ void EventHandler::_servFileRead(const struct kevent& kev)
             _setHttpResponseEvent(cycle);
         }
     }
-    else
-        httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+    httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+
+    if (readLen == kev.data) {
+        close(kev.ident);
+        cycle->setReadFile(-1);
+        httpResponse.statusLine.code = 200;
+        httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
+        httpResponseHandler.makeHttpResponseFinal(cycle);
+        _setHttpResponseEvent(cycle);
+    }
 }
 
 void EventHandler::_servFileWrite(const struct kevent &kev)
@@ -455,7 +453,6 @@ void EventHandler::operate()
     while (true) {
         _kqueueHandler.eventCatch();
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
-            //std::cout << "event type: " << static_cast<int>(_getEventType(eventList[i])) << "\n";
             switch (_getEventType(eventList[i])) {
             case EVENT_LISTEN:
                 _servListen(eventList[i]);
