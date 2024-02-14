@@ -54,6 +54,8 @@ void printMessageBody()
 */
 int main(int argc, char* argv[], char* envp[])
 {
+    (void) argc;
+    (void) argv;
     int envCnt = 0;
     while (envp[envCnt] != NULL)
         ++envCnt;

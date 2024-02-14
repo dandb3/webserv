@@ -175,7 +175,7 @@ void CgiResponseParser::parseCgiResponse(CgiResponse& cgiResponse, const std::st
         parser._parseLines();
         parser._insertResponse(cgiResponse);
     }
-    catch (unsigned short code) {
+    catch (int code) {
         cgiResponse.setType(CgiResponse::CGI_RESPONSE_ERROR);
     }
 }

@@ -226,9 +226,6 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
     struct stat buf;
     int fd;
 
-    path+="index.html";
-    path = path.substr(1);
-    std::cout << "path: " << path << '\n';
     if (access(path.c_str(), F_OK) == FAILURE)
         throw 404;
     if (stat(path.c_str(), &buf) == FAILURE)
@@ -370,10 +367,12 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
         if (access(it->first.c_str(), F_OK) == SUCCESS)
             throw 409;
         if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE)
+        // if (access("wow", W_OK | X_OK) == FAILURE)
             throw 409;
     }
     for (it = files.begin(); it != files.end(); ++it) {
         fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
+        // fd = open("wow/eng.txt", O_WRONLY | O_CREAT, 0644);
         if (fd == FAILURE) {
             for (fileIt = writeFiles.begin(); fileIt != writeFiles.end(); ++fileIt) {
                 close(fileIt->first);
@@ -440,7 +439,6 @@ void HttpResponseHandler::_makeRedirectHttpResponse(ICycle* cycle)
 
 void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
 {
-    std::cout << "code: " << _httpResponse.statusLine.code << '\n';
     const std::string& errorPage = cycle->getConfigInfo().getErrorPage(toString(_httpResponse.statusLine.code));
     int fd;
 
@@ -524,36 +522,36 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         switch (method) {
         case GET:
             if (!configInfo.getAllowMethods(0)) {
-                _setAllow(configInfo);
+                // _setAllow(configInfo);
                 throw 405;
             }
             _makeGETResponse(cycle);
             break;
         case HEAD:
             if (!configInfo.getAllowMethods(1)) {
-                _setAllow(configInfo);
+                // _setAllow(configInfo);
                 throw 405;
             }
             _makeHEADResponse(cycle);
             break;
         case POST:
             if (!configInfo.getAllowMethods(2)) {
-                _setAllow(configInfo);
+                // _setAllow(configInfo);
                 throw 405;
             }
             _makePOSTResponse(cycle, httpRequest);
             break;
         case DELETE:
             if (!configInfo.getAllowMethods(3)) {
-                _setAllow(configInfo);
+                // _setAllow(configInfo);
                 throw 405;
             }
             _makeDELETEResponse(cycle);
             break;
         }
     }
-    catch (unsigned short code) {
-        _httpResponse.statusLine.code = code;
+    catch (int code) {
+        _httpResponse.statusLine.code = static_cast<short>(code);
         makeErrorHttpResponse(cycle);
     }
 }

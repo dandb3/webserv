@@ -217,6 +217,8 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
             start += extension.size();
         }
     }
+    if (_info.find("limit_client_body_size") == _info.end())
+        _info["limit_client_body_size"].push_back("1000000");
 }
 
 // for test

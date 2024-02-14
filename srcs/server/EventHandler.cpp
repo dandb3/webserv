@@ -99,19 +99,10 @@ void EventHandler::_checkClientBodySize(Cycle* cycle)
     // Store the result of configInfo.getInfo() in a variable
     const t_directives& info = configInfo.getInfo();
     // Now use the variable to retrieve the iterator
-    t_directives::const_iterator it = info.find("client_max_body_size");
-    if (it == info.end()) {
-        #include <iostream>
-        std::cout << "info end\n" << std::endl;
-        return;
-    }
+    t_directives::const_iterator it = info.find("limit_client_body_size");
 
     // Check if the key exists
     const size_t maxBodySize = static_cast<size_t>(strtoul(it->second[0].c_str(), NULL, 10));
-    #include <iostream>
-    std::cout << httpRequest.getMessageBody().length() << ' ' << maxBodySize << std::endl;
-    std::cout << httpRequest.getMessageBody() << std::endl;
-    return;
     if (httpRequest.getMessageBody().length() > maxBodySize)
         httpRequest.setCode(413);
 }
@@ -138,8 +129,9 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         try {
             creqHdlr.callCgiScript(cycle);
         }
-        catch (unsigned short code) {
-            httpRequest.setCode(code);
+        catch (int code) {
+            unsigned short ucode = static_cast<unsigned short>(code);
+            httpRequest.setCode(ucode);
             httpResponseHandler.makeHttpResponse(cycle, httpRequest);
             _setHttpResponseEvent(cycle);
             return;
@@ -230,7 +222,8 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
     try {
         cgiRequestHandler.sendCgiRequest(kev);
     }
-    catch (unsigned short code) {
+    catch (int code) {
+        unsigned short ucode = static_cast<unsigned short>(code);
         if (cycle->getCgiSendfd() != -1) {
             if (cycle->getCgiScriptPid() != -1)
                 kill(cycle->getCgiScriptPid(), SIGKILL);
@@ -242,7 +235,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
             close(cycle->getCgiSendfd());
             cycle->setCgiSendfd(-1);
-            cgiResponseHandler.getCgiResponse().setStatusCode(code);
+            cgiResponseHandler.getCgiResponse().setStatusCode(ucode);
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
@@ -265,7 +258,8 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     try {
         cgiResponseHandler.recvCgiResponse(kev);
     }
-    catch (unsigned short code) {
+    catch (int code) {
+        unsigned short ucode = static_cast<unsigned short>(code);
         if (cycle->getCgiRecvfd() != -1) {
             if (cycle->getCgiScriptPid() != -1)
                 kill(cycle->getCgiScriptPid(), SIGKILL);
@@ -277,7 +271,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
-            cgiResponseHandler.getCgiResponse().setStatusCode(code);
+            cgiResponseHandler.getCgiResponse().setStatusCode(ucode);
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
