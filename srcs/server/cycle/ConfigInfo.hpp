@@ -56,6 +56,7 @@ public:
 
     // getter
     std::string getRoot() const;
+    std::string getCgiPath() const;
     std::string getPath() const;
     bool getAllowMethods(int index) const;
     std::string getIndex() const;

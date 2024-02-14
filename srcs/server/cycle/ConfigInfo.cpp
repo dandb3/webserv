@@ -300,6 +300,10 @@ std::string ConfigInfo::getRoot() const {
     return _root;
 }
 
+std::string ConfigInfo::getCgiPath() const {
+    return _cgiPath;
+}
+
 std::string ConfigInfo::getPath() const {
     return _path;
 }
