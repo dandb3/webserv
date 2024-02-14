@@ -11,7 +11,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
 {
     if (kev.flags & EV_ERROR)
         return EVENT_ERROR;
-    
+
     Cycle *cycle = NULL;
     switch (kev.filter) {
     case EVFILT_READ:
@@ -260,6 +260,8 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
         _kqueueHandler.deleteEventType(kev.ident);
         _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
         cgiResponseHandler.makeCgiResponse();
+        if (httpRequestHandler.getHttpRequest().getRequestLine().getMethod() == HttpRequestHandler::HEAD)
+            cgiResponseHandler.getCgiResponse().getMessageBody().clear();
         switch (cgiResponseHandler.getResponseType()) {
         case CgiResponse::LOCAL_REDIR_RES:
             httpRequestHandler.getHttpRequest().getRequestLine().setUri(cgiResponseHandler.getCgiResponse().getHeaderFields().at(0).second); // 구현해야 함.
