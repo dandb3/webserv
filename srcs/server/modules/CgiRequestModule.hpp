@@ -9,7 +9,7 @@
 # include "HttpRequestModule.hpp"
 # include "CgiRequest.hpp"
 
-# define CGI_PATH "undefined"
+# define CGI_PATH "../../../var/script/cat"
 
 class Cycle;
 

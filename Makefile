@@ -39,7 +39,10 @@ SRCS		=	./srcs/config/ServerConfig.cpp \
 
 OBJS		= ${SRCS:.cpp=.o}
 
-CXXFLAGS	= -std=c++98 #-Wall -Wextra -Werror 
+CXXFLAGS	= -std=c++98 #-Wall -Wextra -Werror
+
+CGI			= var/script/cat
+CGI_OBJ		= srcs/script/basicCgi.o
 
 NAME		= srv
 
@@ -48,18 +51,21 @@ DEFINE		= $(if $(DEBUG_MODE), -D DEBUG)
 
 all:	${NAME}
 
-debug: ${NAME}
+debug:	${NAME}
 
 clean:
-		${RM} ${OBJS}
+		${RM} ${OBJS} ${CGI_OBJ}
 
 fclean:	clean
-		${RM} ${NAME}
+		${RM} ${NAME} ${CGI}
 
 re:		fclean all
 
-${NAME}:	${OBJS}
+${NAME}:	${OBJS} ${CGI}
 		${CXX} ${CXXFLAGS} ${DEFINE} ${OBJS} -o $@
+
+${CGI}: ${CGI_OBJ}
+		${CXX} ${CXXFLAGS} ${DEFINE} ${CGI_OBJ} -o $@
 
 %.o : %.cpp
 			${CXX} ${CXXFLAGS} ${DEFINE} -o $@ -c $<
