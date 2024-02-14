@@ -32,18 +32,18 @@ void printEmptyLine()
 
 void printMessageBody()
 {
-    std::cout <<                        \
-        "    /\\     /\\\n"                  \
-        "   {  `---'  }\n"                   \
-        "   {  O   O  }\n"                   \
-        "~~&gt;  V  &lt;~~\n"             \
-        "    \\  \\|/  /\n"                  \
-        "     `-----'____\n"                 \
-        "     /     \\    \\_\n"             \
-        "    {       }\\  )_\\_   _\n"       \
-        "    |  \\_/  |/ /  \\_\\_/ )\n"     \
-        "     \\__/  /(_/     \\__/\n"       \
-        "       (__/\n"                      \
+    std::cout <<                            \
+        "    /\\     /\\\n"                 \
+        "   {  `---'  }\n"                  \
+        "   {  O   O  }\n"                  \
+        "~~&gt;  V  &lt;~~\n"               \
+        "    \\  \\|/  /\n"                 \
+        "     `-----'____\n"                \
+        "     /     \\    \\_\n"            \
+        "    {       }\\  )_\\_   _\n"      \
+        "    |  \\_/  |/ /  \\_\\_/ )\n"    \
+        "     \\__/  /(_/     \\__/\n"      \
+        "       (__/\n"                     \
         << std::endl;
 }
 
@@ -65,8 +65,8 @@ int main(int argc, char* argv[], char* envp[])
         metaVariablesV[i].first = env.substr(0, sep);
         metaVariablesV[i].second = env.substr(sep + 1);
     }
-    const std::map<std::string, std::string> metaVariables(metaVariablesV.begin(), metaVariablesV.end());
-    const std::string& requestMethod = metaVariables.at("REQUEST_METHOD");
+    std::map<std::string, std::string> metaVariables(metaVariablesV.begin(), metaVariablesV.end());
+    std::string& requestMethod = metaVariables["REQUEST_METHOD"];
 
     if (requestMethod == "GET" || requestMethod == "HEAD" || requestMethod == "POST" || requestMethod == "DELETE") {
         printStatusHeader(200);
