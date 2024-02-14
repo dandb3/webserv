@@ -11,7 +11,6 @@ public:
     unsigned short code;
     std::string text;
 
-    StatusLine &operator=(const StatusLine &ref);
 };
 
 class HttpResponse
