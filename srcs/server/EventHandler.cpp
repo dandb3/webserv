@@ -174,10 +174,14 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
 
     httpRequestHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
     httpRequestHandler.parseHttpRequest((kev.flags & EV_EOF) && kev.data == 0, cycle->getHttpRequestQueue());
-    if (httpRequestHandler.isInputReady())
+    if (httpRequestHandler.isInputReady()) {
+        cycle->setTimerType(Cycle::TIMER_KEEP_ALIVE);
         _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, cycle->getConfigInfo().getKeepaliveTimeout(), cycle);
-    else
+    }
+    else {
+        cycle->setTimerType(Cycle::TIMER_REQUEST);
         _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, cycle->getConfigInfo().getRequestTimeout(), cycle);
+    }
     if (httpRequestHandler.closed()) {
         cycle->setClosed();
         _kqueueHandler.deleteEvent(kev.ident, kev.filter);
@@ -381,23 +385,7 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
     }
 }
 
-void EventHandler::_servRTimer(const struct kevent &kev)
-{
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    std::queue<HttpRequest>& httpRequestQ = cycle->getHttpRequestQueue();
-
-    _kqueueHandler.deleteEvent(kev.ident, kev.filter);
-    _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
-    cycle->setClosed();
-    httpRequestQ.push(HttpRequest(408));
-    if (httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
-        _setHttpRequestFromQ(cycle);
-        _processHttpRequest(cycle);
-    }
-}
-
-void EventHandler::_servKTimer(const struct kevent &kev)
+void EventHandler::_servSTimer(const struct kevent &kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
@@ -456,52 +444,36 @@ void EventHandler::operate()
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
             switch (_getEventType(eventList[i])) {
             case EVENT_LISTEN:
-#ifdef DEBUG
-                std::cout << "Listen event catched" << std::endl;
-#endif
                 _servListen(eventList[i]);
                 break;
             case EVENT_HTTP_REQ:
-#ifdef DEBUG
-                std::cout << "Http request event catched" << std::endl;
-#endif
                 _servHttpRequest(eventList[i]);
                 break;
             case EVENT_HTTP_RES:
-#ifdef DEBUG
-                std::cout << "Http response event catched" << std::endl;
-#endif
                 _servHttpResponse(eventList[i]);
                 break;
             case EVENT_CGI_REQ:
-#ifdef DEBUG
-                std::cout << "Cgi request event catched" << std::endl;
-#endif
                 _servCgiRequest(eventList[i]);
                 break;
             case EVENT_CGI_RES:
-#ifdef DEBUG
-                std::cout << "Cgi response event catched" << std::endl;
-#endif
                 _servCgiResponse(eventList[i]);
                 break;
+            case EVENT_CGI_PROC:
+                _servCgiProc(eventList[i]);
+                break;
             case EVENT_FILE_READ:
-#ifdef DEBUG
-                std::cout << "File read event catched" << std::endl;
-#endif
                 _servFileRead(eventList[i]);
                 break;
             case EVENT_FILE_WRITE:
-#ifdef DEBUG
-                std::cout << "File write event catched" << std::endl;
-#endif
                 _servFileWrite(eventList[i]);
                 break;
-            case EVENT_CGI_PROC:
-#ifdef DEBUG
-                std::cout << "Cgi proc event catched" << std::endl;
-#endif
-                _servCgiProc(eventList[i]);
+            case EVENT_STIMER:
+                _servSTimer(eventList[i]);
+                break;
+            case EVENT_CTIMER:
+                _servCTimer(eventList[i]);
+                break;
+            case EVENT_ERROR:
                 break;
             }
         }

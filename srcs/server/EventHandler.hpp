@@ -21,8 +21,7 @@ private:
         EVENT_CGI_PROC,
         EVENT_FILE_READ,
         EVENT_FILE_WRITE,
-        EVENT_RTIMER,
-        EVENT_KTIMER,
+        EVENT_STIMER,
         EVENT_CTIMER,
         EVENT_ERROR
     };
@@ -43,8 +42,7 @@ private:
     void _servCgiProc(const struct kevent& kev);
     void _servFileRead(const struct kevent& kev);
     void _servFileWrite(const struct kevent& kev);
-    void _servRTimer(const struct kevent& kev);
-    void _servKTimer(const struct kevent& kev);
+    void _servSTimer(const struct kevent& kev);
     void _servCTimer(const struct kevent& kev);
 
 public:
