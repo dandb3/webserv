@@ -4,6 +4,8 @@
 #include <sys/wait.h>
 #include "EventHandler.hpp"
 
+#include <iostream> // for test
+
 EventHandler::EventHandler()
 {}
 
@@ -43,7 +45,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_TIMER:
         cycle = reinterpret_cast<Cycle*>(kev.udata);
 
-        if (kev.ident == cycle->getHttpSockfd()) {
+        if (static_cast<int>(kev.ident) == cycle->getHttpSockfd()) {
             if (cycle->getTimerType() == Cycle::TIMER_REQUEST)
                 return EVENT_RTIMER;
             else
@@ -86,15 +88,41 @@ void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
     hreqQ.pop();
 }
 
+void EventHandler::_checkClientBodySize(Cycle* cycle)
+{
+    ConfigInfo& configInfo = cycle->getConfigInfo();
+    HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
+
+    if (httpRequest.getCode() != 0)
+        return;
+
+    // Store the result of configInfo.getInfo() in a variable
+    const t_directives& info = configInfo.getInfo();
+    // Now use the variable to retrieve the iterator
+    t_directives::const_iterator it = info.find("client_max_body_size");
+
+    // Check if the key exists
+    const size_t maxBodySize = static_cast<size_t>(strtoul(it->second[0].c_str(), NULL, 10));
+    if (httpRequest.getMessageBody().length() > maxBodySize)
+        httpRequest.setCode(413);
+}
+
 void EventHandler::_processHttpRequest(Cycle* cycle)
 {
     ConfigInfo& configInfo = cycle->getConfigInfo();
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
-    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
-    switch (configInfo.requestType()) {
-    case ConfigInfo::MAKE_CGI_REQUEST: {
+    configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), \
+        httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
+
+    if (httpRequest.getCode() == 0)
+        _checkClientBodySize(cycle);
+    if (configInfo.requestType(httpRequest) == ConfigInfo::MAKE_HTTP_RESPONSE) {
+        httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
+        _setHttpResponseEvent(cycle);
+    }
+    else {
         CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
@@ -105,7 +133,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
             httpRequest.setCode(code);
             httpResponseHandler.makeHttpResponse(cycle, httpRequest);
             _setHttpResponseEvent(cycle);
-            break;
+            return;
         }
         _kqueueHandler.addEvent(cycle->getCgiSendfd(), EVFILT_WRITE, cycle);
         _kqueueHandler.setEventType(cycle->getCgiSendfd(), KqueueHandler::SOCKET_CGI);
@@ -113,14 +141,6 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
         _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
-        break;
-    }
-    case ConfigInfo::MAKE_HTTP_RESPONSE:
-        httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
-        _setHttpResponseEvent(cycle);
-        break;
-    default:
-        return;
     }
 }
 
@@ -296,15 +316,7 @@ void EventHandler::_servFileRead(const struct kevent& kev)
     HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
     ssize_t readLen;
 
-    if ((kev.flags & EV_EOF) && kev.data == 0) {
-        close(kev.ident);
-        cycle->setReadFile(-1);
-        httpResponse.statusLine.code = 200;
-        httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
-        httpResponseHandler.makeHttpResponseFinal(cycle);
-        _setHttpResponseEvent(cycle);
-    }
-    else if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
+    if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
         httpResponse.headerFields.clear();
         httpResponse.messageBody.clear();
         close(kev.ident);
@@ -319,8 +331,16 @@ void EventHandler::_servFileRead(const struct kevent& kev)
             _setHttpResponseEvent(cycle);
         }
     }
-    else
-        httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+    httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+
+    if (readLen == kev.data) {
+        close(kev.ident);
+        cycle->setReadFile(-1);
+        httpResponse.statusLine.code = 200;
+        httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
+        httpResponseHandler.makeHttpResponseFinal(cycle);
+        _setHttpResponseEvent(cycle);
+    }
 }
 
 void EventHandler::_servFileWrite(const struct kevent &kev)

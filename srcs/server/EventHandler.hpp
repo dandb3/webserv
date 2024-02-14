@@ -35,6 +35,7 @@ private:
     void _setHttpResponseEvent(Cycle* cycle);
     void _setHttpRequestFromQ(Cycle* cycle);
     void _processHttpRequest(Cycle* cycle);
+    void _checkClientBodySize(Cycle* cycle);
 
     void _servListen(const struct kevent& kev);
     void _servHttpRequest(const struct kevent& kev);

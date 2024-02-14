@@ -3,8 +3,10 @@
 #include "../parse/parse.hpp"
 #include "../../utils/utils.hpp"
 
+#include <iostream> // for test ??
+
 HttpRequestHandler::HttpRequestHandler()
-    : _status(INPUT_READY), _clientMaxBodySize(10000000) // 임시temp??
+    : _status(INPUT_READY)
 {}
 
 void HttpRequestHandler::_inputEOF()
@@ -198,11 +200,6 @@ void HttpRequestHandler::_inputMessageBody()
             return;
         }
         _extractContentLength(contentLengthCount);
-        if (_contentLength > _clientMaxBodySize) {
-            _status = INPUT_ERROR_CLOSED;
-            _httpRequest.setCode(413);
-            return;
-        }
         _status = INPUT_DEFAULT_BODY;
         _inputDefaultBody();
     }
@@ -285,14 +282,8 @@ void HttpRequestHandler::_inputChunkedBody()
     start = 0;
     while (1) {
         if ((end = _remain.find(CRLF, start)) == std::string::npos) {
-            if (_remain[start] == '0' && mode == LENGTH) {
-                if (_httpRequest.getMessageBody().length() > _clientMaxBodySize) {
-                    _status = INPUT_ERROR_CLOSED;
-                    _httpRequest.setCode(413);
-                    return;
-                }
+            if (_remain[start] == '0' && mode == LENGTH)
                 _status = PARSE_FINISHED;
-            }
             break;
         }
             
@@ -301,7 +292,7 @@ void HttpRequestHandler::_inputChunkedBody()
             mode = STRING;
         }
         else {
-            if (length != end - start) { // 400 error
+            if (length != static_cast<long long>(end - start)) { // 400 error
                 _status = INPUT_ERROR_CLOSED;
                 _httpRequest.setCode(400);
                 return;
@@ -349,7 +340,7 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
 {
     if (eof)
         _inputEOF();
-    do {
+    // do {
         if (_status == INPUT_READY)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
@@ -364,7 +355,7 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
             _inputChunkedBody();
         if (_status == PARSE_FINISHED || _status == INPUT_ERROR_CLOSED)
             _pushRequest(httpRequestQ);
-    } while (_status == INPUT_READY);
+    // } while (_status == INPUT_READY);
 }
 
 HttpRequest& HttpRequestHandler::getHttpRequest()

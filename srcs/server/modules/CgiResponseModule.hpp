@@ -14,7 +14,6 @@
 class CgiResponseHandler
 {
 private:
-    char _buf[BUF_SIZE];
     CgiResponse _cgiResponse;
     std::string _rawCgiResponse;
     bool _eof;

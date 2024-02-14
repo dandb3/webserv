@@ -6,7 +6,7 @@
 #    By: sunwsong <sunwsong@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/19 17:38:04 by sunwsong          #+#    #+#              #
-#    Updated: 2024/02/12 16:47:56 by sunwsong         ###   ########.fr        #
+#    Updated: 2024/02/12 19:10:12 by sunwsong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,7 +39,7 @@ SRCS		=	./srcs/config/ServerConfig.cpp \
 
 OBJS		= ${SRCS:.cpp=.o}
 
-CXXFLAGS	= -std=c++98 #-Wall -Wextra -Werror 
+CXXFLAGS	= -std=c++98 -Wall -Wextra -Werror 
 
 NAME		= srv
 

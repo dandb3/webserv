@@ -3,12 +3,12 @@
 #include "WriteFile.hpp"
 
 WriteFile::WriteFile(const std::string& path, const std::string& data)
-: _data(data), _pos(0), _eof(false)
+: _path(path), _data(data), _pos(0), _eof(false)
 {}
 
 int WriteFile::writeToFile(int fd, size_t size)
 {
-    size_t writeLen;
+    ssize_t writeLen;
 
     if ((writeLen = write(fd, _data.c_str() + _pos, std::min(_data.size() - _pos, size))) == FAILURE)
         return FAILURE;
