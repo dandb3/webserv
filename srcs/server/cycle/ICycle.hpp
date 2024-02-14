@@ -12,13 +12,6 @@
 
 class ICycle
 {
-public:
-    enum
-    {
-        TIMER_KEEP_ALIVE = 0,
-        TIMER_REQUEST = 1
-    };
-
 protected:
     static char _buf[BUF_SIZE];
 
@@ -32,7 +25,6 @@ protected:
     int _readFile;
     std::map<int, WriteFile> _writeFiles;
     pid_t _cgiScriptPid;
-    bool _timerType; // set if it is a request timer
     bool _closed;
 
     std::queue<HttpRequest> _httpRequestQueue;
@@ -52,14 +44,12 @@ public:
     int getReadFile() const;
     std::map<int, WriteFile>& getWriteFiles();
     pid_t getCgiScriptPid() const;
-    bool getTimerType() const;
     bool closed() const;
 
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);
     void setReadFile(int fd);
     void setCgiScriptPid(pid_t pid);
-    void setTimerType(bool type);
 	void setClosed();
 
     std::queue<HttpRequest> &getHttpRequestQueue();

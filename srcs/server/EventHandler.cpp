@@ -140,7 +140,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
-        _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
+        _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, DEFAULT_TIMEOUT, cycle);
     }
 }
 
@@ -161,7 +161,7 @@ void EventHandler::_servListen(const struct kevent &kev)
     cycle = Cycle::newCycle(localSin.sin_addr.s_addr, localSin.sin_port, remoteSin.sin_addr.s_addr, sockfd);
     _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
     _kqueueHandler.setEventType(sockfd, KqueueHandler::SOCKET_CLIENT);
-    _kqueueHandler.changeEvent(sockfd, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
+    _kqueueHandler.changeEvent(sockfd, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, cycle->getConfigInfo().getKeepaliveTimeout(), cycle);
 }
 
 /* httpSockFd에 대한 event, eventType, Timer는 설정된 상태 */
@@ -174,11 +174,10 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
 
     httpRequestHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
     httpRequestHandler.parseHttpRequest((kev.flags & EV_EOF) && kev.data == 0, cycle->getHttpRequestQueue());
-    _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
     if (httpRequestHandler.isInputReady())
-        cycle->setTimerType(Cycle::TIMER_KEEP_ALIVE);
+        _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, cycle->getConfigInfo().getKeepaliveTimeout(), cycle);
     else
-        cycle->setTimerType(Cycle::TIMER_REQUEST);
+        _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, cycle->getConfigInfo().getRequestTimeout(), cycle);
     if (httpRequestHandler.closed()) {
         cycle->setClosed();
         _kqueueHandler.deleteEvent(kev.ident, kev.filter);
@@ -252,7 +251,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
     CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
 
-    _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, TIMER_PERIOD, cycle);
+    _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, DEFAULT_TIMEOUT, cycle);
     try {
         cgiResponseHandler.recvCgiResponse(kev);
     }
