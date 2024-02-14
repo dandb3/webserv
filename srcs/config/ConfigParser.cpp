@@ -12,7 +12,7 @@ std::set<std::string> init() {
     s.insert("root");
     s.insert("index");
     s.insert("autoindex");
-    s.insert("client_max_body_size");
+    s.insert("limit_client_body_size");
     s.insert("error_page");
     s.insert("location");
     s.insert("access_log");
