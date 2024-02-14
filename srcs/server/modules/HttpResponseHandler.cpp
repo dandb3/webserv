@@ -69,6 +69,9 @@ void HttpResponseHandler::_makeStatusLine()
     case 500:
         _httpResponse.statusLine.text = "Internal Server Error";
         break;
+    case 501:
+        _httpResponse.statusLine.text = "Not Implemented";
+        break;
     case 502:
         _httpResponse.statusLine.text = "Bad Gateway";
         break;
@@ -404,6 +407,7 @@ void HttpResponseHandler::_makeDELETEResponse(ICycle* cycle)
 
 void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
 {
+    std::cout << "code: " << _httpResponse.statusLine.code << '\n';
     const std::string& errorPage = cycle->getConfigInfo().getErrorPage(toString(_httpResponse.statusLine.code));
     int fd;
 

@@ -100,9 +100,18 @@ void EventHandler::_checkClientBodySize(Cycle* cycle)
     const t_directives& info = configInfo.getInfo();
     // Now use the variable to retrieve the iterator
     t_directives::const_iterator it = info.find("client_max_body_size");
+    if (it == info.end()) {
+        #include <iostream>
+        std::cout << "info end\n" << std::endl;
+        return;
+    }
 
     // Check if the key exists
     const size_t maxBodySize = static_cast<size_t>(strtoul(it->second[0].c_str(), NULL, 10));
+    #include <iostream>
+    std::cout << httpRequest.getMessageBody().length() << ' ' << maxBodySize << std::endl;
+    std::cout << httpRequest.getMessageBody() << std::endl;
+    return;
     if (httpRequest.getMessageBody().length() > maxBodySize)
         httpRequest.setCode(413);
 }
