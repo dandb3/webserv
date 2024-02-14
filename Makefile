@@ -6,7 +6,7 @@
 #    By: sunwsong <sunwsong@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/19 17:38:04 by sunwsong          #+#    #+#              #
-#    Updated: 2024/02/12 19:10:12 by sunwsong         ###   ########.fr        #
+#    Updated: 2024/02/14 19:31:39 by sunwsong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,6 @@ SRCS		=	./srcs/config/ServerConfig.cpp \
 				./srcs/server/modules/post.cpp \
 				./srcs/server/modules/CgiRequestHandler.cpp \
 				./srcs/server/modules/HttpRequest.cpp \
-				./srcs/server/modules/StatusLine.cpp \
 				./srcs/server/modules/RequestLine.cpp \
 				./srcs/server/modules/HttpRequestHandler.cpp \
 				./srcs/utils/utils.cpp \

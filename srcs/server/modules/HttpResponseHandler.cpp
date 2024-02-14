@@ -447,15 +447,18 @@ void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
         if (errorPage == ConfigInfo::getDefaultPage(_httpResponse.statusLine.code))
             makeHttpResponseFinal(cycle);
         else {
+            std::cout << "에러 페이지를 읽어올 수 없습니다.\n"; // test
             cycle->getConfigInfo().setDefaultErrorPage(_httpResponse.statusLine.code);
             makeErrorHttpResponse(cycle);
         }
     }
     else {
+        std::cout << "에러 페이지를 읽어옵니다.\n"; // test
         fcntl(fd, F_SETFL, O_NONBLOCK);
         cycle->setReadFile(fd);
         _setContentType(true, errorPage);
     }
+    std::cout << "make error response finish\n"; // test
 }
 
 /**
@@ -535,6 +538,7 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         case POST:
             if (!configInfo.getAllowMethods(2)) {
                 // _setAllow(configInfo);
+                std::cout << "여기서 405 에러 발생\n"; // test
                 throw 405;
             }
             _makePOSTResponse(cycle, httpRequest);
@@ -550,8 +554,11 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
     }
     catch (int code) {
         _httpResponse.statusLine.code = static_cast<short>(code);
+        std::cout << "code: " << code << std::endl; // test
+        std::cout << _httpResponse.statusLine.code << std::endl; // test
         makeErrorHttpResponse(cycle);
     }
+    std::cout << "makeHttpResponse finish\n"; // test
 }
 
 void HttpResponseHandler::makeHttpResponse(ICycle* cycle, CgiResponse &cgiResponse)

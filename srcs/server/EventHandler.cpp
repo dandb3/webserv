@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include "EventHandler.hpp"
 
-#include <iostream> // for test
+#include <iostream> // for test debug ??
 
 EventHandler::EventHandler()
 {}
@@ -60,10 +60,12 @@ void EventHandler::_setHttpResponseEvent(Cycle* cycle)
     int readFile = cycle->getReadFile();
 
     if (readFile != -1) {
+        std::cout << "readFile != -1\n"; // for test debug
         _kqueueHandler.addEvent(readFile, EVFILT_READ, cycle);
         _kqueueHandler.setEventType(readFile, KqueueHandler::FILE_OPEN);
     }
     else if (!writeFiles.empty()) {
+        std::cout << "writeFiles is not empty\n"; // for test debug
         for (std::map<int, WriteFile>::iterator it = writeFiles.begin(); it != writeFiles.end(); ++it) {
             _kqueueHandler.addEvent(it->first, EVFILT_WRITE, cycle);
             _kqueueHandler.setEventType(it->first, KqueueHandler::FILE_OPEN);
@@ -116,6 +118,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _checkClientBodySize(cycle);
     if (configInfo.requestType(httpRequest) == ConfigInfo::MAKE_HTTP_RESPONSE) {
         httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
+        std::cout << "set http response event" << std::endl; // for test debug
         _setHttpResponseEvent(cycle);
     }
     else {
@@ -334,6 +337,7 @@ void EventHandler::_servFileRead(const struct kevent& kev)
     httpResponse.messageBody.append(Cycle::getBuf(), readLen);
 
     if (readLen == kev.data) {
+        std::cout << "readLen == kev.data\n"; // for test debug
         close(kev.ident);
         cycle->setReadFile(-1);
         httpResponse.statusLine.code = 200;
@@ -437,6 +441,7 @@ void EventHandler::operate()
     while (true) {
         _kqueueHandler.eventCatch();
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
+            std::cout << "event type: " << static_cast<int>(_getEventType(eventList[i])) << std::endl; // for test debug
             switch (_getEventType(eventList[i])) {
             case EVENT_LISTEN:
                 _servListen(eventList[i]);
