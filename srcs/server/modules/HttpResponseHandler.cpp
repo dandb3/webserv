@@ -402,6 +402,39 @@ void HttpResponseHandler::_makeDELETEResponse(ICycle* cycle)
     makeHttpResponseFinal(cycle);
 }
 
+void HttpResponseHandler::_makeRedirectHttpResponse(ICycle* cycle)
+{
+    ConfigInfo& configInfo = cycle->getConfigInfo();
+
+    _httpResponse.statusLine.code = stringToType<unsigned short>(configInfo.getRedirect().first);
+    _httpResponse.headerFields.insert(std::make_pair("Location", configInfo.getRedirect().second));
+    _httpResponse.messageBody.append(
+        "<!DOCTYPE html>\n"
+        "<html lang=\"en\">\n"
+        "<head>\n"
+        "    <meta charset=\"UTF-8\">\n"
+        "    <meta http-equiv=\"refresh\" content=\"0; URL="
+    );
+    _httpResponse.messageBody.append(configInfo.getRedirect().second.c_str());
+    _httpResponse.messageBody.append(
+        "\">\n"
+        "    <title>301 Moved Permanently</title>\n"
+        "</head>\n"
+        "<body>\n"
+        "    <h1>301 Moved Permanently</h1>\n"
+        "    <p>This resource has been moved to <a href=\""
+    );
+    _httpResponse.messageBody.append(configInfo.getRedirect().second.c_str());
+    _httpResponse.messageBody.append("\">");
+    _httpResponse.messageBody.append(configInfo.getRedirect().second.c_str());
+    _httpResponse.messageBody.append(
+        "</a>.</p>\n"
+        "</body>\n"
+        "</html>\n"
+    );
+    makeHttpResponseFinal(cycle);
+}
+
 void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
 {
     const std::string& errorPage = cycle->getConfigInfo().getErrorPage(toString(_httpResponse.statusLine.code));
@@ -480,9 +513,7 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         return;
     }
     if (configInfo.getIsRedirect()) {
-        _httpResponse.statusLine.code = stringToType<unsigned short>(configInfo.getRedirect().first);
-        _httpResponse.headerFields.insert(std::make_pair("Location", configInfo.getRedirect().second));
-        makeErrorHttpResponse(cycle);
+        _makeRedirectHttpResponse(cycle);
         return;
     }
     try {

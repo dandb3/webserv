@@ -11,12 +11,16 @@ int main(int argc, char* argv[])
 
     if (argc == 1) {
         ServerManager serverManager;
-
+#ifdef DEBUG
+        std::cout << "serverManager created" << std::endl;
+#endif
         serverManager.operate();
     }
     else {
         ServerManager serverManager(argv[1]);
-
+#ifdef DEBUG
+        std::cout << "serverManager created" << std::endl;
+#endif
         serverManager.operate();
     }
     return 0;

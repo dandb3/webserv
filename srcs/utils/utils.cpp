@@ -33,12 +33,11 @@ std::string ft_itoa(int num)
 std::string ft_inet_ntoa(in_addr_t addr)
 {
     std::stringstream ss;
-    in_addr_t hAddr = ntohl(addr);
-    u_char *addrP;
+    in_addr_t hAddr = addr;
+    u_char *addrP = reinterpret_cast<u_char *>(&hAddr);
 
-    addrP = reinterpret_cast<u_char *>(&hAddr);
     for (int i = 0; i < 4; ++i) {
-        ss << addrP[i];
+        ss << static_cast<int>(addrP[i]);
         if (i != 3)
             ss << '.';
     }

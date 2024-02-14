@@ -44,6 +44,7 @@ private:
     void _makeHEADResponse(ICycle* cycle);
     void _makePOSTResponse(ICycle* cycle, HttpRequest &httpRequest);
     void _makeDELETEResponse(ICycle* cycle);
+    void _makeRedirectHttpResponse(ICycle* cycle);
 
     void _statusLineToString(std::stringstream &responseStream);
     void _headerFieldsToString(std::stringstream &responseStream);
