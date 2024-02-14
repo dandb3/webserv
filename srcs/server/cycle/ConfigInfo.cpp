@@ -4,24 +4,24 @@
 #include <iostream> // for test ??
 
 const std::pair<const std::string, std::string> defaultPages[] = {
-    std::make_pair("400", "/defaultPage/400_BadRequest.html"),
-    std::make_pair("401", "/defaultPage/401_Unauthorized.html"),
-    std::make_pair("403", "/defaultPage/403_Forbidden.html"),
-    std::make_pair("404", "/defaultPage/404_NotFound.html"),
-    std::make_pair("405", "/defaultPage/405_MethodNotAllowed.html"),
-    std::make_pair("408", "/defaultPage/408_RequestTimeout.html"),
-    std::make_pair("409", "/defaultPage/409_Conflict.html"),
-    std::make_pair("413", "/defaultPage/413_PayloadTooLarge.html"),
-    std::make_pair("414", "/defaultPage/414_URITooLong.html"),
-    std::make_pair("500", "/defaultPage/500_InternalServerError.html"),
-    std::make_pair("502", "/defaultPage/502_BadGateway.html"),
-    std::make_pair("503", "/defaultPage/503_ServiceUnavailable.html"),
-    std::make_pair("504", "/defaultPage/504_GatewayTimeout.html"),
-    std::make_pair("505", "/defaultPage/505_HTTPVersionNotSupported.html")
+    std::make_pair("400", "defaultPage/400_BadRequest.html"),
+    std::make_pair("401", "defaultPage/401_Unauthorized.html"),
+    std::make_pair("403", "defaultPage/403_Forbidden.html"),
+    std::make_pair("404", "defaultPage/404_NotFound.html"),
+    std::make_pair("405", "defaultPage/405_MethodNotAllowed.html"),
+    std::make_pair("408", "defaultPage/408_RequestTimeout.html"),
+    std::make_pair("409", "defaultPage/409_Conflict.html"),
+    std::make_pair("413", "defaultPage/413_PayloadTooLarge.html"),
+    std::make_pair("414", "defaultPage/414_URITooLong.html"),
+    std::make_pair("500", "defaultPage/500_InternalServerError.html"),
+    std::make_pair("502", "defaultPage/502_BadGateway.html"),
+    std::make_pair("503", "defaultPage/503_ServiceUnavailable.html"),
+    std::make_pair("504", "defaultPage/504_GatewayTimeout.html"),
+    std::make_pair("505", "defaultPage/505_HTTPVersionNotSupported.html")
 };
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
-const std::string ConfigInfo::DEFAULT_ROOT = "/var/www/html/";
+const std::string ConfigInfo::DEFAULT_ROOT = "var/www/html/";
 const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE(defaultPages, defaultPages + sizeof(defaultPages) / sizeof(defaultPages[0]));
 
 const std::string& ConfigInfo::getDefaultPage(unsigned short code)
@@ -298,6 +298,10 @@ std::string ConfigInfo::getPrintableConfigInfo() {
 // getter
 std::string ConfigInfo::getRoot() const {
     return _root;
+}
+
+std::string ConfigInfo::getCgiPath() const {
+    return _cgiPath;
 }
 
 std::string ConfigInfo::getPath() const {

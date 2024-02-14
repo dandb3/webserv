@@ -45,12 +45,8 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_TIMER:
         cycle = reinterpret_cast<Cycle*>(kev.udata);
 
-        if (static_cast<int>(kev.ident) == cycle->getHttpSockfd()) {
-            if (cycle->getTimerType() == Cycle::TIMER_REQUEST)
-                return EVENT_RTIMER;
-            else
-                return EVENT_KTIMER;
-        }
+        if (static_cast<int>(kev.ident) == cycle->getHttpSockfd())
+            return EVENT_STIMER;
         else
             return EVENT_CTIMER;
     default:
@@ -174,14 +170,10 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
 
     httpRequestHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
     httpRequestHandler.parseHttpRequest((kev.flags & EV_EOF) && kev.data == 0, cycle->getHttpRequestQueue());
-    if (httpRequestHandler.isInputReady()) {
-        cycle->setTimerType(Cycle::TIMER_KEEP_ALIVE);
+    if (httpRequestHandler.isInputReady())
         _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, cycle->getConfigInfo().getKeepaliveTimeout(), cycle);
-    }
-    else {
-        cycle->setTimerType(Cycle::TIMER_REQUEST);
+    else
         _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, cycle->getConfigInfo().getRequestTimeout(), cycle);
-    }
     if (httpRequestHandler.closed()) {
         cycle->setClosed();
         _kqueueHandler.deleteEvent(kev.ident, kev.filter);
