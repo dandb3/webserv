@@ -38,6 +38,8 @@ ConfigInfo::ConfigInfo()
     for (size_t i = 0; i < 4; i++)
         _allowMethods[i] = true;
     _index = DEFAULT_INDEX;
+    _errorPage.clear();
+    _cgiPath = "";
     _autoIndex = false;
     _isRedirect = false;
     _info.clear();
@@ -203,20 +205,14 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
 
     t_directives::iterator it;
     std::string extension;
-    std::string cgiUri;
     size_t cgiPos;
-    size_t start = path.size();
 
     if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
         extension = "." + it->second[0];
-        if ((cgiPos = uri.find(extension, start)) != std::string::npos) {
+        if ((cgiPos = uri.find(extension, path.size())) != std::string::npos) {
             if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
                 _cgiPath = uri.substr(0, cgiPos + extension.size());
-                cgiUri = uri.substr(_cgiPath.size());
-                if (_root.back() == '/' && cgiUri.front() == '/')
-                    _path = _root + cgiUri.substr(1);
-                else
-                    _path = _root + cgiUri;
+                _path = _root + uri.substr(_cgiPath.size() + 1);
             }
         }
     }

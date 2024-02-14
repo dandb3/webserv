@@ -168,12 +168,12 @@ void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpReques
 //  setProtocolSpecific(_cgiRequest, requestLine, headerFields, messageBody);
 }
 
-char** CgiRequestHandler::_makeArgv()
+char** CgiRequestHandler::_makeArgv(const std::string& cgiPath)
 {
     char** result = new char*[2];
 
-    result[0] = new char[std::strlen(CGI_PATH) + 1];
-    std::strcpy(result[0], CGI_PATH);
+    result[0] = new char[cgiPath.size() + 1];
+    std::strcpy(result[0], cgiPath.c_str());
     result[1] = NULL;
     return result;
 }
@@ -198,7 +198,7 @@ void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ)
     close(cgiToServ[1]);
 }
 
-void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ)
+void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ, const std::string& cgiPath)
 {
     char **argv, **envp;
 
@@ -208,7 +208,7 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ)
     close(servToCgi[1]);
     close(cgiToServ[0]);
     close(cgiToServ[1]);
-    argv = _makeArgv();
+    argv = _makeArgv(cgiPath);
     envp = _makeEnvp();
     if (execve(argv[0], argv, envp) == FAILURE)
         std::exit(1);
@@ -267,7 +267,7 @@ void CgiRequestHandler::callCgiScript(ICycle* cycle)
         throw 500;
     }
     if (pid == 0)
-        _childProcess(servToCgi, cgiToServ);
+        _childProcess(servToCgi, cgiToServ, cycle->getConfigInfo().getCgiPath());
     else {
         cycle->setCgiScriptPid(pid);
         _parentProcess(servToCgi, cgiToServ);
