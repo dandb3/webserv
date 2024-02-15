@@ -233,6 +233,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
+        return;
     }
     if (cgiRequestHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
@@ -269,6 +270,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
+        return;
     }
     if (cgiResponseHandler.eof()) {
         if (cycle->getCgiScriptPid() != -1)
