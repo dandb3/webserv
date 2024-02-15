@@ -324,6 +324,7 @@ void EventHandler::_servFileRead(const struct kevent& kev)
         httpResponse.messageBody.clear();
         close(kev.ident);
         cycle->setReadFile(-1);
+        _kqueueHandler.deleteEventType(kev.ident);
         if (httpResponseHandler.isErrorCode(httpResponse.statusLine.code)) {
             httpResponseHandler.makeHttpResponseFinal(cycle);
             _setHttpResponseEvent(cycle);
@@ -333,6 +334,7 @@ void EventHandler::_servFileRead(const struct kevent& kev)
             httpResponseHandler.makeErrorHttpResponse(cycle);
             _setHttpResponseEvent(cycle);
         }
+        return;
     }
     httpResponse.messageBody.append(Cycle::getBuf(), readLen);
 
@@ -340,7 +342,9 @@ void EventHandler::_servFileRead(const struct kevent& kev)
         std::cout << "readLen == kev.data\n"; // for test debug
         close(kev.ident);
         cycle->setReadFile(-1);
-        httpResponse.statusLine.code = 200;
+        _kqueueHandler.deleteEventType(kev.ident);
+        if (httpResponse.statusLine.code == 0)
+            httpResponse.statusLine.code = 200;
         httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(httpResponse.messageBody.size())));
         httpResponseHandler.makeHttpResponseFinal(cycle);
         _setHttpResponseEvent(cycle);
