@@ -14,7 +14,6 @@ char EventHandler::_getEventType(const struct kevent &kev)
     if (kev.flags & EV_ERROR)
         return EVENT_ERROR;
 
-    Cycle *cycle = NULL;
     switch (kev.filter) {
     case EVFILT_READ:
         switch (_kqueueHandler.getEventType(kev.ident)) {
@@ -43,7 +42,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_PROC:
         return EVENT_CGI_PROC;
     case EVFILT_TIMER:
-        cycle = reinterpret_cast<Cycle*>(kev.udata);
+        Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
 
         if (static_cast<int>(kev.ident) == cycle->getHttpSockfd())
             return EVENT_STIMER;
