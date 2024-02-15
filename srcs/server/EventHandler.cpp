@@ -430,6 +430,8 @@ void EventHandler::_servError(const struct kevent& kev)
 {
     Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
 
+    _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
+    _kqueueHandler.deleteEvent(cycle->getHttpSockfd(), EVFILT_TIMER);
     if (cycle->getCgiSendfd() != -1) {
         _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
         close(cycle->getCgiSendfd());
