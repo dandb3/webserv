@@ -44,6 +44,7 @@ private:
     void _servFileWrite(const struct kevent& kev);
     void _servSTimer(const struct kevent& kev);
     void _servCTimer(const struct kevent& kev);
+    void _servError(const struct kevent& kev);
 
 public:
     EventHandler();

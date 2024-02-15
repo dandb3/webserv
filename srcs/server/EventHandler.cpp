@@ -426,6 +426,37 @@ void EventHandler::_servCTimer(const struct kevent &kev)
     }
 }
 
+void EventHandler::_servError(const struct kevent& kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+
+    if (cycle->getCgiSendfd() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
+        close(cycle->getCgiSendfd());
+    }
+    if (cycle->getCgiRecvfd() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
+        close(cycle->getCgiRecvfd());
+    }
+    if (cycle->getReadFile() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getReadFile());
+        close(cycle->getReadFile());
+    }
+    for (std::map<int, WriteFile>::iterator it = cycle->getWriteFiles().begin(); it != cycle->getWriteFiles().end(); ++it) {
+        _kqueueHandler.deleteEventType(it->first);
+        close(it->first);
+        std::remove(it->second.getPath().c_str());
+    }
+    cycle->getWriteFiles().clear();
+    if (cycle->getCgiScriptPid() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getCgiScriptPid());
+        kill(cycle->getCgiScriptPid(), SIGKILL);
+    }
+    _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
+    close(cycle->getHttpSockfd());
+    Cycle::deleteCycle(reinterpret_cast<Cycle*>(cycle));
+}
+
 void EventHandler::initEvent(const std::vector<int> &listenFds)
 {
     for (size_t i = 0; i < listenFds.size(); ++i) {
@@ -473,6 +504,7 @@ void EventHandler::operate()
                 _servCTimer(eventList[i]);
                 break;
             case EVENT_ERROR:
+                _servError(eventList[i]);
                 break;
             }
         }
