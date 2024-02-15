@@ -1,5 +1,6 @@
 #include <csignal>
 #include "Cycle.hpp"
+#include "../modules/PidSet.hpp"
 
 std::map<int, Cycle> Cycle::_cycleStorage;
 
@@ -44,10 +45,9 @@ void Cycle::reset()
     _cgiRecvfd = -1;
     _readFile = -1;
     _writeFiles.clear();
-    if (_cgiScriptPid != -1) {
+    if (PidSet::found(cycle->getCgiScriptPid()))
         kill(_cgiScriptPid, SIGKILL);
-        _cgiScriptPid = -1;
-    }
+    _cgiScriptPid = -1;
     _httpResponseHandler.reset();
     _cgiRequestHandler.reset();
     _cgiResponseHandler.reset();

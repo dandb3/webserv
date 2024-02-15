@@ -3,6 +3,7 @@
 #include <sys/event.h>
 #include <sys/wait.h>
 #include "EventHandler.hpp"
+#include "modules/PidSet.hpp"
 
 #include <iostream> // for test
 
@@ -219,7 +220,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
     catch (int code) {
         unsigned short ucode = static_cast<unsigned short>(code);
         if (cycle->getCgiSendfd() != -1) {
-            if (cycle->getCgiScriptPid() != -1)
+            if (PidSet::found(cycle->getCgiScriptPid()))
                 kill(cycle->getCgiScriptPid(), SIGKILL);
             if (cycle->getCgiRecvfd() != -1) {
                 _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
@@ -256,7 +257,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
     catch (int code) {
         unsigned short ucode = static_cast<unsigned short>(code);
         if (cycle->getCgiRecvfd() != -1) {
-            if (cycle->getCgiScriptPid() != -1)
+            if (PidSet::found(cycle->getCgiScriptPid()))
                 kill(cycle->getCgiScriptPid(), SIGKILL);
             if (cycle->getCgiSendfd() != -1) {
                 _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
@@ -273,7 +274,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
         return;
     }
     if (cgiResponseHandler.eof()) {
-        if (cycle->getCgiScriptPid() != -1)
+        if (PidSet::found(cycle->getCgiScriptPid()))
             kill(cycle->getCgiScriptPid(), SIGKILL);
         close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
@@ -303,11 +304,11 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
 
 void EventHandler::_servCgiProc(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    pid_t pid = static_cast<pid_t>(kev.ident);
 
-    waitpid(kev.ident, NULL, WNOHANG);
+    waitpid(pid, NULL, WNOHANG);
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
-    cycle->setCgiScriptPid(-1);
+    PidSet::erase(pid);
 }
 
 void EventHandler::_servFileRead(const struct kevent& kev)
@@ -409,7 +410,7 @@ void EventHandler::_servCTimer(const struct kevent &kev)
 
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
     if (cycle->getCgiSendfd() != -1 || cycle->getCgiRecvfd() != -1) {
-        if (cycle->getCgiScriptPid() != -1)
+        if (PidSet::found(cycle->getCgiScriptPid()))
             kill(cycle->getCgiScriptPid(), SIGKILL);
         if (cycle->getCgiSendfd() != -1) {
             _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
@@ -451,10 +452,9 @@ void EventHandler::_servError(const struct kevent& kev)
         std::remove(it->second.getPath().c_str());
     }
     cycle->getWriteFiles().clear();
-    if (cycle->getCgiScriptPid() != -1) {
-        _kqueueHandler.deleteEventType(cycle->getCgiScriptPid());
+    
+    if (PidSet::found(cycle->getCgiScriptPid()))
         kill(cycle->getCgiScriptPid(), SIGKILL);
-    }
     _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
     close(cycle->getHttpSockfd());
     Cycle::deleteCycle(reinterpret_cast<Cycle*>(cycle));
