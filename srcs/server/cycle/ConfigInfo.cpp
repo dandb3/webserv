@@ -17,7 +17,8 @@ const std::pair<const std::string, std::string> defaultPages[] = {
     std::make_pair("502", "defaultPage/502_BadGateway.html"),
     std::make_pair("503", "defaultPage/503_ServiceUnavailable.html"),
     std::make_pair("504", "defaultPage/504_GatewayTimeout.html"),
-    std::make_pair("505", "defaultPage/505_HTTPVersionNotSupported.html")
+    std::make_pair("505", "defaultPage/505_HTTPVersionNotSupported.html"),
+    std::make_pair("default", "defaultPage/defaultError.html")
 };
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
@@ -26,6 +27,8 @@ const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE(defaultPages, 
 
 const std::string& ConfigInfo::getDefaultPage(unsigned short code)
 {
+    if (ConfigInfo::DEFAULT_PAGE.find(toString(code)) == ConfigInfo::DEFAULT_PAGE.end())
+        return ConfigInfo::DEFAULT_PAGE.at("default");
     return ConfigInfo::DEFAULT_PAGE.at(toString(code));
 }
 
@@ -321,7 +324,8 @@ std::string ConfigInfo::getIndex() const {
 std::string ConfigInfo::getErrorPage(std::string key) const {
     if (_errorPage.find(key) == _errorPage.end()) {
         if (DEFAULT_PAGE.find(key) == DEFAULT_PAGE.end())
-            throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
+            return DEFAULT_PAGE.at("default");
+            // throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
         return DEFAULT_PAGE.at(key);
     }
     return _errorPage.at(key);
@@ -372,5 +376,6 @@ short ConfigInfo::requestType(HttpRequest& httpRequest) const
 }
 
 void ConfigInfo::setDefaultErrorPage(unsigned short code) {
+    
     _errorPage[toString(code)] = getDefaultPage(code);
 }

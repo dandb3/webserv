@@ -118,7 +118,6 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _checkClientBodySize(cycle);
     if (configInfo.requestType(httpRequest) == ConfigInfo::MAKE_HTTP_RESPONSE) {
         httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
-        std::cout << "set http response event" << std::endl; // for test debug
         _setHttpResponseEvent(cycle);
     }
     else {
@@ -336,7 +335,9 @@ void EventHandler::_servFileRead(const struct kevent& kev)
         }
         return;
     }
-    httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+
+    if (cycle->getHttpRequestHandler().getHttpRequest().getRequestLine().getMethod() == HttpRequestHandler::HEAD)
+        httpResponse.messageBody.append(Cycle::getBuf(), readLen);
 
     if (readLen == kev.data) {
         std::cout << "readLen == kev.data\n"; // for test debug
