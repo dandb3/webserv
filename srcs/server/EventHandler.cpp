@@ -14,7 +14,6 @@ char EventHandler::_getEventType(const struct kevent &kev)
     if (kev.flags & EV_ERROR)
         return EVENT_ERROR;
 
-    Cycle *cycle = NULL;
     switch (kev.filter) {
     case EVFILT_READ:
         switch (_kqueueHandler.getEventType(kev.ident)) {
@@ -43,7 +42,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_PROC:
         return EVENT_CGI_PROC;
     case EVFILT_TIMER:
-        cycle = reinterpret_cast<Cycle*>(kev.udata);
+        Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
 
         if (static_cast<int>(kev.ident) == cycle->getHttpSockfd())
             return EVENT_STIMER;
@@ -234,6 +233,7 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
+        return;
     }
     if (cgiRequestHandler.eof()) {
         close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
@@ -270,6 +270,7 @@ void EventHandler::_servCgiResponse(const struct kevent& kev)
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
+        return;
     }
     if (cgiResponseHandler.eof()) {
         if (cycle->getCgiScriptPid() != -1)
@@ -426,6 +427,39 @@ void EventHandler::_servCTimer(const struct kevent &kev)
     }
 }
 
+void EventHandler::_servError(const struct kevent& kev)
+{
+    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+
+    _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
+    _kqueueHandler.deleteEvent(cycle->getHttpSockfd(), EVFILT_TIMER);
+    if (cycle->getCgiSendfd() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
+        close(cycle->getCgiSendfd());
+    }
+    if (cycle->getCgiRecvfd() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
+        close(cycle->getCgiRecvfd());
+    }
+    if (cycle->getReadFile() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getReadFile());
+        close(cycle->getReadFile());
+    }
+    for (std::map<int, WriteFile>::iterator it = cycle->getWriteFiles().begin(); it != cycle->getWriteFiles().end(); ++it) {
+        _kqueueHandler.deleteEventType(it->first);
+        close(it->first);
+        std::remove(it->second.getPath().c_str());
+    }
+    cycle->getWriteFiles().clear();
+    if (cycle->getCgiScriptPid() != -1) {
+        _kqueueHandler.deleteEventType(cycle->getCgiScriptPid());
+        kill(cycle->getCgiScriptPid(), SIGKILL);
+    }
+    _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
+    close(cycle->getHttpSockfd());
+    Cycle::deleteCycle(reinterpret_cast<Cycle*>(cycle));
+}
+
 void EventHandler::initEvent(const std::vector<int> &listenFds)
 {
     for (size_t i = 0; i < listenFds.size(); ++i) {
@@ -473,6 +507,7 @@ void EventHandler::operate()
                 _servCTimer(eventList[i]);
                 break;
             case EVENT_ERROR:
+                _servError(eventList[i]);
                 break;
             }
         }
