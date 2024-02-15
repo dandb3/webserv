@@ -4,6 +4,7 @@
 #include <iostream> // for test ??
 
 const std::pair<const std::string, std::string> defaultPages[] = {
+    std::make_pair("common", "defaultPage/CommonErrorPage.html"),
     std::make_pair("400", "defaultPage/400_BadRequest.html"),
     std::make_pair("401", "defaultPage/401_Unauthorized.html"),
     std::make_pair("403", "defaultPage/403_Forbidden.html"),
@@ -14,6 +15,7 @@ const std::pair<const std::string, std::string> defaultPages[] = {
     std::make_pair("413", "defaultPage/413_PayloadTooLarge.html"),
     std::make_pair("414", "defaultPage/414_URITooLong.html"),
     std::make_pair("500", "defaultPage/500_InternalServerError.html"),
+    std::make_pair("501", "defaultPage/501_NotImplemented.html"),
     std::make_pair("502", "defaultPage/502_BadGateway.html"),
     std::make_pair("503", "defaultPage/503_ServiceUnavailable.html"),
     std::make_pair("504", "defaultPage/504_GatewayTimeout.html"),
@@ -26,7 +28,12 @@ const std::map<std::string, std::string> ConfigInfo::DEFAULT_PAGE(defaultPages, 
 
 const std::string& ConfigInfo::getDefaultPage(unsigned short code)
 {
-    return ConfigInfo::DEFAULT_PAGE.at(toString(code));
+    std::map<std::string, std::string>::const_iterator it = ConfigInfo::DEFAULT_PAGE.find(toString(code));
+
+    if (it == ConfigInfo::DEFAULT_PAGE.end())
+        return ConfigInfo::DEFAULT_PAGE.at("common");
+    else
+        return it->second;
 }
 
 /// @brief ip, port를 보고 matchedServer,
