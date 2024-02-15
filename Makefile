@@ -30,7 +30,6 @@ SRCS		=	./srcs/config/ServerConfig.cpp \
 				./srcs/server/modules/post.cpp \
 				./srcs/server/modules/CgiRequestHandler.cpp \
 				./srcs/server/modules/HttpRequest.cpp \
-				./srcs/server/modules/StatusLine.cpp \
 				./srcs/server/modules/RequestLine.cpp \
 				./srcs/server/modules/HttpRequestHandler.cpp \
 				./srcs/utils/utils.cpp \
