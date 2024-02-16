@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "PidSet.hpp"
 #include "../../utils/utils.hpp"
 #include "CgiRequestModule.hpp"
 
@@ -269,6 +270,7 @@ void CgiRequestHandler::callCgiScript(ICycle* cycle)
     if (pid == 0)
         _childProcess(servToCgi, cgiToServ, cycle->getConfigInfo().getCgiPath());
     else {
+        PidSet::insert(pid);
         cycle->setCgiScriptPid(pid);
         _parentProcess(servToCgi, cgiToServ);
     }
