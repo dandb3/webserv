@@ -26,6 +26,7 @@ protected:
     std::map<int, WriteFile> _writeFiles;
     pid_t _cgiScriptPid;
     bool _closed;
+    bool _beDeleted;
 
     std::queue<HttpRequest> _httpRequestQueue;
 
@@ -45,12 +46,14 @@ public:
     std::map<int, WriteFile>& getWriteFiles();
     pid_t getCgiScriptPid() const;
     bool closed() const;
+    bool beDeleted() const;
 
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);
     void setReadFile(int fd);
     void setCgiScriptPid(pid_t pid);
 	void setClosed();
+    void setBeDeleted();
 
     std::queue<HttpRequest> &getHttpRequestQueue();
 

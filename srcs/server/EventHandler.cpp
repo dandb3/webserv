@@ -43,7 +43,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_PROC:
         return EVENT_CGI_PROC;
     case EVFILT_TIMER:
-        Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+        Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
 
         if (static_cast<int>(kev.ident) == cycle->getHttpSockfd())
             return EVENT_STIMER;
@@ -54,9 +54,9 @@ char EventHandler::_getEventType(const struct kevent &kev)
     }
 }
 
-void EventHandler::_setHttpResponseEvent(Cycle* cycle)
+void EventHandler::_setHttpResponseEvent(Cycle *cycle)
 {
-    std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
+    std::map<int, WriteFile> &writeFiles = cycle->getWriteFiles();
     int readFile = cycle->getReadFile();
 
     if (readFile != -1) {
@@ -73,27 +73,27 @@ void EventHandler::_setHttpResponseEvent(Cycle* cycle)
         _kqueueHandler.addEvent(cycle->getHttpSockfd(), EVFILT_WRITE, cycle);
 }
 
-void EventHandler::_setHttpRequestFromQ(Cycle* cycle)
+void EventHandler::_setHttpRequestFromQ(Cycle *cycle)
 {
-    HttpResponseHandler& hrspHandler = cycle->getHttpResponseHandler();
-    HttpRequestHandler& hreqHandler = cycle->getHttpRequestHandler();
-    std::queue<HttpRequest>& hreqQ = cycle->getHttpRequestQueue();
+    HttpResponseHandler &hrspHandler = cycle->getHttpResponseHandler();
+    HttpRequestHandler &hreqHandler = cycle->getHttpRequestHandler();
+    std::queue<HttpRequest> &hreqQ = cycle->getHttpRequestQueue();
 
     hrspHandler.setStatus(HttpResponseHandler::RES_BUSY);
     hreqHandler.setHttpRequest(hreqQ.front());
     hreqQ.pop();
 }
 
-void EventHandler::_checkClientBodySize(Cycle* cycle)
+void EventHandler::_checkClientBodySize(Cycle *cycle)
 {
-    ConfigInfo& configInfo = cycle->getConfigInfo();
-    HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
+    ConfigInfo &configInfo = cycle->getConfigInfo();
+    HttpRequest &httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
     if (httpRequest.getCode() != 0)
         return;
 
     // Store the result of configInfo.getInfo() in a variable
-    const t_directives& info = configInfo.getInfo();
+    const t_directives &info = configInfo.getInfo();
     // Now use the variable to retrieve the iterator
     t_directives::const_iterator it = info.find("limit_client_body_size");
 
@@ -103,11 +103,11 @@ void EventHandler::_checkClientBodySize(Cycle* cycle)
         httpRequest.setCode(413);
 }
 
-void EventHandler::_processHttpRequest(Cycle* cycle)
+void EventHandler::_processHttpRequest(Cycle *cycle)
 {
-    ConfigInfo& configInfo = cycle->getConfigInfo();
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    HttpRequest& httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
+    ConfigInfo &configInfo = cycle->getConfigInfo();
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    HttpRequest &httpRequest = cycle->getHttpRequestHandler().getHttpRequest();
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), \
         httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
@@ -119,7 +119,7 @@ void EventHandler::_processHttpRequest(Cycle* cycle)
         _setHttpResponseEvent(cycle);
     }
     else {
-        CgiRequestHandler& creqHdlr = cycle->getCgiRequestHandler();
+        CgiRequestHandler &creqHdlr = cycle->getCgiRequestHandler();
 
         creqHdlr.makeCgiRequest(cycle, httpRequest);
         try {
@@ -151,7 +151,7 @@ void EventHandler::_servListen(const struct kevent &kev)
 
     memset(&localSin, 0, localLen);
     memset(&remoteSin, 0, remoteLen);
-    if ((sockfd = accept(kev.ident, reinterpret_cast<struct sockaddr*>(&remoteSin), &remoteLen)) == FAILURE)
+    if ((sockfd = accept(kev.ident, reinterpret_cast<struct sockaddr *>(&remoteSin), &remoteLen)) == FAILURE)
         return;
     fcntl(sockfd, F_SETFL, O_NONBLOCK);
     getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&localSin), &localLen);
@@ -162,12 +162,15 @@ void EventHandler::_servListen(const struct kevent &kev)
 }
 
 /* httpSockFd에 대한 event, eventType, Timer는 설정된 상태 */
-void EventHandler::_servHttpRequest(const struct kevent& kev)
+void EventHandler::_servHttpRequest(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpRequestHandler& httpRequestHandler = cycle->getHttpRequestHandler();
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    std::queue<HttpRequest>& httpRequestQueue = cycle->getHttpRequestQueue();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpRequestHandler &httpRequestHandler = cycle->getHttpRequestHandler();
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    std::queue<HttpRequest> &httpRequestQueue = cycle->getHttpRequestQueue();
+
+    if (cycle->beDeleted())
+        return;
 
     httpRequestHandler.recvHttpRequest(kev.ident, static_cast<size_t>(kev.data));
     httpRequestHandler.parseHttpRequest((kev.flags & EV_EOF) && kev.data == 0, cycle->getHttpRequestQueue());
@@ -186,10 +189,13 @@ void EventHandler::_servHttpRequest(const struct kevent& kev)
     }
 }
 
-void EventHandler::_servHttpResponse(const struct kevent& kev)
+void EventHandler::_servHttpResponse(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+
+    if (cycle->beDeleted())
+        return;
 
     httpResponseHandler.sendHttpResponse(kev.ident, static_cast<size_t>(kev.data));
     if (httpResponseHandler.getStatus() == HttpResponseHandler::RES_FINISH) {
@@ -202,17 +208,20 @@ void EventHandler::_servHttpResponse(const struct kevent& kev)
         else if (cycle->closed()) {
             _kqueueHandler.deleteEventType(kev.ident);
             close(kev.ident);
-            Cycle::deleteCycle(cycle);
+            cycle->setBeDeleted();
         }
     }
 }
 
-void EventHandler::_servCgiRequest(const struct kevent& kev)
+void EventHandler::_servCgiRequest(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    CgiRequestHandler& cgiRequestHandler = cycle->getCgiRequestHandler();
-    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    CgiRequestHandler &cgiRequestHandler = cycle->getCgiRequestHandler();
+    CgiResponseHandler &cgiResponseHandler = cycle->getCgiResponseHandler();
+
+    if (cycle->beDeleted())
+        return;
 
     try {
         cgiRequestHandler.sendCgiRequest(kev);
@@ -243,12 +252,15 @@ void EventHandler::_servCgiRequest(const struct kevent& kev)
     }
 }
 
-void EventHandler::_servCgiResponse(const struct kevent& kev)
+void EventHandler::_servCgiResponse(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpRequestHandler& httpRequestHandler = cycle->getHttpRequestHandler();
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpRequestHandler &httpRequestHandler = cycle->getHttpRequestHandler();
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    CgiResponseHandler &cgiResponseHandler = cycle->getCgiResponseHandler();
+
+    if (cycle->beDeleted())
+        return;
 
     _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, DEFAULT_TIMEOUT, cycle);
     try {
@@ -311,12 +323,15 @@ void EventHandler::_servCgiProc(const struct kevent &kev)
     PidSet::erase(pid);
 }
 
-void EventHandler::_servFileRead(const struct kevent& kev)
+void EventHandler::_servFileRead(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    HttpResponse &httpResponse = httpResponseHandler.getHttpResponse();
     ssize_t readLen;
+
+    if (cycle->beDeleted())
+        return;
 
     if ((readLen = read(kev.ident, Cycle::getBuf(), std::min(static_cast<size_t>(kev.data), BUF_SIZE))) == FAILURE) {
         httpResponse.headerFields.clear();
@@ -351,16 +366,19 @@ void EventHandler::_servFileRead(const struct kevent& kev)
 
 void EventHandler::_servFileWrite(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    HttpResponse& httpResponse = httpResponseHandler.getHttpResponse();
-    std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    HttpResponse &httpResponse = httpResponseHandler.getHttpResponse();
+    std::map<int, WriteFile> &writeFiles = cycle->getWriteFiles();
     std::map<int, WriteFile>::iterator it;
+
+    if (cycle->beDeleted())
+        return;
 
     if ((it = writeFiles.find(kev.ident)) == writeFiles.end())
         return;
 
-    WriteFile& writeFile = it->second;
+    WriteFile &writeFile = it->second;
 
     if (writeFile.writeToFile(kev.ident, static_cast<size_t>(kev.data)) == FAILURE) {
         for (it = writeFiles.begin(); it != writeFiles.end(); ++it) {
@@ -388,9 +406,12 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
 
 void EventHandler::_servSTimer(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    std::queue<HttpRequest>& httpRequestQ = cycle->getHttpRequestQueue();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    std::queue<HttpRequest> &httpRequestQ = cycle->getHttpRequestQueue();
+
+    if (cycle->beDeleted())
+        return;
 
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
     _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
@@ -404,9 +425,12 @@ void EventHandler::_servSTimer(const struct kevent &kev)
 
 void EventHandler::_servCTimer(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
-    HttpResponseHandler& httpResponseHandler = cycle->getHttpResponseHandler();
-    CgiResponseHandler& cgiResponseHandler = cycle->getCgiResponseHandler();
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
+    CgiResponseHandler &cgiResponseHandler = cycle->getCgiResponseHandler();
+
+    if (cycle->beDeleted())
+        return;
 
     _kqueueHandler.deleteEvent(kev.ident, kev.filter);
     if (cycle->getCgiSendfd() != -1 || cycle->getCgiRecvfd() != -1) {
@@ -428,10 +452,15 @@ void EventHandler::_servCTimer(const struct kevent &kev)
     }
 }
 
-void EventHandler::_servError(const struct kevent& kev)
+void EventHandler::_servError(const struct kevent &kev)
 {
-    Cycle* cycle = reinterpret_cast<Cycle*>(kev.udata);
+    Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
 
+    cycle->setBeDeleted();
+}
+
+void EventHandler::_destroyCycle(Cycle *cycle)
+{
     _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
     _kqueueHandler.deleteEvent(cycle->getHttpSockfd(), EVFILT_TIMER);
     if (cycle->getCgiSendfd() != -1) {
@@ -451,13 +480,10 @@ void EventHandler::_servError(const struct kevent& kev)
         close(it->first);
         std::remove(it->second.getPath().c_str());
     }
-    cycle->getWriteFiles().clear();
-    
     if (PidSet::found(cycle->getCgiScriptPid()))
         kill(cycle->getCgiScriptPid(), SIGKILL);
     _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
     close(cycle->getHttpSockfd());
-    Cycle::deleteCycle(reinterpret_cast<Cycle*>(cycle));
 }
 
 void EventHandler::initEvent(const std::vector<int> &listenFds)
@@ -471,45 +497,58 @@ void EventHandler::initEvent(const std::vector<int> &listenFds)
 void EventHandler::operate()
 {
     struct kevent *eventList = _kqueueHandler.getEventList();
+    std::set<Cycle *> cycleBeDeleted;
 
     while (true) {
         _kqueueHandler.eventCatch();
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
-            switch (_getEventType(eventList[i])) {
-            case EVENT_LISTEN:
-                _servListen(eventList[i]);
-                break;
-            case EVENT_HTTP_REQ:
-                _servHttpRequest(eventList[i]);
-                break;
-            case EVENT_HTTP_RES:
-                _servHttpResponse(eventList[i]);
-                break;
-            case EVENT_CGI_REQ:
-                _servCgiRequest(eventList[i]);
-                break;
-            case EVENT_CGI_RES:
-                _servCgiResponse(eventList[i]);
-                break;
-            case EVENT_CGI_PROC:
-                _servCgiProc(eventList[i]);
-                break;
-            case EVENT_FILE_READ:
-                _servFileRead(eventList[i]);
-                break;
-            case EVENT_FILE_WRITE:
-                _servFileWrite(eventList[i]);
-                break;
-            case EVENT_STIMER:
-                _servSTimer(eventList[i]);
-                break;
-            case EVENT_CTIMER:
-                _servCTimer(eventList[i]);
-                break;
-            case EVENT_ERROR:
-                _servError(eventList[i]);
-                break;
+            try {
+                switch (_getEventType(eventList[i])) {
+                case EVENT_LISTEN:
+                    _servListen(eventList[i]);
+                    break;
+                case EVENT_HTTP_REQ:
+                    _servHttpRequest(eventList[i]);
+                    break;
+                case EVENT_HTTP_RES:
+                    _servHttpResponse(eventList[i]);
+                    break;
+                case EVENT_CGI_REQ:
+                    _servCgiRequest(eventList[i]);
+                    break;
+                case EVENT_CGI_RES:
+                    _servCgiResponse(eventList[i]);
+                    break;
+                case EVENT_CGI_PROC:
+                    _servCgiProc(eventList[i]);
+                    break;
+                case EVENT_FILE_READ:
+                    _servFileRead(eventList[i]);
+                    break;
+                case EVENT_FILE_WRITE:
+                    _servFileWrite(eventList[i]);
+                    break;
+                case EVENT_STIMER:
+                    _servSTimer(eventList[i]);
+                    break;
+                case EVENT_CTIMER:
+                    _servCTimer(eventList[i]);
+                    break;
+                case EVENT_ERROR:
+                    _servError(eventList[i]);
+                    break;
+                }
             }
+            catch (std::runtime_error& e) {
+                reinterpret_cast<Cycle*>(eventList[i].udata)->setBeDeleted();
+            }
+            if (reinterpret_cast<Cycle *>(eventList[i].udata)->beDeleted())
+                cycleBeDeleted.insert(reinterpret_cast<Cycle *>(eventList[i].udata));
         }
+        for (std::set<Cycle *>::iterator it = cycleBeDeleted.begin(); it != cycleBeDeleted.end(); ++it) {
+            _destroyCycle(*it);
+            Cycle::deleteCycle(*it);
+        }
+        cycleBeDeleted.clear();
     }
 }

@@ -46,6 +46,8 @@ private:
     void _servCTimer(const struct kevent& kev);
     void _servError(const struct kevent& kev);
 
+    void _destroyCycle(Cycle* cycle);
+
 public:
     EventHandler();
 
