@@ -544,8 +544,9 @@ void EventHandler::operate()
             catch (std::runtime_error& e) {
                 reinterpret_cast<Cycle*>(eventList[i].udata)->setBeDeleted();
             }
-            if (reinterpret_cast<Cycle *>(eventList[i].udata)->beDeleted())
+            if (eventList[i].udata != NULL && reinterpret_cast<Cycle *>(eventList[i].udata)->beDeleted()) {
                 cycleBeDeleted.insert(reinterpret_cast<Cycle *>(eventList[i].udata));
+            }
         }
         for (std::set<Cycle *>::iterator it = cycleBeDeleted.begin(); it != cycleBeDeleted.end(); ++it) {
             _destroyCycle(*it);
