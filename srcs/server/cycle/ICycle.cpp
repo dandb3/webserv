@@ -10,7 +10,7 @@ char* ICycle::getBuf()
 
 ICycle::ICycle(in_addr_t localIp, in_port_t localPort, in_addr_t remoteIp, int httpSockfd)
 : _configInfo(), _localIp(localIp), _localPort(localPort), _remoteIp(remoteIp), _httpSockfd(httpSockfd), \
-    _cgiSendfd(-1), _cgiRecvfd(-1), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _closed(false)
+    _cgiSendfd(-1), _cgiRecvfd(-1), _readFile(-1), _writeFiles(), _cgiScriptPid(-1), _closed(false), _beDeleted(false)
 {}
 
 ConfigInfo& ICycle::getConfigInfo()
@@ -68,6 +68,11 @@ bool ICycle::closed() const
     return _closed;
 }
 
+bool ICycle::beDeleted() const
+{
+    return _beDeleted;
+}
+
 void ICycle::setCgiSendfd(int fd)
 {
     _cgiSendfd = fd;
@@ -91,6 +96,11 @@ void ICycle::setCgiScriptPid(pid_t pid)
 void ICycle::setClosed()
 {
     _closed = true;
+}
+
+void ICycle::setBeDeleted()
+{
+    _beDeleted = true;
 }
 
 std::queue<HttpRequest> &ICycle::getHttpRequestQueue()
