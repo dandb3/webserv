@@ -226,6 +226,10 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     else
         _path = _root + uri;
 
+    std::cout << "path: " << _path << std::endl; // for test
+    std::cout << "root: " << _root << std::endl; // for test
+    std::cout << "uri: " << uri << std::endl; // for test
+
     t_directives::iterator it;
     std::string extension;
     size_t cgiPos;
@@ -240,7 +244,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
         }
     }
     if (_info.find("limit_client_body_size") == _info.end())
-        _info["limit_client_body_size"].push_back("1000000");
+        _info["limit_client_body_size"].push_back(toString(DEFAULT_MAX_BODY_SIZE));
 }
 
 // for test
