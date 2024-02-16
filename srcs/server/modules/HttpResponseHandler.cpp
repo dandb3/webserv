@@ -538,7 +538,6 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         case POST:
             if (!configInfo.getAllowMethods(2)) {
                 // _setAllow(configInfo);
-                std::cout << "여기서 405 에러 발생\n"; // test
                 throw 405;
             }
             _makePOSTResponse(cycle, httpRequest);
@@ -554,8 +553,6 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
     }
     catch (int code) {
         _httpResponse.statusLine.code = static_cast<short>(code);
-        std::cout << "code: " << code << std::endl; // test
-        std::cout << _httpResponse.statusLine.code << std::endl; // test
         makeErrorHttpResponse(cycle);
     }
     std::cout << "makeHttpResponse finish\n"; // test
@@ -593,6 +590,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
         _status = RES_FINISH;
         _pos = 0;
     }
+    std::cout << "sendHttpResponse finish\n"; // test
 }
 
 void HttpResponseHandler::setStatus(char status)

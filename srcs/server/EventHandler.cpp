@@ -462,7 +462,10 @@ void EventHandler::_servCTimer(const struct kevent &kev)
 void EventHandler::_servError(const struct kevent &kev)
 {
     Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
-
+    if (cycle == NULL) {
+        std::cout << "NULL\n"; // test
+        return;
+    }
     cycle->setBeDeleted();
 }
 

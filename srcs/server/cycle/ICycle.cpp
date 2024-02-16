@@ -98,9 +98,12 @@ void ICycle::setClosed()
     _closed = true;
 }
 
+#include <iostream> // test
 void ICycle::setBeDeleted()
 {
+    std::cout << "1\n"; // test
     _beDeleted = true;
+    std::cout << "2\n"; // test
 }
 
 std::queue<HttpRequest> &ICycle::getHttpRequestQueue()
