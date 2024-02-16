@@ -139,7 +139,7 @@ void EventHandler::_processHttpRequest(Cycle *cycle)
         _kqueueHandler.addEvent(cycle->getCgiRecvfd(), EVFILT_READ, cycle);
         _kqueueHandler.setEventType(cycle->getCgiRecvfd(), KqueueHandler::SOCKET_CGI);
         _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT);
-        _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, DEFAULT_TIMEOUT, cycle);
+        _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, DEFAULT_TIMEOUT, cycle);
     }
 }
 
@@ -264,7 +264,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
     if (cycle->beDeleted())
         return;
 
-    _kqueueHandler.changeEvent(cycle->getCgiSendfd(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, DEFAULT_TIMEOUT, cycle);
+    _kqueueHandler.changeEvent(cycle->getCgiScriptPid(), EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, DEFAULT_TIMEOUT, cycle);
     try {
         cgiResponseHandler.recvCgiResponse(kev);
     }
@@ -292,7 +292,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
             kill(cycle->getCgiScriptPid(), SIGKILL);
         close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
         _kqueueHandler.deleteEventType(kev.ident);
-        _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
+        _kqueueHandler.deleteEvent(cycle->getCgiScriptPid(), EVFILT_TIMER);
         cgiResponseHandler.makeCgiResponse();
         if (httpRequestHandler.getHttpRequest().getRequestLine().getMethod() == HttpRequestHandler::HEAD)
             cgiResponseHandler.getCgiResponse().getMessageBody().clear();
@@ -321,7 +321,6 @@ void EventHandler::_servCgiProc(const struct kevent &kev)
     pid_t pid = static_cast<pid_t>(kev.ident);
 
     waitpid(pid, NULL, WNOHANG);
-    _kqueueHandler.deleteEvent(kev.ident, kev.filter);
     PidSet::erase(pid);
 }
 
@@ -464,7 +463,7 @@ void EventHandler::_servError(const struct kevent &kev)
 
 void EventHandler::_destroyCycle(Cycle *cycle)
 {
-    _kqueueHandler.deleteEvent(cycle->getCgiSendfd(), EVFILT_TIMER);
+    _kqueueHandler.deleteEvent(cycle->getCgiScriptPid(), EVFILT_TIMER);
     _kqueueHandler.deleteEvent(cycle->getHttpSockfd(), EVFILT_TIMER);
     if (cycle->getCgiSendfd() != -1) {
         _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
