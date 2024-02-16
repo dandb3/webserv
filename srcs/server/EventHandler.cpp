@@ -12,6 +12,8 @@ EventHandler::EventHandler()
 
 char EventHandler::_getEventType(const struct kevent &kev)
 {
+    Cycle* cycle;
+
     if (kev.flags & EV_ERROR)
         return EVENT_ERROR;
 
@@ -43,7 +45,7 @@ char EventHandler::_getEventType(const struct kevent &kev)
     case EVFILT_PROC:
         return EVENT_CGI_PROC;
     case EVFILT_TIMER:
-        Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+        cycle = reinterpret_cast<Cycle*>(kev.udata);
 
         if (static_cast<int>(kev.ident) == cycle->getHttpSockfd())
             return EVENT_STIMER;

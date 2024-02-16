@@ -32,6 +32,7 @@ SRCS		=	./srcs/config/ServerConfig.cpp \
 				./srcs/server/modules/HttpRequest.cpp \
 				./srcs/server/modules/RequestLine.cpp \
 				./srcs/server/modules/HttpRequestHandler.cpp \
+				./srcs/server/modules/PidSet.cpp \
 				./srcs/utils/utils.cpp \
 				./srcs/utils/FileReader.cpp \
 				./srcs/main.cpp

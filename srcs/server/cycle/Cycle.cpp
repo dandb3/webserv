@@ -45,7 +45,7 @@ void Cycle::reset()
     _cgiRecvfd = -1;
     _readFile = -1;
     _writeFiles.clear();
-    if (PidSet::found(cycle->getCgiScriptPid()))
+    if (_cgiScriptPid != -1 && PidSet::found(_cgiScriptPid))
         kill(_cgiScriptPid, SIGKILL);
     _cgiScriptPid = -1;
     _httpResponseHandler.reset();
