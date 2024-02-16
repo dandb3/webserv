@@ -458,7 +458,8 @@ void EventHandler::_servError(const struct kevent &kev)
 {
     Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
 
-    cycle->setBeDeleted();
+    if (cycle != NULL)
+        cycle->setBeDeleted();
 }
 
 void EventHandler::_destroyCycle(Cycle *cycle)
