@@ -70,6 +70,8 @@ public:
     bool isInputReady() const;
     bool closed() const;
 
+    void reset();
+
 };
 
 #endif

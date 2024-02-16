@@ -376,3 +376,8 @@ bool HttpRequestHandler::closed() const
 {
     return (_status == INPUT_NORMAL_CLOSED || _status == INPUT_ERROR_CLOSED);
 }
+
+void HttpRequestHandler::reset()
+{
+    _cycleHttpRequest = HttpRequest();
+}

@@ -208,8 +208,10 @@ void EventHandler::_servHttpResponse(const struct kevent &kev)
             _processHttpRequest(cycle);
         }
         else if (cycle->closed()) {
+            _kqueueHandler.deleteEvent(kev.ident, EVFILT_TIMER);
             _kqueueHandler.deleteEventType(kev.ident);
             close(kev.ident);
+            cycle->setHttpSockfd(-1);
             cycle->setBeDeleted();
         }
     }
@@ -464,7 +466,11 @@ void EventHandler::_servError(const struct kevent &kev)
 
 void EventHandler::_destroyCycle(Cycle *cycle)
 {
-    _kqueueHandler.deleteEvent(cycle->getHttpSockfd(), EVFILT_TIMER);
+    if (cycle->getHttpSockfd() != -1) {
+        _kqueueHandler.deleteEvent(cycle->getHttpSockfd(), EVFILT_TIMER);
+        _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
+        close(cycle->getHttpSockfd());
+    }
     if (cycle->getCgiSendfd() != -1) {
         _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
         close(cycle->getCgiSendfd());
@@ -485,8 +491,6 @@ void EventHandler::_destroyCycle(Cycle *cycle)
     }
     if (PidSet::found(cycle->getCgiScriptPid()))
         kill(cycle->getCgiScriptPid(), SIGKILL);
-    _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
-    close(cycle->getHttpSockfd());
 }
 
 void EventHandler::initEvent(const std::vector<int> &listenFds)

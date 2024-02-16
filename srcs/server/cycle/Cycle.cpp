@@ -41,13 +41,7 @@ CgiResponseHandler &Cycle::getCgiResponseHandler()
 
 void Cycle::reset()
 {
-    _cgiSendfd = -1;
-    _cgiRecvfd = -1;
-    _readFile = -1;
-    _writeFiles.clear();
-    if (_cgiScriptPid != -1 && PidSet::found(_cgiScriptPid))
-        kill(_cgiScriptPid, SIGKILL);
-    _cgiScriptPid = -1;
+    _httpRequestHandler.reset();
     _httpResponseHandler.reset();
     _cgiRequestHandler.reset();
     _cgiResponseHandler.reset();
