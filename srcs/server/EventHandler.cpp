@@ -115,6 +115,7 @@ void EventHandler::_processHttpRequest(Cycle *cycle)
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), \
         httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
+    std::cout << "path: " << configInfo.getPath() << std::endl; // for test debug
 
     if (httpRequest.getCode() == 0)
         _checkClientBodySize(cycle);
@@ -355,11 +356,10 @@ void EventHandler::_servFileRead(const struct kevent &kev)
         return;
     }
 
-    if (cycle->getHttpRequestHandler().getHttpRequest().getRequestLine().getMethod() == HttpRequestHandler::HEAD)
+    if (cycle->getHttpRequestHandler().getHttpRequest().getRequestLine().getMethod() != HttpRequestHandler::HEAD) // tmp
         httpResponse.messageBody.append(Cycle::getBuf(), readLen);
 
     if (readLen == kev.data) {
-        std::cout << "readLen == kev.data\n"; // for test debug
         close(kev.ident);
         cycle->setReadFile(-1);
         _kqueueHandler.deleteEventType(kev.ident);
