@@ -15,6 +15,7 @@ void HttpRequestHandler::_inputEOF()
         _status = INPUT_NORMAL_CLOSED;
     else
         _status = INPUT_ERROR_CLOSED;
+    std::cout << "input EOF\n"; // test
 }
 
 void HttpRequestHandler::_inputStart()
@@ -125,9 +126,9 @@ void HttpRequestHandler::_parseRequestLine()
     _status = INPUT_HEADER_FIELD;
 }
 
-void HttpRequestHandler::_inputHeaderField()
+void HttpRequestHandler::_inputByLine(bool isHeaderField)
 {
-    const std::string whitespace = WHITESPACE;
+    const std::string whitespace(WHITESPACE);
     size_t start, end;
     bool lastWhitespace, lastCRLF;
 
@@ -145,8 +146,12 @@ void HttpRequestHandler::_inputHeaderField()
     }
 
     _remain = _remain.substr(start);
-    if (lastCRLF)
-        _parseHeaderField();
+    if (lastCRLF) {
+        if (isHeaderField)
+            _parseHeaderField();
+        else
+            _parseChunkedBody();
+    }
 }
 
 void HttpRequestHandler::_parseHeaderField()
@@ -174,6 +179,7 @@ void HttpRequestHandler::_parseHeaderField()
         headerFields.insert(make_pair(key, value));
     }
 
+    _lineV.clear();
     _httpRequest.setHeaderFields(headerFields);
     
     _status = INPUT_MESSAGE_BODY;
@@ -211,7 +217,7 @@ void HttpRequestHandler::_inputMessageBody()
         }
         _lineV.clear();
         _status = INPUT_CHUNKED_BODY;
-        _inputChunkedBody();
+        _inputByLine(false);
     }
     else
         _status = PARSE_FINISHED;
@@ -253,12 +259,10 @@ void HttpRequestHandler::_extractContentLength(int contentLengthCount)
 
 void HttpRequestHandler::_inputDefaultBody()
 {
-    const size_t length = _remain.length();
-
-    if (length < _contentLength) {
+    if (_remain.length() <= _contentLength) {
         _httpRequest.getMessageBody().append(_remain);
         _remain = "";
-        _contentLength -= length;
+        _contentLength -= _remain.length();
     }
     else { // remain에 다음 request가 포함되어 있을 수 있다.
         _httpRequest.getMessageBody().append(_remain.substr(0, _contentLength));
@@ -268,41 +272,30 @@ void HttpRequestHandler::_inputDefaultBody()
     }
 }
 
-void HttpRequestHandler::_inputChunkedBody()
+void HttpRequestHandler::_parseChunkedBody()
 {
-    enum {
-        LENGTH = 0,
-        STRING
-    };
-
-    size_t start, end;
+    std::cout << "parse chunked body start\n"; // test
     long long length;
-    unsigned short mode = LENGTH;
 
-    start = 0;
-    while (1) {
-        if ((end = _remain.find(CRLF, start)) == std::string::npos) {
-            if (_remain[start] == '0' && mode == LENGTH)
-                _status = PARSE_FINISHED;
-            break;
-        }
-            
-        if (mode == LENGTH) {
-            length = strtol(_remain.substr(start, end - start).c_str(), NULL, 10);
-            mode = STRING;
-        }
+    if (!(_lineV.size() & 1) || _lineV.back() != "0") {
+        _status = INPUT_ERROR_CLOSED;
+        _httpRequest.setCode(400);
+        return;
+    }
+    for (size_t i = 0; i < _lineV.size() - 1; i++) {
+        if (!(i & 1))
+            length = strtol(_lineV[i].c_str(), NULL, 10);
         else {
-            if (length != static_cast<long long>(end - start)) { // 400 error
+            if (length != static_cast<long long>(_lineV[i].length())) {
                 _status = INPUT_ERROR_CLOSED;
                 _httpRequest.setCode(400);
                 return;
             }
-            _httpRequest.getMessageBody().append(_remain.substr(start, length));
-            mode = LENGTH;
+            _httpRequest.getMessageBody().append(_lineV[i]);
         }
-        start = end + 2;
     }
-    _remain = _remain.substr(start);
+    _lineV.clear();
+    _status = PARSE_FINISHED;
 }
 
 void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
@@ -333,7 +326,17 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
         _status = INPUT_ERROR_CLOSED;
         return;
     }
+    std::cout << "readLen: " << readLen << std::endl; // test
+    if (readLen <= 4) {
+        std::cout << "recv http request in ascii\n";
+        for (ssize_t i = 0; i < readLen; i++)
+            std::cout << static_cast<int>(ICycle::getBuf()[i]) << " ";
+        std::cout << std::endl;
+    }
+    else 
+        std::cout << "recvHttpRequest\n" << std::string(ICycle::getBuf()).substr(0, readLen) << std::endl; // test
     _remain.append(ICycle::getBuf(), static_cast<size_t>(readLen));
+    // std::cout << "_remain: " << _remain << std::endl; // test
 }
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
@@ -341,18 +344,19 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
     if (eof)
         _inputEOF();
     // do {
+    std::cout << "http request status: " << static_cast<int>(_status) << std::endl; // test
         if (_status == INPUT_READY)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
             _inputRequestLine();
         if (_status == INPUT_HEADER_FIELD)
-            _inputHeaderField();
+            _inputByLine(true);
         if (_status == INPUT_MESSAGE_BODY)
             _inputMessageBody();
         if (_status == INPUT_DEFAULT_BODY)
             _inputDefaultBody();
         if (_status == INPUT_CHUNKED_BODY)
-            _inputChunkedBody();
+            _inputByLine(false);
         if (_status == PARSE_FINISHED || _status == INPUT_ERROR_CLOSED)
             _pushRequest(httpRequestQ);
     // } while (_status == INPUT_READY);
