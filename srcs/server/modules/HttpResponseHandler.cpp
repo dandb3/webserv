@@ -233,8 +233,11 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
         throw 500;
     
     if (S_ISDIR(buf.st_mode)) {
+        std::cout << "is dir\n"; // test
         prevPath = path;
+        path.push_back('/');
         path += cycle->getConfigInfo().getIndex();
+        std::cout << "index path: " << path << std::endl; // test
         
         if (access(path.c_str(), F_OK) == FAILURE) {
             if (cycle->getConfigInfo().getAutoIndex() == false)

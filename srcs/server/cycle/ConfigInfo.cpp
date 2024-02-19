@@ -221,14 +221,21 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     std::string path;
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
-    if (_root.back() == '/' && uri.front() == '/')
-        _path = _root + uri.substr(1);
+    std::string locationUri = (path == "/") ? uri : uri.substr(path.size() - 1);
+    std::cout << "locationUri: " << locationUri << std::endl; // for test
+    if (locationUri != "" && locationUri != "/") {
+        if (_root.back() == '/' && locationUri[0] == '/') {
+            _path = _root;
+            _path.pop_back();
+            _path += locationUri;
+        }
+        else
+            _path = _root + locationUri;
+    }
     else
-        _path = _root + uri;
-
-    std::cout << "path: " << _path << std::endl; // for test
-    std::cout << "root: " << _root << std::endl; // for test
-    std::cout << "uri: " << uri << std::endl; // for test
+        _path = _root;
+    // if (_path.back() == '/' && _index != "")
+    //     _path += _index;
 
     t_directives::iterator it;
     std::string extension;
