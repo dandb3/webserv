@@ -48,6 +48,7 @@ public:
     bool closed() const;
     bool beDeleted() const;
 
+    void setHttpSockfd(int fd);
     void setCgiSendfd(int fd);
     void setCgiRecvfd(int fd);
     void setReadFile(int fd);

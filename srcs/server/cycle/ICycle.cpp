@@ -73,6 +73,11 @@ bool ICycle::beDeleted() const
     return _beDeleted;
 }
 
+void ICycle::setHttpSockfd(int fd)
+{
+    _httpSockfd = fd;
+}
+
 void ICycle::setCgiSendfd(int fd)
 {
     _cgiSendfd = fd;

@@ -370,12 +370,9 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
     for (it = files.begin(); it != files.end(); ++it) {
         // if (access(it->first.c_str(), F_OK) == SUCCESS)
         //     throw 409;
-        if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE) {
+        if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE)
         // if (access("wow", W_OK | X_OK) == FAILURE)
-            std::cout << "dirPath(it->first): " << dirPath(it->first) << "\n"; // test
-            std::cout << "access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE\n"; // test
             throw 403;
-        }
     }
     for (it = files.begin(); it != files.end(); ++it) {
         fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
