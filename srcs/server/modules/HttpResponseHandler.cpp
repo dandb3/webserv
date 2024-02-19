@@ -335,7 +335,7 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
     std::map<std::string, std::string> files;
     const std::string contentType = httpRequest.getHeaderFields().find("Content-Type")->second;
     const std::string body = httpRequest.getMessageBody();
-    const std::string fileName = httpRequest.getRequestLine().getUri();
+    const std::string fileName = cycle->getConfigInfo().getPath();
     std::string fileContent;
 
     if (contentType == "") {
@@ -368,11 +368,14 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
     int fd;
 
     for (it = files.begin(); it != files.end(); ++it) {
-        if (access(it->first.c_str(), F_OK) == SUCCESS)
-            throw 409;
-        if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE)
+        // if (access(it->first.c_str(), F_OK) == SUCCESS)
+        //     throw 409;
+        if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE) {
         // if (access("wow", W_OK | X_OK) == FAILURE)
-            throw 409;
+            std::cout << "dirPath(it->first): " << dirPath(it->first) << "\n"; // test
+            std::cout << "access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE\n"; // test
+            throw 403;
+        }
     }
     for (it = files.begin(); it != files.end(); ++it) {
         fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
