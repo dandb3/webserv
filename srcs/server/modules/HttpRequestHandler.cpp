@@ -145,7 +145,8 @@ void HttpRequestHandler::_inputByLine(bool isHeaderField)
         start = end + 2;
     }
 
-    _remain = _remain.substr(start);
+    if (start != 0)
+        _remain = _remain.substr(start);
     if (lastCRLF) {
         if (isHeaderField)
             _parseHeaderField();
@@ -283,8 +284,9 @@ void HttpRequestHandler::_parseChunkedBody()
         return;
     }
     for (size_t i = 0; i < _lineV.size() - 1; i++) {
-        if (!(i & 1))
-            length = strtol(_lineV[i].c_str(), NULL, 10);
+        if (!(i & 1)) {
+            length = strtol(_lineV[i].c_str(), NULL, 16);
+        }
         else {
             if (length != static_cast<long long>(_lineV[i].length())) {
                 _status = INPUT_ERROR_CLOSED;
@@ -326,15 +328,15 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
         _status = INPUT_ERROR_CLOSED;
         return;
     }
-    std::cout << "readLen: " << readLen << std::endl; // test
-    if (readLen <= 4) {
-        std::cout << "recv http request in ascii\n";
-        for (ssize_t i = 0; i < readLen; i++)
-            std::cout << static_cast<int>(ICycle::getBuf()[i]) << " ";
-        std::cout << std::endl;
-    }
-    else 
-        std::cout << "recvHttpRequest\n" << std::string(ICycle::getBuf()).substr(0, readLen) << std::endl; // test
+    // std::cout << "readLen: " << readLen << std::endl; // test
+    // if (readLen <= 4) { // test
+    //     std::cout << "recv http request in ascii\n";
+    //     for (ssize_t i = 0; i < readLen; i++)
+    //         std::cout << static_cast<int>(ICycle::getBuf()[i]) << " ";
+    //     std::cout << std::endl;
+    // }
+    // else 
+    //     std::cout << "recvHttpRequest\n" << std::string(ICycle::getBuf()).substr(0, readLen) << std::endl; // test
     _remain.append(ICycle::getBuf(), static_cast<size_t>(readLen));
     // std::cout << "_remain: " << _remain << std::endl; // test
 }
@@ -344,7 +346,6 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
     if (eof)
         _inputEOF();
     // do {
-    std::cout << "http request status: " << static_cast<int>(_status) << std::endl; // test
         if (_status == INPUT_READY)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
