@@ -6,6 +6,7 @@
 #include "../modules/HttpRequest.hpp"
 
 #define DEFAULT_TIMEOUT 10L
+#define DEFAULT_MAX_BODY_SIZE 1000000000L
 
 typedef std::map<std::string, std::vector<std::string> > t_directives;
 

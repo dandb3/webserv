@@ -19,7 +19,8 @@ const std::pair<const std::string, std::string> defaultPages[] = {
     std::make_pair("502", "defaultPage/502_BadGateway.html"),
     std::make_pair("503", "defaultPage/503_ServiceUnavailable.html"),
     std::make_pair("504", "defaultPage/504_GatewayTimeout.html"),
-    std::make_pair("505", "defaultPage/505_HTTPVersionNotSupported.html")
+    std::make_pair("505", "defaultPage/505_HTTPVersionNotSupported.html"),
+    std::make_pair("default", "defaultPage/defaultError.html")
 };
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
@@ -32,8 +33,7 @@ const std::string& ConfigInfo::getDefaultPage(unsigned short code)
 
     if (it == ConfigInfo::DEFAULT_PAGE.end())
         return ConfigInfo::DEFAULT_PAGE.at("common");
-    else
-        return it->second;
+    return it->second;
 }
 
 /// @brief ip, port를 보고 matchedServer,
@@ -221,10 +221,21 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     std::string path;
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
     transferInfo(matchedLocation.getLocationInfo());
-    if (_root.back() == '/' && uri.front() == '/')
-        _path = _root + uri.substr(1);
+    std::string locationUri = (path == "/") ? uri : uri.substr(path.size() - 1);
+    std::cout << "locationUri: " << locationUri << std::endl; // for test
+    if (locationUri != "" && locationUri != "/") {
+        if (_root.back() == '/' && locationUri[0] == '/') {
+            _path = _root;
+            _path.pop_back();
+            _path += locationUri;
+        }
+        else
+            _path = _root + locationUri;
+    }
     else
-        _path = _root + uri;
+        _path = _root;
+    // if (_path.back() == '/' && _index != "")
+    //     _path += _index;
 
     t_directives::iterator it;
     std::string extension;
@@ -240,7 +251,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
         }
     }
     if (_info.find("limit_client_body_size") == _info.end())
-        _info["limit_client_body_size"].push_back("1000000");
+        _info["limit_client_body_size"].push_back(toString(DEFAULT_MAX_BODY_SIZE));
 }
 
 // for test
@@ -328,7 +339,8 @@ std::string ConfigInfo::getIndex() const {
 std::string ConfigInfo::getErrorPage(std::string key) const {
     if (_errorPage.find(key) == _errorPage.end()) {
         if (DEFAULT_PAGE.find(key) == DEFAULT_PAGE.end())
-            throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
+            return DEFAULT_PAGE.at("default");
+            // throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
         return DEFAULT_PAGE.at(key);
     }
     return _errorPage.at(key);
@@ -379,5 +391,6 @@ short ConfigInfo::requestType(HttpRequest& httpRequest) const
 }
 
 void ConfigInfo::setDefaultErrorPage(unsigned short code) {
+    
     _errorPage[toString(code)] = getDefaultPage(code);
 }

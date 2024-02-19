@@ -226,14 +226,18 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
     struct stat buf;
     int fd;
 
+    std::cout << "access path: " << path << std::endl; // test
     if (access(path.c_str(), F_OK) == FAILURE)
         throw 404;
     if (stat(path.c_str(), &buf) == FAILURE)
         throw 500;
     
     if (S_ISDIR(buf.st_mode)) {
+        std::cout << "is dir\n"; // test
         prevPath = path;
+        path.push_back('/');
         path += cycle->getConfigInfo().getIndex();
+        std::cout << "index path: " << path << std::endl; // test
         
         if (access(path.c_str(), F_OK) == FAILURE) {
             if (cycle->getConfigInfo().getAutoIndex() == false)
@@ -364,8 +368,8 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
     int fd;
 
     for (it = files.begin(); it != files.end(); ++it) {
-        if (access(it->first.c_str(), F_OK) == SUCCESS)
-            throw 409;
+        // if (access(it->first.c_str(), F_OK) == SUCCESS)
+        //     throw 409;
         if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE)
         // if (access("wow", W_OK | X_OK) == FAILURE)
             throw 403;
@@ -447,15 +451,18 @@ void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
         if (errorPage == ConfigInfo::getDefaultPage(_httpResponse.statusLine.code))
             makeHttpResponseFinal(cycle);
         else {
+            std::cout << "에러 페이지를 읽어올 수 없습니다.\n"; // test
             cycle->getConfigInfo().setDefaultErrorPage(_httpResponse.statusLine.code);
             makeErrorHttpResponse(cycle);
         }
     }
     else {
+        std::cout << "에러 페이지를 읽어옵니다.\n"; // test
         fcntl(fd, F_SETFL, O_NONBLOCK);
         cycle->setReadFile(fd);
         _setContentType(true, errorPage);
     }
+    std::cout << "make error response finish\n"; // test
 }
 
 /**
@@ -517,12 +524,15 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         return;
     }
     try {
+        std::cout << "switch method : " << method << "\n"; // test
         switch (method) {
         case GET:
+            std::cout << "GET\n"; // test
             if (!configInfo.getAllowMethods(0)) {
                 // _setAllow(configInfo);
                 throw 405;
             }
+            std::cout << "makeGETResponse go\n"; // test
             _makeGETResponse(cycle);
             break;
         case HEAD:
@@ -549,9 +559,11 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         }
     }
     catch (int code) {
+        std::cout << "http response handler make http response catch: " << code << "\n"; // test
         _httpResponse.statusLine.code = static_cast<short>(code);
         makeErrorHttpResponse(cycle);
     }
+    std::cout << "makeHttpResponse finish\n"; // test
 }
 
 void HttpResponseHandler::makeHttpResponse(ICycle* cycle, CgiResponse &cgiResponse)
@@ -578,6 +590,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
 {
     size_t writeLen;
 
+    std::cout << "_response: " << _response << "\n"; // test
     writeLen = std::min(_response.size() - _pos, size);
     if (write(fd, _response.c_str() + _pos, writeLen) == FAILURE)
         throw std::runtime_error("sendHttpResponse에서 write 실패");
@@ -586,6 +599,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
         _status = RES_FINISH;
         _pos = 0;
     }
+    std::cout << "sendHttpResponse finish\n"; // test
 }
 
 void HttpResponseHandler::setStatus(char status)

@@ -9,3 +9,4 @@ client
 *.o
 srv
 clnt
+cat
