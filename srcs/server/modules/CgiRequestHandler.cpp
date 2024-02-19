@@ -248,6 +248,8 @@ void CgiRequestHandler::callCgiScript(ICycle* cycle)
     int servToCgi[2], cgiToServ[2];
     pid_t pid;
 
+    if (access(cycle->getConfigInfo().getCgiPath().c_str(), X_OK) == FAILURE)
+        throw 404;
     if (pipe(servToCgi) == FAILURE)
         throw 500;
     if (pipe(cgiToServ) == FAILURE) {

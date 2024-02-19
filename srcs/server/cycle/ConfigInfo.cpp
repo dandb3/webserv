@@ -234,7 +234,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
         extension = "." + it->second[0];
         if ((cgiPos = uri.find(extension, path.size())) != std::string::npos) {
             if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
-                _cgiPath = _root.substr(0, _root.size() - 1) + uri.substr(0, cgiPos + extension.size());
+                _cgiPath = _root + uri.substr(path.size(), cgiPos + extension.size() - path.size());
                 _path = _root.substr(0, _root.size() - 1) + uri.substr(cgiPos + extension.size());
             }
         }
