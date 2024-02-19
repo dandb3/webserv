@@ -71,6 +71,14 @@ void KqueueHandler::eventCatch()
     _eventsToAdd.clear();
 }
 
+void KqueueHandler::deleteDuplicated()
+{
+    for (std::vector<struct kevent>::iterator it = _eventsToAdd.begin(); it != _eventsToAdd.end(); ++it) {
+        if ((it->filter == EVFILT_READ || it->filter == EVFILT_WRITE) && _type.find(it->ident) != _type.end())
+            
+    }
+}
+
 char KqueueHandler::getEventType(int ident)
 {
     if (_type.find(ident) == _type.end()) {

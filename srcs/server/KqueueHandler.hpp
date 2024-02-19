@@ -50,6 +50,7 @@ public:
     void deleteEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags = 0, intptr_t data = 0, void *udata = NULL);
     void eventCatch();
+    void deleteDuplicated();
     // void enableEvent(/* args */);
     // void disableEvent(/* args */);
     char getEventType(int ident);

@@ -182,7 +182,7 @@ void EventHandler::_servHttpRequest(const struct kevent &kev)
         _kqueueHandler.changeEvent(kev.ident, EVFILT_TIMER, EV_ADD, NOTE_SECONDS, cycle->getConfigInfo().getRequestTimeout(), cycle);
     if (httpRequestHandler.closed()) {
         cycle->setClosed();
-        _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+        _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
         _kqueueHandler.deleteEvent(kev.ident, EVFILT_TIMER);
     }
     if (!httpRequestQueue.empty() && httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
@@ -201,19 +201,20 @@ void EventHandler::_servHttpResponse(const struct kevent &kev)
 
     httpResponseHandler.sendHttpResponse(kev.ident, static_cast<size_t>(kev.data));
     if (httpResponseHandler.getStatus() == HttpResponseHandler::RES_FINISH) {
-        _kqueueHandler.deleteEvent(kev.ident, kev.filter);
         cycle->reset();
         if (!cycle->getHttpRequestQueue().empty()) {
+            _kqueueHandler.deleteEvent(kev.ident, EVFILT_WRITE);
             _setHttpRequestFromQ(cycle);
             _processHttpRequest(cycle);
         }
         else if (cycle->closed()) {
-            _kqueueHandler.deleteEvent(kev.ident, EVFILT_TIMER);
             _kqueueHandler.deleteEventType(kev.ident);
             close(kev.ident);
             cycle->setHttpSockfd(-1);
             cycle->setBeDeleted();
         }
+        else
+            _kqueueHandler.deleteEvent(kev.ident, EVFILT_WRITE);
     }
 }
 
@@ -416,10 +417,10 @@ void EventHandler::_servSTimer(const struct kevent &kev)
     HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
     std::queue<HttpRequest> &httpRequestQ = cycle->getHttpRequestQueue();
 
-    if (cycle->beDeleted())
+    if (cycle->beDeleted() || cycle->closed())
         return;
 
-    _kqueueHandler.deleteEvent(kev.ident, kev.filter);
+    _kqueueHandler.deleteEvent(kev.ident, EVFILT_TIMER);
     _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
     cycle->setClosed();
     httpRequestQ.push(HttpRequest(408));
@@ -466,8 +467,9 @@ void EventHandler::_servError(const struct kevent &kev)
 
 void EventHandler::_destroyCycle(Cycle *cycle)
 {
-    if (cycle->getHttpSockfd() != -1) {
+    if (!cycle->closed())
         _kqueueHandler.deleteEvent(cycle->getHttpSockfd(), EVFILT_TIMER);
+    if (cycle->getHttpSockfd() != -1) {
         _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
         close(cycle->getHttpSockfd());
     }
@@ -553,6 +555,8 @@ void EventHandler::operate()
                 cycleBeDeleted.insert(reinterpret_cast<Cycle *>(eventList[i].udata));
             }
         }
+        // 겹치는 이벤트 delete 제거
+        _kqueueHandler.deleteDuplicated();
         for (std::set<Cycle *>::iterator it = cycleBeDeleted.begin(); it != cycleBeDeleted.end(); ++it) {
             _destroyCycle(*it);
             Cycle::deleteCycle(*it);
