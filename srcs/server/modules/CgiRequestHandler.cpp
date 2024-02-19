@@ -45,7 +45,7 @@ static void setGatewayInterface(CgiRequest& cgiRequest)
 
 static void setPathInfo(CgiRequest& cgiRequest, ConfigInfo& configInfo)
 {
-    std::string pathInfo = configInfo.getPath().substr(configInfo.getRoot().size());
+    std::string pathInfo = configInfo.getPath().substr(configInfo.getRoot().size() - 1);
 
     if (pathInfo.empty())
         pathInfo = "/";
