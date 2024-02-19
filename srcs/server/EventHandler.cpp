@@ -555,8 +555,6 @@ void EventHandler::operate()
                 cycleBeDeleted.insert(reinterpret_cast<Cycle *>(eventList[i].udata));
             }
         }
-        // 겹치는 이벤트 delete 제거
-        _kqueueHandler.deleteDuplicated();
         for (std::set<Cycle *>::iterator it = cycleBeDeleted.begin(); it != cycleBeDeleted.end(); ++it) {
             _destroyCycle(*it);
             Cycle::deleteCycle(*it);
