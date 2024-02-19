@@ -17,6 +17,11 @@ void HttpRequestHandler::_inputEOF()
         _status = INPUT_ERROR_CLOSED;
 }
 
+void HttpRequestHandler::_inputReady()
+{
+    _status = INPUT_START;
+}
+
 void HttpRequestHandler::_inputStart()
 {
     if (!_remain.empty())
@@ -340,8 +345,10 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
 {
     if (eof)
         _inputEOF();
-    // do {
+    do {
         if (_status == INPUT_READY)
+            _inputReady();
+        if (_status == INPUT_START)
             _inputStart();
         if (_status == INPUT_REQUEST_LINE)
             _inputRequestLine();
@@ -355,7 +362,7 @@ void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &htt
             _inputChunkedBody();
         if (_status == PARSE_FINISHED || _status == INPUT_ERROR_CLOSED)
             _pushRequest(httpRequestQ);
-    // } while (_status == INPUT_READY);
+    } while (_status == INPUT_READY);
 }
 
 HttpRequest& HttpRequestHandler::getHttpRequest()
