@@ -399,13 +399,15 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
         _setHttpResponseEvent(cycle);
         return;
     }
-    close(kev.ident);
-    _kqueueHandler.deleteEventType(kev.ident);
-    writeFiles.erase(it);
-    if (writeFiles.empty()) {
-        httpResponse.statusLine.code = 201;
-        httpResponseHandler.makeHttpResponseFinal(cycle);
-        _setHttpResponseEvent(cycle);
+    if (writeFile.eof()) {
+        close(kev.ident);
+        _kqueueHandler.deleteEventType(kev.ident);
+        writeFiles.erase(it);
+        if (writeFiles.empty()) {
+            httpResponse.statusLine.code = 201;
+            httpResponseHandler.makeHttpResponseFinal(cycle);
+            _setHttpResponseEvent(cycle);
+        }
     }
 }
 
