@@ -161,7 +161,7 @@ void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpReques
     setRemoteAddr(_cgiRequest, cycle);
     setRemoteHost(_cgiRequest, cycle);
     setRequestMethod(_cgiRequest, requestLine);
-    setScriptName(_cgiRequest);
+    setScriptName(_cgiRequest, cycle->getConfigInfo());
     setServerName(_cgiRequest, cycle);
     setServerPort(_cgiRequest, cycle);
     setServerProtocol(_cgiRequest);
