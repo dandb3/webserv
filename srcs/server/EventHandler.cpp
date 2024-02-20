@@ -187,6 +187,8 @@ void EventHandler::_servHttpRequest(const struct kevent &kev)
         cycle->setClosed();
         _kqueueHandler.deleteEvent(kev.ident, EVFILT_READ);
         _kqueueHandler.deleteEvent(kev.ident, EVFILT_TIMER);
+        if (httpRequestQueue.empty() && httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE)
+            cycle->setBeDeleted();
     }
     if (!httpRequestQueue.empty() && httpResponseHandler.getStatus() == HttpResponseHandler::RES_IDLE) {
         _setHttpRequestFromQ(cycle);
