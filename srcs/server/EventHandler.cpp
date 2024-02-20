@@ -392,7 +392,7 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
 
     WriteFile &writeFile = it->second;
 
-    if (writeFile.writeToFile(kev.ident, static_cast<size_t>(kev.data)) == FAILURE) {
+    if (writeFile.writeToFile(kev.ident) == FAILURE) {
         for (it = writeFiles.begin(); it != writeFiles.end(); ++it) {
             close(it->first);
             std::remove(it->second.getPath().c_str()); // 이미 파일은 만들어진 상태이다. open(O_CREAT)을 했기 때문.
@@ -404,15 +404,13 @@ void EventHandler::_servFileWrite(const struct kevent &kev)
         _setHttpResponseEvent(cycle);
         return;
     }
-    if (writeFile.eof()) {
-        close(kev.ident);
-        _kqueueHandler.deleteEventType(kev.ident);
-        writeFiles.erase(it);
-        if (writeFiles.empty()) {
-            httpResponse.statusLine.code = 201;
-            httpResponseHandler.makeHttpResponseFinal(cycle);
-            _setHttpResponseEvent(cycle);
-        }
+    close(kev.ident);
+    _kqueueHandler.deleteEventType(kev.ident);
+    writeFiles.erase(it);
+    if (writeFiles.empty()) {
+        httpResponse.statusLine.code = 201;
+        httpResponseHandler.makeHttpResponseFinal(cycle);
+        _setHttpResponseEvent(cycle);
     }
 }
 
