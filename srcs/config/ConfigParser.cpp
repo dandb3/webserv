@@ -18,6 +18,7 @@ std::set<std::string> init() {
     s.insert("access_log");
     s.insert("error_log");
     s.insert("cgi");
+    s.insert("cgi_path");
     s.insert("allow_method");
     s.insert("request_timeout");
     s.insert("keepalive_timeout");

@@ -6,6 +6,7 @@
 #include "../modules/HttpRequest.hpp"
 
 #define DEFAULT_TIMEOUT 10L
+#define DEFAULT_CGI_ROOT "var/script/"
 
 typedef std::map<std::string, std::vector<std::string> > t_directives;
 
@@ -13,7 +14,7 @@ class ConfigInfo
 {
 private:
     static const std::string DEFAULT_INDEX; // index.html
-    static const std::string DEFAULT_ROOT;    // /var/www/html
+    static const std::string DEFAULT_ROOT;    // var/www/html
     static const std::map<std::string, std::string> DEFAULT_PAGE;
 
     std::string _root;
