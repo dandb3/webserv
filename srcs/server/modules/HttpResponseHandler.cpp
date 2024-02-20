@@ -372,6 +372,7 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
     }
     for (it = files.begin(); it != files.end(); ++it) {
         fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
+        fcntl(fd, F_SETFL, O_NONBLOCK);
         // fd = open("wow/eng.txt", O_WRONLY | O_CREAT, 0644);
         if (fd == FAILURE) {
             for (fileIt = writeFiles.begin(); fileIt != writeFiles.end(); ++fileIt) {
