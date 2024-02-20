@@ -381,7 +381,7 @@ void HttpRequestHandler::setHttpRequest(const HttpRequest& httpRequest)
 
 bool HttpRequestHandler::isInputReady() const
 {
-    return (_status == INPUT_READY);
+    return (_status == INPUT_READY || _status == INPUT_START);
 }
 
 bool HttpRequestHandler::closed() const
