@@ -251,10 +251,8 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
 
     if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
         extension = "." + it->second[0];
-        if ((cgiPos = uri.find(extension, path.size())) != std::string::npos \
-            && cgiPos + extension.size() == uri.size())
-            _path.resize(_path.size() - extension.size());
-        else
+        if ((cgiPos = uri.find(extension, path.size())) == std::string::npos \
+            || cgiPos + extension.size() != uri.size())
             _cgiPath.clear();
     }
     else
