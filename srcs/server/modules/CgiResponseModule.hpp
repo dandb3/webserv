@@ -9,7 +9,7 @@
 # include "../cycle/ICycle.hpp"
 # include "CgiResponse.hpp"
 
-#define BUF_SIZE 1024UL
+#define BUF_SIZE 102400UL
 
 class CgiResponseHandler
 {

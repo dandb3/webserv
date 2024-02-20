@@ -5,7 +5,7 @@
 #include "EventHandler.hpp"
 #include "modules/PidSet.hpp"
 
-#include <iostream> // for test
+#include <iostream> // for test debug ??
 
 EventHandler::EventHandler()
 {}
@@ -62,10 +62,12 @@ void EventHandler::_setHttpResponseEvent(Cycle *cycle)
     int readFile = cycle->getReadFile();
 
     if (readFile != -1) {
+        std::cout << "readFile != -1\n"; // for test debug
         _kqueueHandler.addEvent(readFile, EVFILT_READ, cycle);
         _kqueueHandler.setEventType(readFile, KqueueHandler::FILE_OPEN);
     }
     else if (!writeFiles.empty()) {
+        std::cout << "writeFiles is not empty\n"; // for test debug
         for (std::map<int, WriteFile>::iterator it = writeFiles.begin(); it != writeFiles.end(); ++it) {
             _kqueueHandler.addEvent(it->first, EVFILT_WRITE, cycle);
             _kqueueHandler.setEventType(it->first, KqueueHandler::FILE_OPEN);
@@ -113,6 +115,7 @@ void EventHandler::_processHttpRequest(Cycle *cycle)
 
     configInfo = ConfigInfo(cycle->getLocalIp(), cycle->getLocalPort(), \
         httpRequest.getHeaderFields().find("Host")->second, httpRequest.getRequestLine().getUri());
+    std::cout << "path: " << configInfo.getPath() << std::endl; // for test debug
 
     if (httpRequest.getCode() == 0)
         _checkClientBodySize(cycle);
@@ -357,7 +360,9 @@ void EventHandler::_servFileRead(const struct kevent &kev)
         }
         return;
     }
-    httpResponse.messageBody.append(Cycle::getBuf(), readLen);
+
+    if (cycle->getHttpRequestHandler().getHttpRequest().getRequestLine().getMethod() != HttpRequestHandler::HEAD) // tmp
+        httpResponse.messageBody.append(Cycle::getBuf(), readLen);
 
     if (readLen == kev.data) {
         close(kev.ident);
@@ -512,6 +517,7 @@ void EventHandler::operate()
         _kqueueHandler.eventCatch();
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
             try {
+                std::cout << "event type: " << static_cast<int>(_getEventType(eventList[i])) << std::endl; // for test debug
                 switch (_getEventType(eventList[i])) {
                 case EVENT_LISTEN:
                     _servListen(eventList[i]);

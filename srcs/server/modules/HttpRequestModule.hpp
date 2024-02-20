@@ -42,14 +42,14 @@ private:
     void _inputRequestLine();
     void _parseRequestLine();
 
-    void _inputHeaderField();
+    void _inputByLine(bool isHeaderField);
     void _parseQuery(RequestLine &requestLine, std::string &query);
     void _parseHeaderField();
 
     void _extractContentLength(int contentLengthCount);
     void _inputMessageBody();
     void _inputDefaultBody();
-    void _inputChunkedBody();
+    void _parseChunkedBody();
 
     void _pushRequest(std::queue<HttpRequest> &httpRequestQ);
 public:

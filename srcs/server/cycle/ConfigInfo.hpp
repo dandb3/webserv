@@ -7,6 +7,7 @@
 
 #define DEFAULT_TIMEOUT 10L
 #define DEFAULT_CGI_ROOT "var/script/"
+#define DEFAULT_MAX_BODY_SIZE 1000000000L
 
 typedef std::map<std::string, std::vector<std::string> > t_directives;
 

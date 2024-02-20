@@ -8,7 +8,7 @@
 #include "WriteFile.hpp"
 #include "../modules/HttpRequest.hpp"
 
-#define BUF_SIZE 1024UL
+#define BUF_SIZE 102400UL
 
 class ICycle
 {
