@@ -15,6 +15,7 @@ private:
     enum
     {
         INPUT_READY,
+        INPUT_START,
         INPUT_REQUEST_LINE,
         INPUT_HEADER_FIELD,
         INPUT_MESSAGE_BODY,
@@ -35,6 +36,7 @@ private:
     HttpRequest _cycleHttpRequest;
 
     void _inputEOF();
+    void _inputReady();
     void _inputStart();
 
     void _inputRequestLine();
