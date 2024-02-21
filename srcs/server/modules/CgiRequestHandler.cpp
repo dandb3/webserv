@@ -98,9 +98,9 @@ static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestL
     }
 }
 
-static void setScriptName(CgiRequest& cgiRequest, ConfigInfo& configInfo)
+static void setScriptName(__attribute__((unused)) CgiRequest& cgiRequest, __attribute__((unused)) ConfigInfo& configInfo)
 {
-    cgiRequest.addMetaVariable("SCRIPT_NAME", configInfo.getCgiPath());
+    // cgiRequest.addMetaVariable("SCRIPT_NAME", configInfo.getCgiPath());
 }
 
 static void setServerName(CgiRequest& cgiRequest, ICycle* cycle)
