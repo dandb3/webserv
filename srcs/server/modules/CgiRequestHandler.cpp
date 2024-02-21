@@ -9,7 +9,7 @@
 #include "../../utils/utils.hpp"
 #include "CgiRequestModule.hpp"
 
-static std::string toProtocolSpecificKey(std::string& key)
+static std::string toProtocolSpecificKey(const std::string& key)
 {
     std::string result = key;
 
