@@ -1,4 +1,5 @@
 #include <sstream>
+#include "../modules/HttpRequestModule.hpp"
 #include "ConfigInfo.hpp"
 
 #include <iostream> // for test ??
@@ -392,7 +393,8 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
 
 short ConfigInfo::requestType(HttpRequest& httpRequest) const
 {
-    if ((httpRequest.getCode() != 0) || _isRedirect || _cgiPath.empty())
+    if ((httpRequest.getCode() != 0) || _isRedirect || _cgiPath.empty() \
+        || httpRequest.getRequestLine().getMethod() != HttpRequestHandler::POST)
         return MAKE_HTTP_RESPONSE;
     return MAKE_CGI_REQUEST;
 }
