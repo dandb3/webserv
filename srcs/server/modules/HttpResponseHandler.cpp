@@ -235,7 +235,8 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
     if (S_ISDIR(buf.st_mode)) {
         std::cout << "is dir\n"; // test
         prevPath = path;
-        path.push_back('/');
+        if (path.back() != '/')
+            path.push_back('/');
         path += cycle->getConfigInfo().getIndex();
         std::cout << "index path: " << path << std::endl; // test
         
