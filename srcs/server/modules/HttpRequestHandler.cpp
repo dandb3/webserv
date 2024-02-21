@@ -265,7 +265,7 @@ void HttpRequestHandler::_extractContentLength(int contentLengthCount)
 
 void HttpRequestHandler::_inputDefaultBody()
 {
-    if (_remain.length() <= _contentLength) {
+    if (_remain.length() < _contentLength) {
         _httpRequest.getMessageBody().append(_remain);
         _remain = "";
         _contentLength -= _remain.length();
@@ -314,10 +314,16 @@ void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
 
     if (_status != INPUT_ERROR_CLOSED) {
         it = headerFields.find("Connection");
-        if (it != headerFields.end() && isCaseInsensitiveSame(it->second, "closed"))
+        if (it != headerFields.end() && isCaseInsensitiveSame(it->second, "close"))
             _status = INPUT_NORMAL_CLOSED;
         else
             _status = INPUT_READY;
+    }
+    if (_httpRequest.getMessageBody().length() < 10000000) { // test
+        std::cout << "request line: " << _httpRequest.getRequestLine().getMethod() << " " << _httpRequest.getRequestLine().getUri() << " " << _httpRequest.getRequestLine().getVersion().first << "." << _httpRequest.getRequestLine().getVersion().second << std::endl; // test
+        for (it = headerFields.begin(); it != headerFields.end(); it++)
+            std::cout << it->first << ": " << it->second << std::endl; // test
+        std::cout << "fin\n";
     }
     _httpRequest = HttpRequest();
 }
