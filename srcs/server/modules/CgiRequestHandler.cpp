@@ -9,7 +9,7 @@
 #include "../../utils/utils.hpp"
 #include "CgiRequestModule.hpp"
 
-static std::string toExtensionKey(std::string& key)
+static std::string toProtocolSpecificKey(std::string& key)
 {
     std::string result = key;
 
@@ -141,15 +141,15 @@ static void setServerSoftware(CgiRequest& cgiRequest)
     cgiRequest.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
 }
 
-static void setExtension(CgiRequest& cgiRequest, const std::multimap<std::string, std::string>& headerFields)
+static void setProtocolSpecific(CgiRequest& cgiRequest, const std::multimap<std::string, std::string>& headerFields)
 {
     std::multimap<std::string, std::string>::const_iterator it;
     std::string key;
 
     for (it = headerFields.begin(); it != headerFields.end(); ++it) {
-        key = toExtensionKey(it->first);
+        key = toProtocolSpecificKey(it->first);
         if (key.size() >= 2 && key[0] == 'X' && key[1] == '_')
-            cgiRequest.addMetaVariable(key, it->second);
+            cgiRequest.addMetaVariable("HTTP_" + key, it->second);
     }
 }
 
@@ -191,8 +191,7 @@ void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpReques
     setServerPort(_cgiRequest, cycle);
     setServerProtocol(_cgiRequest);
     setServerSoftware(_cgiRequest);
-//  setProtocolSpecific(_cgiRequest, requestLine, headerFields, messageBody);
-    setExtension(_cgiRequest, headerFields);
+    setProtocolSpecific(_cgiRequest, headerFields);
 }
 
 char** CgiRequestHandler::_makeArgv(const std::string& cgiPath)
