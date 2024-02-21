@@ -120,7 +120,7 @@ void EventHandler::_processHttpRequest(Cycle *cycle)
     if (httpRequest.getCode() == 0)
         _checkClientBodySize(cycle);
     if (configInfo.requestType(httpRequest) == ConfigInfo::MAKE_HTTP_RESPONSE) {
-        httpResponseHandler.makeHttpResponse(cycle, httpRequest); // 수정 필요. 인자 들어가는거 맞춰서.
+        httpResponseHandler.makeHttpResponse(cycle, httpRequest);
         _setHttpResponseEvent(cycle);
     }
     else {
