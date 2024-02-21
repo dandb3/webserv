@@ -183,6 +183,14 @@ void ConfigInfo::transferInfo(t_directives &directives) {
             if (it->second.size() == 1)
                 _keepaliveTimeout = stringToType<intptr_t>(it->second[0]);
         }
+        else if (it->first == "cgi_path") {
+            if (it->second.size() == 1) {
+                _cgiPath = DEFAULT_CGI_ROOT;
+                if (it->second[0].front() == '/')
+                    _cgiPath.pop_back();
+                _cgiPath += it->second[0];
+            }
+        }
         else {
             _info[it->first] = it->second;
         }
@@ -243,13 +251,12 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
 
     if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
         extension = "." + it->second[0];
-        if ((cgiPos = uri.find(extension, path.size())) != std::string::npos) {
-            if (cgiPos + extension.size() >= uri.size() || uri[cgiPos + extension.size()] == '/') {
-                _cgiPath = _root + uri.substr(path.size(), cgiPos + extension.size() - path.size());
-                _path = _root.substr(0, _root.size() - 1) + uri.substr(cgiPos + extension.size());
-            }
-        }
+        if ((cgiPos = uri.find(extension, path.size())) == std::string::npos \
+            || cgiPos + extension.size() != uri.size())
+            _cgiPath.clear();
     }
+    else
+        _cgiPath.clear();
     if (_info.find("limit_client_body_size") == _info.end())
         _info["limit_client_body_size"].push_back(toString(DEFAULT_MAX_BODY_SIZE));
 }

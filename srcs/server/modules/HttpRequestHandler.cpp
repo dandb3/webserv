@@ -11,7 +11,7 @@ HttpRequestHandler::HttpRequestHandler()
 
 void HttpRequestHandler::_inputEOF()
 {
-    if (_status == INPUT_READY)
+    if (_status == INPUT_READY || _status == INPUT_START)
         _status = INPUT_NORMAL_CLOSED;
     else
         _status = INPUT_ERROR_CLOSED;
@@ -381,7 +381,7 @@ void HttpRequestHandler::setHttpRequest(const HttpRequest& httpRequest)
 
 bool HttpRequestHandler::isInputReady() const
 {
-    return (_status == INPUT_READY);
+    return (_status == INPUT_READY || _status == INPUT_START);
 }
 
 bool HttpRequestHandler::closed() const
