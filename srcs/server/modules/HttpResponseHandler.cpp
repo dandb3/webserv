@@ -233,11 +233,10 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
         throw 500;
     
     if (S_ISDIR(buf.st_mode)) {
-        std::cout << "is dir\n"; // test
         prevPath = path;
-        path.push_back('/');
+        if (path.back() != '/')
+            path.push_back('/');
         path += cycle->getConfigInfo().getIndex();
-        std::cout << "index path: " << path << std::endl; // test
         
         if (access(path.c_str(), F_OK) == FAILURE) {
             if (cycle->getConfigInfo().getAutoIndex() == false)
@@ -528,12 +527,10 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         std::cout << "switch method : " << method << "\n"; // test
         switch (method) {
         case GET:
-            std::cout << "GET\n"; // test
             if (!configInfo.getAllowMethods(0)) {
                 // _setAllow(configInfo);
                 throw 405;
             }
-            std::cout << "makeGETResponse go\n"; // test
             _makeGETResponse(cycle);
             break;
         case HEAD:
@@ -579,6 +576,7 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, CgiResponse &cgiRespon
     }
 
     _httpResponse.messageBody = cgiResponse.getMessageBody();
+    _setContentLength(_httpResponse.messageBody.length());
     for (; it != cgiHeaderFields.end(); ++it)
         if (!isCaseInsensitiveSame(it->first, "Status") && !isCaseInsensitiveSame(it->first, "Content-Length"))
             _httpResponse.headerFields.insert(*it);
@@ -600,7 +598,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
         _status = RES_FINISH;
         _pos = 0;
     }
-    std::cout << "sendHttpResponse finish\n"; // test
+    // std::cout << "sendHttpResponse finish\n"; // test
 }
 
 void HttpResponseHandler::setStatus(char status)
