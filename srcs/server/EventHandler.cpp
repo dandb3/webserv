@@ -222,6 +222,7 @@ void EventHandler::_servHttpResponse(const struct kevent &kev)
 void EventHandler::_servCgiRequest(const struct kevent &kev)
 {
     Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpRequestHandler &httpRequestHandler = cycle->getHttpRequestHandler();
     HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
     CgiRequestHandler &cgiRequestHandler = cycle->getCgiRequestHandler();
     CgiResponseHandler &cgiResponseHandler = cycle->getCgiResponseHandler();
@@ -246,7 +247,7 @@ void EventHandler::_servCgiRequest(const struct kevent &kev)
             _kqueueHandler.deleteEventType(cycle->getCgiSendfd());
             close(cycle->getCgiSendfd());
             cycle->setCgiSendfd(-1);
-            cgiResponseHandler.getCgiResponse().setStatusCode(ucode);
+            httpRequestHandler.getHttpRequest().setCode(ucode);
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
@@ -287,7 +288,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
             _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
-            cgiResponseHandler.getCgiResponse().setStatusCode(ucode);
+            httpRequestHandler.getHttpRequest().setCode(ucode);
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
         }
@@ -315,7 +316,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
             _setHttpResponseEvent(cycle);
             break;
         default:    /* in case of an error */
-            cgiResponseHandler.getCgiResponse().setStatusCode(502);
+            httpRequestHandler.getHttpRequest().setCode(502);
             httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
             _setHttpResponseEvent(cycle);
             break;
@@ -436,6 +437,7 @@ void EventHandler::_servSTimer(const struct kevent &kev)
 void EventHandler::_servCTimer(const struct kevent &kev)
 {
     Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
+    HttpRequestHandler &httpRequestHandler = cycle->getHttpRequestHandler();
     HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
     CgiResponseHandler &cgiResponseHandler = cycle->getCgiResponseHandler();
 
@@ -454,7 +456,7 @@ void EventHandler::_servCTimer(const struct kevent &kev)
         _kqueueHandler.deleteEventType(cycle->getCgiRecvfd());
         close(cycle->getCgiRecvfd());
         cycle->setCgiRecvfd(-1);
-        cgiResponseHandler.getCgiResponse().setStatusCode(504);
+        httpRequestHandler.getHttpRequest().setCode(504);
         httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
         _setHttpResponseEvent(cycle);
     }
