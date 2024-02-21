@@ -98,9 +98,9 @@ static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestL
     }
 }
 
-static void setScriptName(CgiRequest& cgiRequest)
+static void setScriptName(CgiRequest& cgiRequest, ConfigInfo& configInfo)
 {
-    cgiRequest.addMetaVariable("SCRIPT_NAME", CGI_PATH);
+    cgiRequest.addMetaVariable("SCRIPT_NAME", configInfo.getCgiPath());
 }
 
 static void setServerName(CgiRequest& cgiRequest, ICycle* cycle)
@@ -161,7 +161,7 @@ void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpReques
     setRemoteAddr(_cgiRequest, cycle);
     setRemoteHost(_cgiRequest, cycle);
     setRequestMethod(_cgiRequest, requestLine);
-    setScriptName(_cgiRequest);
+    setScriptName(_cgiRequest, cycle->getConfigInfo());
     setServerName(_cgiRequest, cycle);
     setServerPort(_cgiRequest, cycle);
     setServerProtocol(_cgiRequest);
