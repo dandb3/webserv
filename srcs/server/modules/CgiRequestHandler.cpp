@@ -261,7 +261,7 @@ void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
     remainSize = messageBody.size() - _pos;
     sendSize = std::min(remainSize, maxSize);
 
-    if (write(kev.ident, messageBody.c_str() + _pos, sendSize) == FAILURE)
+    if ((sendSize = write(kev.ident, messageBody.c_str() + _pos, sendSize)) == FAILURE)
         throw 500;
     _pos += sendSize;
     if (remainSize <= maxSize)

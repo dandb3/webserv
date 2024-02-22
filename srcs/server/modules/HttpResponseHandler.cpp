@@ -606,7 +606,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
 
     // std::cout << "_response: " << _response << "\n"; // test
     writeLen = std::min(_response.size() - _pos, size);
-    if (write(fd, _response.c_str() + _pos, writeLen) == FAILURE)
+    if ((writeLen = write(fd, _response.c_str() + _pos, writeLen)) == FAILURE)
         throw std::runtime_error("sendHttpResponse에서 write 실패");
     _pos += writeLen;
     if (_pos == _response.size()) {
