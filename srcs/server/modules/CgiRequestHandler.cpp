@@ -256,15 +256,13 @@ void CgiRequestHandler::makeCgiRequest(ICycle* cycle, HttpRequest& httpRequest)
 void CgiRequestHandler::sendCgiRequest(const struct kevent& kev)
 {
     const std::string& messageBody = _cgiRequest.getMessageBody();
-    size_t remainSize, sendSize, maxSize = static_cast<size_t>(kev.data);
+    ssize_t writeSize;
 
-    remainSize = messageBody.size() - _pos;
-    sendSize = std::min(remainSize, maxSize);
-
-    if ((sendSize = write(kev.ident, messageBody.c_str() + _pos, sendSize)) == FAILURE)
+    if ((writeSize = write(kev.ident, messageBody.c_str() + _pos, \
+        std::min(messageBody.size() - _pos, static_cast<size_t>(kev.data)))) == FAILURE)
         throw 500;
-    _pos += sendSize;
-    if (remainSize <= maxSize)
+    _pos += writeSize;
+    if (_pos == messageBody.size())
         _eof = true;
 }
 
