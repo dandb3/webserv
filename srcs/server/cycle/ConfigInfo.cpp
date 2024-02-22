@@ -393,8 +393,7 @@ std::pair<std::string, std::string> ConfigInfo::getRedirect() const {
 
 short ConfigInfo::requestType(HttpRequest& httpRequest) const
 {
-    if ((httpRequest.getCode() != 0) || _isRedirect || _cgiPath.empty() \
-        || httpRequest.getRequestLine().getMethod() != HttpRequestHandler::POST)
+    if ((httpRequest.getCode() != 0) || _isRedirect || _cgiPath.empty())
         return MAKE_HTTP_RESPONSE;
     return MAKE_CGI_REQUEST;
 }
