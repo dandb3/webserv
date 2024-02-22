@@ -62,7 +62,7 @@ void ServerManager::initServer()
 
         if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)
             throw std::runtime_error("bind error");
-        if (listen(sockfd, 10) == -1)
+        if (listen(sockfd, 1000) == -1)
             throw std::runtime_error("listen error");
         if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
             throw std::runtime_error("fcntl error");
