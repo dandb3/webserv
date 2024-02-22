@@ -331,7 +331,7 @@ void HttpResponseHandler::_makeHEADResponse(ICycle* cycle)
 
 void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequest)
 {
-    std::map<std::string, std::string> files;
+    std::map<std::string, std::string> newFiles, files;
     const std::string contentType = httpRequest.getHeaderFields().find("Content-Type")->second;
     const std::string body = httpRequest.getMessageBody();
     const std::string fileName = cycle->getConfigInfo().getPath();
@@ -347,7 +347,7 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
 
     // 만약 같은 경로의 POST 요청이 존재한다면 throw 409;
     if (checkString(contentType, "multipart/form-data", 0)) {
-        parseMultiForm(contentType, body, files);
+        parseMultiForm(contentType, body, newFiles);
     }
     else {
         if (checkString(contentType, "application/x-www-form-urlencoded", 0))
@@ -358,24 +358,38 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
         }
         else
             fileContent = body;
-        files.insert(std::make_pair(fileName, fileContent));
+        newFiles.insert(std::make_pair(fileName, fileContent));
     }
 
     std::map<int, WriteFile>& writeFiles = cycle->getWriteFiles();
     std::map<std::string, std::string>::iterator it;
     std::map<int, WriteFile>::iterator fileIt;
+    std::string path;
+    struct stat buf;
     int fd;
 
-    for (it = files.begin(); it != files.end(); ++it) {
+    for (it = newFiles.begin(); it != newFiles.end();) {
         // if (access(it->first.c_str(), F_OK) == SUCCESS)
         //     throw 409;
-        if (access(dirPath(it->first).c_str(), W_OK | X_OK) == FAILURE)
+        path = it->first;
+        if (access(it->first.c_str(), F_OK) == SUCCESS) {
+            if (stat(it->first.c_str(), &buf) == FAILURE)
+                throw 500;
+            if (S_ISDIR(buf.st_mode)) {
+                if (it->first.back() == '/')
+                    path += cycle->getConfigInfo().getIndex();
+                else
+                    path += "/" + cycle->getConfigInfo().getIndex();
+            }
+        }
+        files.insert(std::make_pair(path, it->second));
+        if (access(dirPath(path).c_str(), W_OK | X_OK) == FAILURE)
         // if (access("wow", W_OK | X_OK) == FAILURE)
             throw 403;
+        ++it;
     }
     for (it = files.begin(); it != files.end(); ++it) {
         fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
-        fcntl(fd, F_SETFL, O_NONBLOCK);
         // fd = open("wow/eng.txt", O_WRONLY | O_CREAT, 0644);
         if (fd == FAILURE) {
             for (fileIt = writeFiles.begin(); fileIt != writeFiles.end(); ++fileIt) {
@@ -385,6 +399,7 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
             writeFiles.clear();
             throw 500;
         }
+        fcntl(fd, F_SETFL, O_NONBLOCK);
         writeFiles.insert(std::make_pair(fd, WriteFile(it->first, it->second)));
     }
 }

@@ -151,12 +151,18 @@ void printParsedServer(ServerConfig &server) {
 
 std::string dirPath(const std::string& str)
 {
-    size_t lastSlash = str.find_last_of('/');
+    size_t filePos = str.find_last_not_of('/');
+    size_t dirPos;
 
-    if (lastSlash == std::string::npos)
+    if (filePos == std::string::npos)
         return "";
 
-    return str.substr(0, lastSlash);
+    dirPos = str.find_last_of('/', filePos);
+
+    if (dirPos == std::string::npos)
+        return "";
+
+    return str.substr(0, dirPos + 1);
 }
 
 bool checkString(const std::string &str, const std::string &target, const size_t &start)
