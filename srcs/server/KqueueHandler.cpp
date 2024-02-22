@@ -41,7 +41,7 @@ void KqueueHandler::addEvent(uintptr_t ident, int16_t filter, void *udata)
     struct kevent kev;
 
     EV_SET(&kev, ident, filter, EV_ADD, 0, 0, udata);
-    _eventsToAdd.push_back(kev);
+    _eventsToAdd[std::make_pair(ident, filter)] = kev;
 }
 
 void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void *udata)
@@ -49,7 +49,7 @@ void KqueueHandler::deleteEvent(uintptr_t ident, int16_t filter, void *udata)
     struct kevent kev;
 
     EV_SET(&kev, ident, filter, EV_DELETE, 0, 0, udata);
-    _eventsToAdd.push_back(kev);
+    _eventsToAdd[std::make_pair(ident, filter)] = kev;
 }
 
 void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata)
@@ -57,12 +57,22 @@ void KqueueHandler::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags,
     struct kevent kev;
 
     EV_SET(&kev, ident, filter, flags, fflags, data, udata);
-    _eventsToAdd.push_back(kev);
+    _eventsToAdd[std::make_pair(ident, filter)] = kev;
+}
+
+void KqueueHandler::deleteEntry(uintptr_t ident, int16_t filter)
+{
+    _eventsToAdd.erase(std::make_pair(ident, filter));
 }
 
 void KqueueHandler::eventCatch()
 {
-    int nev = kevent(_kqfd, &_eventsToAdd[0], _eventsToAdd.size(), _eventList, MAX_EVENTS, NULL);
+    std::vector<struct kevent> v;
+    std::map<std::pair<uintptr_t, int16_t>, struct kevent>::iterator it;
+
+    for (it = _eventsToAdd.begin(); it != _eventsToAdd.end(); ++it)
+        v.push_back(it->second);
+    int nev = kevent(_kqfd, &v[0], v.size(), _eventList, MAX_EVENTS, NULL);
     if (nev == -1) {
         std::cerr << "[eventCatch] : kevent() failed" << std::endl;
         exit(1);

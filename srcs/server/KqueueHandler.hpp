@@ -35,7 +35,7 @@ private:
     /* data */
     int _kqfd;
     int _nevents;
-    std::vector<struct kevent> _eventsToAdd;
+    std::map<std::pair<uintptr_t, int16_t>, struct kevent> _eventsToAdd;
     struct kevent _eventList[MAX_EVENTS];
     std::map<int, char> _type;
 
@@ -49,6 +49,7 @@ public:
     void addEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void deleteEvent(uintptr_t ident, int16_t filter, void *udata = NULL);
     void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags = 0, intptr_t data = 0, void *udata = NULL);
+    void deleteEntry(uintptr_t ident, int16_t filter);
     void eventCatch();
     // void enableEvent(/* args */);
     // void disableEvent(/* args */);
