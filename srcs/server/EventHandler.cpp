@@ -472,6 +472,8 @@ void EventHandler::_servError(const struct kevent &kev)
 
 void EventHandler::_destroyCycle(Cycle *cycle)
 {
+    _kqueueHandler.deleteEntry(cycle->getHttpSockfd(), EVFILT_READ);
+    _kqueueHandler.deleteEntry(cycle->getHttpSockfd(), EVFILT_WRITE);
     _kqueueHandler.deleteEventType(cycle->getHttpSockfd());
     close(cycle->getHttpSockfd());
     if (!cycle->closed())
