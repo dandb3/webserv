@@ -67,7 +67,11 @@ void KqueueHandler::deleteEntry(uintptr_t ident, int16_t filter)
 
 void KqueueHandler::eventCatch()
 {
-    std::vector<struct kevent> v(_eventsToAdd.begin(), _eventsToAdd.end());
+    std::vector<struct kevent> v;
+    std::map<std::pair<uintptr_t, int16_t>, struct kevent>::iterator it;
+
+    for (it = _eventsToAdd.begin(); it != _eventsToAdd.end(); ++it)
+        v.push_back(it->second);
     int nev = kevent(_kqfd, &v[0], v.size(), _eventList, MAX_EVENTS, NULL);
     if (nev == -1) {
         std::cerr << "[eventCatch] : kevent() failed" << std::endl;
