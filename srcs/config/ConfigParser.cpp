@@ -17,6 +17,7 @@ std::set<std::string> init() {
     s.insert("location");
     s.insert("access_log");
     s.insert("error_log");
+    s.insert("return");
     s.insert("cgi");
     s.insert("cgi_path");
     s.insert("allow_method");
