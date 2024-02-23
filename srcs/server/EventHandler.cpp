@@ -248,7 +248,7 @@ void EventHandler::_servCgiRequest(const struct kevent &kev)
             close(cycle->getCgiSendfd());
             cycle->setCgiSendfd(-1);
             httpRequestHandler.getHttpRequest().setCode(ucode);
-            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
+            httpResponseHandler.makeHttpResponse(cycle, httpRequestHandler.getHttpRequest());
             _setHttpResponseEvent(cycle);
         }
         return;
@@ -289,7 +289,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
             close(cycle->getCgiRecvfd());
             cycle->setCgiRecvfd(-1);
             httpRequestHandler.getHttpRequest().setCode(ucode);
-            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
+            httpResponseHandler.makeHttpResponse(cycle, httpRequestHandler.getHttpRequest());
             _setHttpResponseEvent(cycle);
         }
         return;
@@ -317,7 +317,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
             break;
         default:    /* in case of an error */
             httpRequestHandler.getHttpRequest().setCode(502);
-            httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
+            httpResponseHandler.makeHttpResponse(cycle, httpRequestHandler.getHttpRequest());
             _setHttpResponseEvent(cycle);
             break;
         }
