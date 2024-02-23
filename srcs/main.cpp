@@ -9,13 +9,23 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (argc == 1) {
-        ServerManager serverManager;
-        serverManager.operate();
+    ServerManager *serverManager;
+
+    try {
+        if (argc == 1)
+            serverManager = new ServerManager();
+        else
+            serverManager = new ServerManager(argv[1]);
+
+        if (serverManager == NULL)
+            throw std::runtime_error("ServerManager creation failed");
+    } catch (std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     }
-    else {
-        ServerManager serverManager(argv[1]);
-        serverManager.operate();
-    }
+
+    serverManager->operate();
+
+    delete serverManager;
     return 0;
 }
