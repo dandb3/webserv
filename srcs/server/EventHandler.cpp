@@ -457,7 +457,7 @@ void EventHandler::_servCTimer(const struct kevent &kev)
         close(cycle->getCgiRecvfd());
         cycle->setCgiRecvfd(-1);
         httpRequestHandler.getHttpRequest().setCode(504);
-        httpResponseHandler.makeHttpResponse(cycle, cgiResponseHandler.getCgiResponse());
+        httpResponseHandler.makeHttpResponse(cycle, httpRequestHandler.getHttpRequest());
         _setHttpResponseEvent(cycle);
     }
 }
