@@ -5,7 +5,7 @@
 #include "../../config/Config.hpp"
 #include "../modules/HttpRequest.hpp"
 
-#define DEFAULT_TIMEOUT 10L
+#define DEFAULT_TIMEOUT 50L
 #define DEFAULT_CGI_ROOT "var/script/"
 #define DEFAULT_MAX_BODY_SIZE 1000000000L
 

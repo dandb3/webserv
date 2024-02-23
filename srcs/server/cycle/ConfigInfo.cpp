@@ -21,7 +21,6 @@ const std::pair<const std::string, std::string> defaultPages[] = {
     std::make_pair("503", "defaultPage/503_ServiceUnavailable.html"),
     std::make_pair("504", "defaultPage/504_GatewayTimeout.html"),
     std::make_pair("505", "defaultPage/505_HTTPVersionNotSupported.html"),
-    std::make_pair("default", "defaultPage/defaultError.html")
 };
 
 const std::string ConfigInfo::DEFAULT_INDEX = "index.html";
@@ -352,7 +351,7 @@ std::string ConfigInfo::getIndex() const {
 std::string ConfigInfo::getErrorPage(std::string key) const {
     if (_errorPage.find(key) == _errorPage.end()) {
         if (DEFAULT_PAGE.find(key) == DEFAULT_PAGE.end())
-            return DEFAULT_PAGE.at("default");
+            return DEFAULT_PAGE.at("common");
             // throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
         return DEFAULT_PAGE.at(key);
     }
