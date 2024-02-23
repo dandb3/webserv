@@ -104,6 +104,13 @@ void CgiResponseParser::_parseLines()
 char CgiResponseParser::_determineType()
 {
     for (size_t i = 0; i < _pairV.size(); ++i) {
+        if (isCaseInsensitiveSame("Content-Length", _pairV[i].first)) {
+            size_t contentLength = stringToType<size_t>(_pairV[i].second);
+
+            if (_messageBody.size() < contentLength)
+                return CgiResponse::CGI_RESPONSE_ERROR;
+            _messageBody.resize(contentLength);
+        }
         if (isContentType(_pairV[i]))
             ++_fieldCnt[HDR_CONTENT_TYPE];
         else if (isLocalLocation(_pairV[i]))

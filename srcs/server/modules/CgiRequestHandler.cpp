@@ -58,11 +58,7 @@ static void setGatewayInterface(CgiRequest& cgiRequest)
 
 static void setPathInfo(CgiRequest& cgiRequest, ConfigInfo& configInfo)
 {
-    std::string pathInfo = configInfo.getPath().substr(configInfo.getRoot().size() - 1);
-
-    if (pathInfo.empty())
-        pathInfo = "/";
-    cgiRequest.addMetaVariable("PATH_INFO", pathInfo);
+    cgiRequest.addMetaVariable("PATH_INFO", configInfo.getPath());
 }
 
 static void setPathTranslated(CgiRequest& cgiRequest, ConfigInfo& configInfo)
@@ -194,13 +190,15 @@ void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpReques
     setProtocolSpecific(_cgiRequest, headerFields);
 }
 
-char** CgiRequestHandler::_makeArgv(const std::string& cgiPath)
+char** CgiRequestHandler::_makeArgv(const std::string& cgiPath, const std::string& file)
 {
-    char** result = new char*[2];
+    char** result = new char*[3];
 
     result[0] = new char[cgiPath.size() + 1];
     std::strcpy(result[0], cgiPath.c_str());
-    result[1] = NULL;
+    result[1] = new char[file.size() + 1];
+    std::strcpy(result[1], file.c_str());
+    result[2] = NULL;
     return result;
 }
 
@@ -224,7 +222,7 @@ void CgiRequestHandler::_parentProcess(int* servToCgi, int* cgiToServ)
     close(cgiToServ[1]);
 }
 
-void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ, const std::string& cgiPath)
+void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ, const std::string& cgiPath, const std::string& file)
 {
     char **argv, **envp;
 
@@ -234,7 +232,7 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ, const std:
     close(servToCgi[1]);
     close(cgiToServ[0]);
     close(cgiToServ[1]);
-    argv = _makeArgv(cgiPath);
+    argv = _makeArgv(cgiPath, file);
     envp = _makeEnvp();
     if (execve(argv[0], argv, envp) == FAILURE)
         std::exit(1);
@@ -293,7 +291,7 @@ void CgiRequestHandler::callCgiScript(ICycle* cycle)
         throw 500;
     }
     if (pid == 0)
-        _childProcess(servToCgi, cgiToServ, cycle->getConfigInfo().getCgiPath());
+        _childProcess(servToCgi, cgiToServ, cycle->getConfigInfo().getCgiPath(), cycle->getConfigInfo().getPath());
     else {
         PidSet::insert(pid);
         cycle->setCgiScriptPid(pid);
