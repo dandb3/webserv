@@ -19,6 +19,7 @@ private:
     static const std::map<std::string, std::string> DEFAULT_PAGE;
 
     std::string _root;
+    std::string _locationPath;
     std::string _cgiPath;    // cgi인지를 판별하게 만드는 경로가 저장된다.
     std::string _path;       // root + uri, 만약 CGI request로 넘어간다면 PATH_INFO에 넘겨주는 인자로 설정이 된다.
     bool _allowMethods[4]; // GET, HEAD, POST, DELETE
@@ -33,7 +34,7 @@ private:
     t_directives _info;
 
     std::vector<ServerConfig>::iterator findMatchedServer(in_addr_t ip, in_port_t port, std::string serverName);
-    LocationConfig &findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap, std::string &path);
+    LocationConfig &findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap);
     void transferInfo(t_directives &directives);
 
 public:
@@ -58,6 +59,7 @@ public:
 
     // getter
     std::string getRoot() const;
+    std::string getLocationPath() const;
     std::string getCgiPath() const;
     std::string getPath() const;
     bool getAllowMethods(int index) const;

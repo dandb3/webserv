@@ -43,6 +43,7 @@ ConfigInfo::ConfigInfo()
 {
     // ip, port을 보고 match되는 config를 찾아서 생성자 호출
     _root = DEFAULT_ROOT;
+    _locationPath = "";
     _cgiPath = "";
     _path = "";
     for (size_t i = 0; i < 4; i++)
@@ -72,6 +73,7 @@ ConfigInfo &ConfigInfo::operator=(const ConfigInfo &ConfigInfo)
     if (this == &ConfigInfo)
         return *this;
     _root = ConfigInfo._root;
+    _locationPath = ConfigInfo._locationPath;
     _cgiPath = ConfigInfo._cgiPath;
     _path = ConfigInfo._path;
     for (size_t i = 0; i < 4; i++)
@@ -199,7 +201,7 @@ void ConfigInfo::transferInfo(t_directives &directives) {
 }
 
 // uri로 location 찾기
-LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap, std::string &path) {
+LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap) {
     // if (uri.find('.') != std::string::npos) {
     //     size_t pos = uri.find_last_of('/');
     //     if (uri.find('.') < pos)
@@ -207,19 +209,19 @@ LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::
     //     path = uri.substr(0, uri.find_last_of('/') + 1);
     // }
     if (uri[uri.size() - 1] == '/')
-        path = uri;
+        _locationPath = uri;
     else
-        path = uri + '/';
-    while (locationMap.find(path) == locationMap.end()) {
-        path = path.substr(0, path.find_last_of('/'));
-        if (path == "")
+        _locationPath = uri + '/';
+    while (locationMap.find(_locationPath) == locationMap.end()) {
+        _locationPath = _locationPath.substr(0, _locationPath.find_last_of('/'));
+        if (_locationPath == "")
             break;
-        size_t pos = path.find_last_of('/');
-        path = path.substr(0, pos + 1);
+        size_t pos = _locationPath.find_last_of('/');
+        _locationPath = _locationPath.substr(0, pos + 1);
     }
-    if (path == "")
+    if (_locationPath == "")
         throw std::runtime_error("ConfigInfo 생성자에서 location 찾기 실패");
-    return locationMap[path];
+    return locationMap[_locationPath];
 }
 
 // matchedServer에서 먼저 데이터 넣고, matchedLocation에도 있으면 거기서 덮어씌우기
@@ -227,10 +229,9 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     ServerConfig &matchedServer = *findMatchedServer(ip, port, serverName);
     transferInfo(matchedServer.getServerInfo());
     // LocationConfig location 찾기
-    std::string path;
-    LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList(), path);
+    LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList());
     transferInfo(matchedLocation.getLocationInfo());
-    std::string locationUri = (path == "/") ? uri : uri.substr(path.size() - 1);
+    std::string locationUri = (_locationPath == "/") ? uri : uri.substr(_locationPath.size() - 1);
     std::cout << "locationUri: " << locationUri << std::endl; // for test
     if (locationUri != "" && locationUri != "/") {
         if (_root.back() == '/' && locationUri[0] == '/') {
@@ -252,7 +253,7 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
 
     if ((it = _info.find("cgi")) != _info.end() && it->second.size() == 1) {
         extension = "." + it->second[0];
-        if ((cgiPos = uri.find(extension, path.size())) == std::string::npos \
+        if ((cgiPos = uri.find(extension, _locationPath.size())) == std::string::npos \
             || cgiPos + extension.size() != uri.size())
             _cgiPath.clear();
     }
@@ -326,6 +327,10 @@ std::string ConfigInfo::getPrintableConfigInfo() {
 // getter
 std::string ConfigInfo::getRoot() const {
     return _root;
+}
+
+std::string ConfigInfo::getLocationPath() const {
+    return _locationPath;
 }
 
 std::string ConfigInfo::getCgiPath() const {
