@@ -199,7 +199,6 @@ char** CgiRequestHandler::_makeArgv(const std::string& cgiPath, const std::strin
     result[1] = new char[file.size() + 1];
     std::strcpy(result[1], file.c_str());
     result[2] = NULL;
-    std::cout << "argv: " << result[0] << ", " << result[1] << std::endl;
     return result;
 }
 
