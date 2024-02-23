@@ -124,10 +124,11 @@ void HttpResponseHandler::_setLastModified(const char *path)
     _httpResponse.headerFields.insert(std::make_pair("Last-Modified", std::string(buf)));
 }
 
-void HttpResponseHandler::_makeDirectoryListing(const std::string& path)
+void HttpResponseHandler::_makeDirectoryListing(ConfigInfo& configInfo, const std::string& path)
 {
     DIR *dir = opendir(path.c_str());
     struct dirent *entry;
+    std::string filePath;
 
     if (dir == NULL)
         throw 500;
@@ -136,9 +137,11 @@ void HttpResponseHandler::_makeDirectoryListing(const std::string& path)
     bodyStream << "<!DOCTYPE html>\n<html>\n<head>\n<title>Directory Listing</title>\n</head>\n<body>\n";
     bodyStream << "<h1>Directory Listing: " << path << "</h1>\n<ul>\n";
 
-    while ((entry = readdir(dir)) != NULL)
+    while ((entry = readdir(dir)) != NULL) {
+        filePath = configInfo.getLocationPath() + entry->d_name;
         if (entry->d_name[0] != '.')  // Skip hidden files/directories
-            bodyStream << "<li><a href=\"" << entry->d_name << "\">" << entry->d_name << "</a></li>\n";
+            bodyStream << "<li><a href=\"" << filePath << "\">" << filePath << "</a></li>\n";
+    }
 
     bodyStream << "</ul>\n</body>\n</html>\n";
 
@@ -243,7 +246,7 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
                 throw 404;
             if (access(prevPath.c_str(), R_OK) == FAILURE)
                 throw 403;
-            _makeDirectoryListing(prevPath);
+            _makeDirectoryListing(cycle->getConfigInfo(), prevPath);
             _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
@@ -257,7 +260,7 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
                 throw 404;
             if (access(path.c_str(), R_OK) == FAILURE)
                 throw 403;
-            _makeDirectoryListing(path);
+            _makeDirectoryListing(cycle->getConfigInfo(), path);
             _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
@@ -295,7 +298,7 @@ void HttpResponseHandler::_makeHEADResponse(ICycle* cycle)
                 throw 404;
             if (access(prevPath.c_str(), R_OK) == FAILURE)
                 throw 403;
-            _makeDirectoryListing(prevPath);
+            _makeDirectoryListing(cycle->getConfigInfo(), prevPath);
             _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;
@@ -310,7 +313,7 @@ void HttpResponseHandler::_makeHEADResponse(ICycle* cycle)
                 throw 404;
             if (access(path.c_str(), R_OK) == FAILURE)
                 throw 403;
-            _makeDirectoryListing(path);
+            _makeDirectoryListing(cycle->getConfigInfo(), path);
             _setContentType(false, "text/html");
             _setContentLength();
             _httpResponse.statusLine.code = 200;

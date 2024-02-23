@@ -35,7 +35,7 @@ private:
     void _setContentType(bool isPath, const std::string& str);
     void _setDate();
     void _setLastModified(const char *path);
-    void _makeDirectoryListing(const std::string& path);
+    void _makeDirectoryListing(ConfigInfo& configInfo, const std::string& path);
 
     void _makeStatusLine();
     void _makeHeaderFields(ICycle* cycle);
