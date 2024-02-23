@@ -6,7 +6,7 @@
 #    By: sunwsong <sunwsong@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/19 17:38:04 by sunwsong          #+#    #+#              #
-#    Updated: 2024/02/14 19:31:39 by sunwsong         ###   ########.fr        #
+#    Updated: 2024/02/23 08:44:24 by sunwsong         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,7 +44,7 @@ CXXFLAGS	= -std=c++98 -Wall -Wextra -Werror
 CGI			= var/script/cat
 CGI_OBJ		= srcs/script/basicCgi.o
 
-NAME		= srv
+NAME		= webserv
 
 DEBUG_MODE	= $(findstring debug, $(MAKECMDGOALS))
 DEFINE		= $(if $(DEBUG_MODE), -D DEBUG)
