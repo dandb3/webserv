@@ -225,7 +225,6 @@ void EventHandler::_servCgiRequest(const struct kevent &kev)
     HttpRequestHandler &httpRequestHandler = cycle->getHttpRequestHandler();
     HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
     CgiRequestHandler &cgiRequestHandler = cycle->getCgiRequestHandler();
-    CgiResponseHandler &cgiResponseHandler = cycle->getCgiResponseHandler();
 
     if (cycle->beDeleted())
         return;
@@ -439,7 +438,6 @@ void EventHandler::_servCTimer(const struct kevent &kev)
     Cycle *cycle = reinterpret_cast<Cycle *>(kev.udata);
     HttpRequestHandler &httpRequestHandler = cycle->getHttpRequestHandler();
     HttpResponseHandler &httpResponseHandler = cycle->getHttpResponseHandler();
-    CgiResponseHandler &cgiResponseHandler = cycle->getCgiResponseHandler();
 
     if (cycle->beDeleted())
         return;
