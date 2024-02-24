@@ -217,6 +217,7 @@ LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::
 
 // matchedServer에서 먼저 데이터 넣고, matchedLocation에도 있으면 거기서 덮어씌우기
 void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri) {
+    log("Config를 바탕으로 올바른 Server, Location 블록을 선택하는 ConfigInfo 생성");
     ServerConfig &matchedServer = *findMatchedServer(ip, port, serverName);
     transferInfo(matchedServer.getServerInfo());
     // LocationConfig location 찾기

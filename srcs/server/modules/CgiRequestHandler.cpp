@@ -230,6 +230,7 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ, const std:
 
 void CgiRequestHandler::makeCgiRequest(ICycle* cycle, HttpRequest& httpRequest)
 {
+    log("CgiRequestHandler 호출");
     _setMetaVariables(cycle, httpRequest);
     _cgiRequest.setMessageBody(httpRequest.getMessageBody());
 }
@@ -262,8 +263,8 @@ void CgiRequestHandler::callCgiScript(ICycle* cycle)
         throw 500;
     }
     // we don't know how cgi script acts, so let I/O fds blocking state.
-    fcntl(servToCgi[1], F_SETFL, O_NONBLOCK);
-    fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK);
+    fcntl(servToCgi[1], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+    fcntl(cgiToServ[0], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
     cycle->setCgiSendfd(servToCgi[1]);
     cycle->setCgiRecvfd(cgiToServ[0]);
     if ((pid = fork()) == FAILURE) {

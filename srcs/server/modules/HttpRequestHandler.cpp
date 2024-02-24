@@ -332,8 +332,11 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)
 {
-    if (eof)
+    if (eof) {
+        log("클라이언트로 부터 EOF를 받음");
         _inputEOF();
+    }
+    log("HttpRequestHandler에서 파싱 시작");
     do {
         if (_status == INPUT_READY)
             _inputReady();

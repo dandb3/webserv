@@ -150,7 +150,7 @@ void EventHandler::_servListen(const struct kevent &kev)
     memset(&remoteSin, 0, remoteLen);
     if ((sockfd = accept(kev.ident, reinterpret_cast<struct sockaddr *>(&remoteSin), &remoteLen)) == FAILURE)
         return;
-    fcntl(sockfd, F_SETFL, O_NONBLOCK);
+    fcntl(sockfd, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
     getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&localSin), &localLen);
     cycle = Cycle::newCycle(localSin.sin_addr.s_addr, localSin.sin_port, remoteSin.sin_addr.s_addr, sockfd);
     _kqueueHandler.addEvent(sockfd, EVFILT_READ, cycle);
@@ -505,40 +505,52 @@ void EventHandler::operate()
 
     while (true) {
         _kqueueHandler.eventCatch();
+        log("eventCatched");
         for (int i = 0; i < _kqueueHandler.getNevents(); ++i) {
             try {
                 switch (_getEventType(eventList[i])) {
                 case EVENT_LISTEN:
+                    log("EVENT_LISTEN");
                     _servListen(eventList[i]);
                     break;
                 case EVENT_HTTP_REQ:
+                    log("EVENT_HTTP_REQ");
                     _servHttpRequest(eventList[i]);
                     break;
                 case EVENT_HTTP_RES:
+                    log("EVENT_HTTP_RES");
                     _servHttpResponse(eventList[i]);
                     break;
                 case EVENT_CGI_REQ:
+                    log("EVENT_CGI_REQ");
                     _servCgiRequest(eventList[i]);
                     break;
                 case EVENT_CGI_RES:
+                    log("EVENT_CGI_RES");
                     _servCgiResponse(eventList[i]);
                     break;
                 case EVENT_CGI_PROC:
+                    log("EVENT_CGI_PROC");
                     _servCgiProc(eventList[i]);
                     break;
                 case EVENT_FILE_READ:
+                    log("EVENT_FILE_READ");
                     _servFileRead(eventList[i]);
                     break;
                 case EVENT_FILE_WRITE:
+                    log("EVENT_FILE_WRITE");
                     _servFileWrite(eventList[i]);
                     break;
                 case EVENT_STIMER:
+                    log("EVENT_STIMER");
                     _servSTimer(eventList[i]);
                     break;
                 case EVENT_CTIMER:
+                    log("EVENT_CTIMER");
                     _servCTimer(eventList[i]);
                     break;
                 case EVENT_ERROR:
+                    log("EVENT_ERROR");
                     _servError(eventList[i]);
                     break;
                 }

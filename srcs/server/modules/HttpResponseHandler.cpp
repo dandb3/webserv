@@ -268,7 +268,7 @@ void HttpResponseHandler::_makeGETResponse(ICycle* cycle)
         throw 403;
     if ((fd = open(path.c_str(), O_RDONLY)) == FAILURE)
         throw 500;
-    fcntl(fd, F_SETFL, O_NONBLOCK);
+    fcntl(fd, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
     cycle->setReadFile(fd);
     _setContentType(true, path);
     _setLastModified(path.c_str());
@@ -393,7 +393,7 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
             writeFiles.clear();
             throw 500;
         }
-        fcntl(fd, F_SETFL, O_NONBLOCK);
+        fcntl(fd, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
         writeFiles.insert(std::make_pair(fd, WriteFile(it->first, it->second)));
     }
 }
@@ -465,7 +465,7 @@ void HttpResponseHandler::makeErrorHttpResponse(ICycle* cycle)
         }
     }
     else {
-        fcntl(fd, F_SETFL, O_NONBLOCK);
+        fcntl(fd, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
         cycle->setReadFile(fd);
         _setContentType(true, errorPage);
     }
@@ -520,6 +520,7 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
     ConfigInfo& configInfo = cycle->getConfigInfo();
     const short method = httpRequest.getRequestLine().getMethod();
 
+    log("HttpResponseHandler에서 HTTP Request를 기반으로 HTTP Response 생성");
     _httpResponse.statusLine.code = httpRequest.getCode();
     if (isErrorCode(_httpResponse.statusLine.code)) {
         makeErrorHttpResponse(cycle);
@@ -568,6 +569,7 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, CgiResponse &cgiRespon
     const std::vector<pair_t>& cgiHeaderFields = cgiResponse.getHeaderFields();
     std::vector<pair_t>::const_iterator it = cgiHeaderFields.begin();
 
+    log("HttpResponseHandler에서 CGI Response를 기반으로 HTTP Response 생성");
     _httpResponse.statusLine.code = cgiResponse.getStatusCode();
     if (isErrorCode(_httpResponse.statusLine.code)) {
         makeErrorHttpResponse(cycle);
@@ -588,6 +590,7 @@ void HttpResponseHandler::sendHttpResponse(int fd, size_t size)
 {
     ssize_t writeLen;
 
+    log("HttpResponseHandler에서 client로 HTTP Response 전송");
     if ((writeLen = write(fd, _response.c_str() + _pos, std::min(_response.size() - _pos, size))) == FAILURE)
         throw std::runtime_error("sendHttpResponse에서 write 실패");
     _pos += writeLen;
