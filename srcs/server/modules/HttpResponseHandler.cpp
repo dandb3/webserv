@@ -384,7 +384,7 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
         ++it;
     }
     for (it = files.begin(); it != files.end(); ++it) {
-        fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
+        fd = open(it->first.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (fd == FAILURE) {
             for (fileIt = writeFiles.begin(); fileIt != writeFiles.end(); ++fileIt) {
                 close(fileIt->first);
