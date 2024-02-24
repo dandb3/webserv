@@ -53,7 +53,6 @@ public:
 
     void initConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri);
 
-    // test
     void printConfigInfo();
     std::string getPrintableConfigInfo();
 

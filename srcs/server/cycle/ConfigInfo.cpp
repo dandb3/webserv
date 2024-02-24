@@ -2,8 +2,6 @@
 #include "../modules/HttpRequestModule.hpp"
 #include "ConfigInfo.hpp"
 
-#include <iostream> // for test ??
-
 const std::pair<const std::string, std::string> defaultPages[] = {
     std::make_pair("common", "defaultPage/CommonErrorPage.html"),
     std::make_pair("400", "defaultPage/400_BadRequest.html"),
@@ -163,7 +161,7 @@ void ConfigInfo::transferInfo(t_directives &directives) {
                     throw std::runtime_error("ConfigInfo 생성자에서 allow_methods 설정 실패");
             }
         }
-        else if (it->first == "error_page") { // test 필요
+        else if (it->first == "error_page") {
             size_t sz = it->second.size();
             std::string route = it->second[sz - 1];
             for (size_t i = 0; i < sz - 1; i++) {
@@ -231,7 +229,6 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     LocationConfig &matchedLocation = findMatchedLocation(uri, matchedServer.getLocationList());
     transferInfo(matchedLocation.getLocationInfo());
     std::string locationUri = (_locationPath == "/") ? uri : uri.substr(_locationPath.size() - 1);
-    std::cout << "locationUri: " << locationUri << std::endl; // for test
     if (locationUri != "" && locationUri != "/") {
         if (_root.back() == '/' && locationUri[0] == '/') {
             _path = _root;

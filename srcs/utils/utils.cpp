@@ -137,7 +137,7 @@ int ft_inet_aton(const char *str, struct in_addr *addr) {
     return 1;
 }
 
-// for testg
+// for test
 void printParsedServer(ServerConfig &server) {
     std::cout << "======================" << std::endl;
     std::cout << "[parseServer] " << "globalPortList: ";

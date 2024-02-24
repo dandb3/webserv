@@ -25,7 +25,6 @@ public:
     std::vector<std::string> &getVariable(std::string &key);
 
     // setter
-    void setLocationInfo(t_directives &locationInfo); // 필요한가? 보류
     void setVariable(std::string &key, std::vector<std::string> &value);
 };
 
