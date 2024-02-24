@@ -9,8 +9,9 @@
 #define LOG_N(N, ...) CAT(LOG_, N)(__VA_ARGS__)
 #define LOG(...)                                \
     do {                                        \
-        LOG_N(NARGS(__VA_ARGS__), __VA_ARGS__)  \
-        std::cout << std::endl;                      \
+        std::cout << "[DEBUG] ";                \
+        LOG_N(NARGS(__VA_ARGS__), __VA_ARGS__); \
+        std::cout << std::endl;                 \
     } while (0)
 #define LOG_1(_1) \
     std::cout << (_1);

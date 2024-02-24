@@ -59,7 +59,7 @@ void ServerManager::initServer()
             throw std::runtime_error("bind error");
         if (listen(sockfd, 1000) == -1)
             throw std::runtime_error("listen error");
-        if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1)
+        if (fcntl(sockfd, F_SETFL, O_NONBLOCK, FD_CLOEXEC) == -1)
             throw std::runtime_error("fcntl error");
         serverSet.insert(std::make_pair(it->getIp().s_addr, it->getPort()));
         listenFds.push_back(sockfd);
