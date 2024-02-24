@@ -1,10 +1,5 @@
 #include "ConfigParser.hpp"
 
-// const std::set<std::string> ConfigParser::SERVER_KEY_SET = {
-//     "listen", "server_name", "root", "index", "autoindex", "client_max_body_size",
-//     "error_page", "location", "access_log", "error_log", "cgi", "allow_methods",
-//     "request_timeout", "keepalive_timeout", "session" };
-
 std::set<std::string> init() {
     std::set<std::string> s;
     s.insert("listen");
@@ -15,15 +10,12 @@ std::set<std::string> init() {
     s.insert("limit_client_body_size");
     s.insert("error_page");
     s.insert("location");
-    s.insert("access_log");
-    s.insert("error_log");
     s.insert("return");
     s.insert("cgi");
     s.insert("cgi_path");
     s.insert("allow_method");
     s.insert("request_timeout");
     s.insert("keepalive_timeout");
-    s.insert("session");
     return s;
 }
 
@@ -63,7 +55,7 @@ std::pair<struct in_addr, int> ConfigParser::getIpPort(std::string listen) {
  * 2-2. key가 include일 경우 mime.types 파일을 읽어서 Config에 저장
  * 2-3. 그 외의 경우 ; 전까지의 내용을 value로 저장
  *
- * 파싱 시에 key 값이 내가 찾는 값이 아닌경우 key가 무엇인지 알려주고 오류 처리 (해야할 것)
+ * 파싱 시에 key 값이 내가 찾는 값이 아닌경우 key가 무엇인지 알려주고 오류 처리
 */
 void ConfigParser::parse(std::string const &configPath, Config &config) {
     std::string fileContent = FileReader::read_file(configPath); // 실패 시 throw
@@ -139,8 +131,6 @@ void ConfigParser::parseServer(std::string const &fileContent, size_t &i, Config
         config.setServer(serverConfig);
 }
 
-// ServeraConfig에 location path 같은게 있으면 뒤에꺼는 무시하고 앞에꺼만 적용되는데
-// locationConfig 구조 변경 -> path를 key로 하는 map으로 변경
 void ConfigParser::parseLocation(std::string const &fileContent, size_t &i, ServerConfig &serverConfig, LocationConfig &locationConfig) {
     std::map<std::string, LocationConfig> locationMap = serverConfig.getLocationList();
     std::string path = getValue(fileContent, i, '{');
@@ -152,7 +142,7 @@ void ConfigParser::parseLocation(std::string const &fileContent, size_t &i, Serv
         std::string key = getKey(fileContent, i);
         if (i == std::string::npos)
             throw std::runtime_error("config 파일 파싱 중 에러 발생");
-        if (key == "location") { // location에 대한 파싱이 다 끝난 후에야 옴.
+        if (key == "location") {
             LocationConfig newLocationConfig = locationConfig;
             parseLocation(fileContent, i, serverConfig, newLocationConfig);
         }

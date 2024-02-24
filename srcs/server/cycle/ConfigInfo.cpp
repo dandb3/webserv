@@ -199,12 +199,6 @@ void ConfigInfo::transferInfo(t_directives &directives) {
 
 // uri로 location 찾기
 LocationConfig &ConfigInfo::findMatchedLocation(std::string &uri, std::map<std::string, LocationConfig> &locationMap) {
-    // if (uri.find('.') != std::string::npos) {
-    //     size_t pos = uri.find_last_of('/');
-    //     if (uri.find('.') < pos)
-    //         throw std::runtime_error("경로내에 .이 있습니다.");
-    //     path = uri.substr(0, uri.find_last_of('/') + 1);
-    // }
     if (uri[uri.size() - 1] == '/')
         _locationPath = uri;
     else
@@ -240,8 +234,6 @@ void ConfigInfo::initConfigInfo(in_addr_t ip, in_port_t port, std::string server
     }
     else
         _path = _root;
-    // if (_path.back() == '/' && _index != "")
-    //     _path += _index;
 
     t_directives::iterator it;
     std::string extension;
@@ -316,7 +308,6 @@ std::string ConfigInfo::getPrintableConfigInfo() {
         result << "\n";
     }
 
-    // 문자열로 변환된 결과 반환
     return result.str();
 }
 
@@ -349,7 +340,6 @@ std::string ConfigInfo::getErrorPage(std::string key) const {
     if (_errorPage.find(key) == _errorPage.end()) {
         if (DEFAULT_PAGE.find(key) == DEFAULT_PAGE.end())
             return DEFAULT_PAGE.at("common");
-            // throw std::runtime_error("ConfigInfo에서 errorPage 찾기 실패");
         return DEFAULT_PAGE.at(key);
     }
     return _errorPage.at(key);

@@ -245,7 +245,7 @@ void EventHandler::_servCgiRequest(const struct kevent &kev)
         return;
     }
     if (cgiRequestHandler.eof()) {
-        close(kev.ident); // -> 자동으로 event는 해제되기 때문에 따로 해제할 필요가 없다.
+        close(kev.ident);
         cycle->setCgiSendfd(-1);
         _kqueueHandler.deleteEventType(kev.ident);
     }
@@ -288,7 +288,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
     if (cgiResponseHandler.eof()) {
         if (PidSet::found(cycle->getCgiScriptPid()))
             kill(cycle->getCgiScriptPid(), SIGKILL);
-        close(kev.ident); // -> 자동으로 event는 제거되기 때문에 따로 제거할 필요가 없다.
+        close(kev.ident);
         _kqueueHandler.deleteEventType(kev.ident);
         _kqueueHandler.deleteEvent(cycle->getCgiRecvfd(), EVFILT_TIMER);
         cycle->setCgiRecvfd(-1);
@@ -297,7 +297,7 @@ void EventHandler::_servCgiResponse(const struct kevent &kev)
             cgiResponseHandler.getCgiResponse().getMessageBody().clear();
         switch (cgiResponseHandler.getResponseType()) {
         case CgiResponse::LOCAL_REDIR_RES:
-            httpRequestHandler.getHttpRequest().getRequestLine().setUri(cgiResponseHandler.getCgiResponse().getHeaderFields().at(0).second); // 구현해야 함.
+            httpRequestHandler.getHttpRequest().getRequestLine().setUri(cgiResponseHandler.getCgiResponse().getHeaderFields().at(0).second);
             _processHttpRequest(cycle);
             break;
         case CgiResponse::DOCUMENT_RES:
@@ -351,7 +351,7 @@ void EventHandler::_servFileRead(const struct kevent &kev)
         return;
     }
 
-    if (cycle->getHttpRequestHandler().getHttpRequest().getRequestLine().getMethod() != HttpRequestHandler::HEAD) // tmp
+    if (cycle->getHttpRequestHandler().getHttpRequest().getRequestLine().getMethod() != HttpRequestHandler::HEAD) // HEAD인 경우 본문을 달지 않음
         httpResponse.messageBody.append(Cycle::getBuf(), readLen);
 
     if (readLen == kev.data) {

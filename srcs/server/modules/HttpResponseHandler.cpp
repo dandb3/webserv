@@ -167,7 +167,6 @@ void HttpResponseHandler::_setDate()
     _httpResponse.headerFields.insert(std::make_pair("Date", std::string(buf)));
 }
 
-// 수정 필요, mimeTypes의 구조.
 void HttpResponseHandler::_setContentType(bool isPath, const std::string& str)
 {
     if (!isPath) {
@@ -203,7 +202,6 @@ void HttpResponseHandler::_setContentLength(off_t size)
     _httpResponse.headerFields.insert(std::make_pair("Content-Length", toString(size)));
 }
 
-// 수정 필요
 void HttpResponseHandler::_setConnection(ICycle* cycle)
 {
     _httpResponse.headerFields.erase("Connection");
@@ -369,8 +367,6 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
     int fd;
 
     for (it = newFiles.begin(); it != newFiles.end();) {
-        // if (access(it->first.c_str(), F_OK) == SUCCESS)
-        //     throw 409;
         path = it->first;
         if (access(it->first.c_str(), F_OK) == SUCCESS) {
             if (stat(it->first.c_str(), &buf) == FAILURE)
@@ -384,13 +380,11 @@ void HttpResponseHandler::_makePOSTResponse(ICycle* cycle, HttpRequest &httpRequ
         }
         files.insert(std::make_pair(path, it->second));
         if (access(dirPath(path).c_str(), W_OK | X_OK) == FAILURE)
-        // if (access("wow", W_OK | X_OK) == FAILURE)
             throw 403;
         ++it;
     }
     for (it = files.begin(); it != files.end(); ++it) {
         fd = open(it->first.c_str(), O_WRONLY | O_CREAT, 0644);
-        // fd = open("wow/eng.txt", O_WRONLY | O_CREAT, 0644);
         if (fd == FAILURE) {
             for (fileIt = writeFiles.begin(); fileIt != writeFiles.end(); ++fileIt) {
                 close(fileIt->first);
@@ -539,28 +533,24 @@ void HttpResponseHandler::makeHttpResponse(ICycle* cycle, HttpRequest &httpReque
         switch (method) {
         case GET:
             if (!configInfo.getAllowMethods(0)) {
-                // _setAllow(configInfo);
                 throw 405;
             }
             _makeGETResponse(cycle);
             break;
         case HEAD:
             if (!configInfo.getAllowMethods(1)) {
-                // _setAllow(configInfo);
                 throw 405;
             }
             _makeHEADResponse(cycle);
             break;
         case POST:
             if (!configInfo.getAllowMethods(2)) {
-                // _setAllow(configInfo);
                 throw 405;
             }
             _makePOSTResponse(cycle, httpRequest);
             break;
         case DELETE:
             if (!configInfo.getAllowMethods(3)) {
-                // _setAllow(configInfo);
                 throw 405;
             }
             _makeDELETEResponse(cycle);

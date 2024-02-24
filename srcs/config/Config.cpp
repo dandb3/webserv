@@ -81,7 +81,6 @@ void Config::setServerConfig(std::vector<ServerConfig> &serverList) {
 }
 
 void Config::setServer(ServerConfig &server) {
-    // 똑같은 서버가 있는지 확인 과정 필요
     this->_serverList.push_back(server);
 }
 

@@ -28,11 +28,11 @@ private:
 
     /* private functions */
     Config();
-    Config(const Config &ref); // x
+    Config(const Config &ref);
     Config(std::string const &configPath);
     ~Config();
 
-    Config &operator=(const Config &ref); // x
+    Config &operator=(const Config &ref);
 
     static Config _instance;
 
