@@ -49,8 +49,6 @@ ConfigInfo::ConfigInfo()
     _errorPage.clear();
     _autoIndex = false;
     _isRedirect = false;
-    _requestTimeout = DEFAULT_TIMEOUT;
-    _keepaliveTimeout = DEFAULT_TIMEOUT;
     _redirect = std::make_pair("", "");
     _info.clear();
 }
@@ -79,8 +77,6 @@ ConfigInfo &ConfigInfo::operator=(const ConfigInfo &ConfigInfo)
     _errorPage = ConfigInfo._errorPage;
     _autoIndex = ConfigInfo._autoIndex;
     _isRedirect = ConfigInfo._isRedirect;
-    _requestTimeout = ConfigInfo._requestTimeout;
-    _keepaliveTimeout = ConfigInfo._keepaliveTimeout;
     _redirect = ConfigInfo._redirect;
     _info = ConfigInfo._info;
     return *this;
@@ -174,14 +170,6 @@ void ConfigInfo::transferInfo(t_directives &directives) {
                 _redirect = std::make_pair("", "");
             else
                 _redirect = std::make_pair(it->second[0], it->second[1]);
-        }
-        else if (it->first == "request_timeout") {
-            if (it->second.size() == 1)
-                _requestTimeout = stringToType<intptr_t>(it->second[0]);
-        }
-        else if (it->first == "keepalive_timeout") {
-            if (it->second.size() == 1)
-                _keepaliveTimeout = stringToType<intptr_t>(it->second[0]);
         }
         else if (it->first == "cgi_path") {
             if (it->second.size() == 1) {
@@ -365,16 +353,6 @@ t_directives ConfigInfo::getInfo() const {
 
 bool ConfigInfo::getIsRedirect() const {
     return _isRedirect;
-}
-
-intptr_t ConfigInfo::getRequestTimeout() const
-{
-    return _requestTimeout;
-}
-
-intptr_t ConfigInfo::getKeepaliveTimeout() const
-{
-    return _keepaliveTimeout;
 }
 
 std::pair<std::string, std::string> ConfigInfo::getRedirect() const {

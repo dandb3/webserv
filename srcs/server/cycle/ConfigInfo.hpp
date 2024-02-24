@@ -27,8 +27,6 @@ private:
     std::map<std::string, std::string> _errorPage;
     bool _autoIndex;
     bool _isRedirect;
-    intptr_t _requestTimeout;
-    intptr_t _keepaliveTimeout;
     std::pair<std::string, std::string> _redirect; // first: redirection 번호(301 or 302), second: redirect uri
     t_directives _info;
 
@@ -67,8 +65,6 @@ public:
     bool getAutoIndex() const;
     t_directives getInfo() const;
     bool getIsRedirect() const;
-    intptr_t getRequestTimeout() const;
-    intptr_t getKeepaliveTimeout() const;
     std::pair<std::string, std::string> getRedirect() const;
     short requestType(HttpRequest& httpRequest) const;
 
