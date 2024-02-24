@@ -14,7 +14,6 @@ class ServerConfig
 {
 private:
     /* data */
-    // server name이랑 listen은 따로 저장할까? DEFAULT 값도 설정하고
     struct in_addr _ip;
     int _port;
     std::string _serverName;

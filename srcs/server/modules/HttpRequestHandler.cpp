@@ -3,8 +3,6 @@
 #include "../parse/parse.hpp"
 #include "../../utils/utils.hpp"
 
-#include <iostream> // for test ??
-
 HttpRequestHandler::HttpRequestHandler()
     : _status(INPUT_READY)
 {}
@@ -15,7 +13,6 @@ void HttpRequestHandler::_inputEOF()
         _status = INPUT_NORMAL_CLOSED;
     else
         _status = INPUT_ERROR_CLOSED;
-    std::cout << "input EOF\n"; // test
 }
 
 void HttpRequestHandler::_inputReady()
@@ -168,7 +165,7 @@ void HttpRequestHandler::_parseHeaderField()
     size_t pos;
 
     for (size_t i = 0; i < _lineV.size(); i++) {
-        if ((pos = _lineV[i].find(':')) == std::string::npos) { // maybe a obs-fold -> 400 ERROR
+        if ((pos = _lineV[i].find(':')) == std::string::npos) {
             _status = INPUT_ERROR_CLOSED;
             _httpRequest.setCode(400);
             return;
@@ -280,7 +277,6 @@ void HttpRequestHandler::_inputDefaultBody()
 
 void HttpRequestHandler::_parseChunkedBody()
 {
-    std::cout << "parse chunked body start\n"; // test
     long long length;
 
     if (!(_lineV.size() & 1) || _lineV.back() != "0") {
@@ -319,12 +315,6 @@ void HttpRequestHandler::_pushRequest(std::queue<HttpRequest> &httpRequestQ)
         else
             _status = INPUT_READY;
     }
-    if (_httpRequest.getMessageBody().length() < 10000000) { // test
-        std::cout << "request line: " << _httpRequest.getRequestLine().getMethod() << " " << _httpRequest.getRequestLine().getUri() << " " << _httpRequest.getRequestLine().getVersion().first << "." << _httpRequest.getRequestLine().getVersion().second << std::endl; // test
-        for (it = headerFields.begin(); it != headerFields.end(); it++)
-            std::cout << it->first << ": " << it->second << std::endl; // test
-        std::cout << "fin\n";
-    }
     _httpRequest = HttpRequest();
 }
 
@@ -332,24 +322,12 @@ void HttpRequestHandler::recvHttpRequest(int fd, size_t size)
 {
     ssize_t readLen;
 
-    // configuration의 client-body size도 고려해야 함
-    // 곧 쳐야 됨
     if ((readLen = read(fd, ICycle::getBuf(), std::min(size, static_cast<size_t>(BUF_SIZE)))) == FAILURE) {
         _httpRequest.setCode(500);
         _status = INPUT_ERROR_CLOSED;
         return;
     }
-    // std::cout << "readLen: " << readLen << std::endl; // test
-    // if (readLen <= 4) { // test
-    //     std::cout << "recv http request in ascii\n";
-    //     for (ssize_t i = 0; i < readLen; i++)
-    //         std::cout << static_cast<int>(ICycle::getBuf()[i]) << " ";
-    //     std::cout << std::endl;
-    // }
-    // else 
-    //     std::cout << "recvHttpRequest\n" << std::string(ICycle::getBuf()).substr(0, readLen) << std::endl; // test
     _remain.append(ICycle::getBuf(), static_cast<size_t>(readLen));
-    // std::cout << "_remain: " << _remain << std::endl; // test
 }
 
 void HttpRequestHandler::parseHttpRequest(bool eof, std::queue<HttpRequest> &httpRequestQ)

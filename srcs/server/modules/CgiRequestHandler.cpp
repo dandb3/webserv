@@ -43,10 +43,6 @@ static void setContentType(CgiRequest& cgiRequest, const std::multimap<std::stri
 
     if ((it = headerFields.find("Content-Type")) != headerFields.end())
         cgiRequest.addMetaVariable("CONTENT_TYPE", it->second);
-    /**
-     * 사실은 message-body를 통해 content-type을 추론하는 과정이 필요한데
-     * 편의상 생략했고, 추후 추가 가능.
-    */
     else
         cgiRequest.addMetaVariable("CONTENT_TYPE", "application/octet-stream");
 }
@@ -105,11 +101,6 @@ static void setRequestMethod(CgiRequest& cgiRequest, const RequestLine& requestL
         cgiRequest.addMetaVariable("REQUEST_METHOD", "DELETE");
         break;
     }
-}
-
-static void setScriptName(__attribute__((unused)) CgiRequest& cgiRequest, __attribute__((unused)) ConfigInfo& configInfo)
-{
-    // cgiRequest.addMetaVariable("SCRIPT_NAME", configInfo.getCgiPath());
 }
 
 static void setServerName(CgiRequest& cgiRequest, ICycle* cycle)
@@ -182,7 +173,6 @@ void CgiRequestHandler::_setMetaVariables(ICycle* cycle, HttpRequest& httpReques
     setRemoteAddr(_cgiRequest, cycle);
     setRemoteHost(_cgiRequest, cycle);
     setRequestMethod(_cgiRequest, requestLine);
-    setScriptName(_cgiRequest, cycle->getConfigInfo());
     setServerName(_cgiRequest, cycle);
     setServerPort(_cgiRequest, cycle);
     setServerProtocol(_cgiRequest);
@@ -237,13 +227,6 @@ void CgiRequestHandler::_childProcess(int* servToCgi, int* cgiToServ, const std:
     if (execve(argv[0], argv, envp) == FAILURE)
         std::exit(1);
 }
-
-/**
- * header-field find할 때, 해당 header-field 값이 여러 개가 존재할 수 있는 경우가 모두 고려된 건가?
- * 아마 안 됐을 듯.
- * 그렇다면 헤더필드에 대해서 체크 해주어야 하는 함수를 어디엔가 넣어주어야 한다..?
- * -> 파싱부에서 헤더필드를 다 읽어온 다음에 각 항목별로 Syntax Check를 해 주어야 한다.
-*/
 
 void CgiRequestHandler::makeCgiRequest(ICycle* cycle, HttpRequest& httpRequest)
 {

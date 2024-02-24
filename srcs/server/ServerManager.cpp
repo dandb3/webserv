@@ -19,9 +19,8 @@ ServerManager::ServerManager(std::string config_path)
  *    - 소켓을 리스닝 모드로 설정합니다.
  *    - 소켓을 논블로킹 모드로 설정하고 이벤트 핸들러에 이벤트를 추가합니다.
  *    - 서버 소켓 타입을 설정합니다.
- *    - SIGPIPE 시그널 발생 시 SIG_IGN으로 설정한다.
+ *    - SIGPIPE 시그널 발생 시 SIG_IGN으로 설정합니다.
  * @throws std::runtime_error 소켓 생성, 주소 바인딩, 논블로킹 설정, 이벤트 추가 등의 과정에서 오류 발생 시 예외 처리
- *      예외 처리는 나중에 구현할 예정입니다.
  */
 void ServerManager::initServer()
 {
@@ -32,9 +31,6 @@ void ServerManager::initServer()
     std::vector<int> listenFds;
 
     for (; it != serverVec.end(); it++) {
-        // getVariable 실패 시 어떻게 처리할지 고민
-        // default 값 설정해서 실패 안나게 할까? or 예외 처리?
-
         int sockfd;
         struct sockaddr_in servaddr;
         // 해당 port의 "0.0.0.0" ip가 있는 경우 -> 서버 생성하지 않고 넘어가기
@@ -55,7 +51,6 @@ void ServerManager::initServer()
         servaddr.sin_addr.s_addr = (it->getIp()).s_addr;
         servaddr.sin_port = htons(it->getPort());
 
-        // bind(): Address already in use 해결
         int optval = 1;
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
             throw std::runtime_error("setsockopt error");

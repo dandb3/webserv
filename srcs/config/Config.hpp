@@ -20,7 +20,7 @@ private:
     /* data */
     t_directives _httpInfo;
     std::vector<ServerConfig> _serverList;
-    std::map<std::string, std::string> _mimeTypes; // 나중에 어떻게 사용하는지 보고 자료구조 변경할 듯
+    std::map<std::string, std::string> _mimeTypes;
 
     std::string _configPath;
 
@@ -28,11 +28,11 @@ private:
 
     /* private functions */
     Config();
-    Config(const Config &ref); // x
+    Config(const Config &ref);
     Config(std::string const &configPath);
     ~Config();
 
-    Config &operator=(const Config &ref); // x
+    Config &operator=(const Config &ref);
 
     static Config _instance;
 

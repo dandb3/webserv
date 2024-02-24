@@ -24,7 +24,6 @@ private:
     std::string _path;       // root + uri, 만약 CGI request로 넘어간다면 PATH_INFO에 넘겨주는 인자로 설정이 된다.
     bool _allowMethods[4]; // GET, HEAD, POST, DELETE
     std::string _index;
-    // std::string _errorPage;
     std::map<std::string, std::string> _errorPage;
     bool _autoIndex;
     bool _isRedirect;
@@ -53,7 +52,6 @@ public:
 
     void initConfigInfo(in_addr_t ip, in_port_t port, std::string serverName, std::string uri);
 
-    // test
     void printConfigInfo();
     std::string getPrintableConfigInfo();
 

@@ -29,10 +29,6 @@ std::vector<std::string> &LocationConfig::getVariable(std::string &key) {
 }
 
 // setter
-void LocationConfig::setLocationInfo(t_directives &location_info) {
-    this->_locationInfo = location_info;
-}
-
 void LocationConfig::setVariable(std::string &key, std::vector<std::string> &value) {
     this->_locationInfo[key] = value;
 }

@@ -5,10 +5,8 @@
 KqueueHandler::KqueueHandler()
 {
     _kqfd = kqueue();
-    if (_kqfd == -1) {
-        // std::cerr << "kqueue() failed" << std::endl;
+    if (_kqfd == -1)
         throw std::runtime_error("kqueue() failed");
-    }
     _nevents = 0;
 }
 
@@ -73,10 +71,8 @@ void KqueueHandler::eventCatch()
     for (it = _eventsToAdd.begin(); it != _eventsToAdd.end(); ++it)
         v.push_back(it->second);
     int nev = kevent(_kqfd, &v[0], v.size(), _eventList, MAX_EVENTS, NULL);
-    if (nev == -1) {
-        // std::cerr << "[eventCatch] : kevent() failed" << std::endl;
-        throw std::runtime_error("kevent() failed");
-    }
+    if (nev == -1)
+        throw std::runtime_error("[eventCatch] : kevent() failed");
     _nevents = nev;
     _eventsToAdd.clear();
 }

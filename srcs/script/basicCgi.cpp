@@ -47,11 +47,6 @@ void printMessageBody()
         << std::endl;
 }
 
-/*
-    REQUEST_METHOD
-    SERVER_PROTOCOL
-    PATH_INFO
-*/
 int main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[], char* envp[])
 {
     int envCnt = 0;
