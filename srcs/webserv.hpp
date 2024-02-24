@@ -12,4 +12,11 @@
 
 #define ERROR 1
 
+#ifndef DEBUG
+#define log(...)
+#else
+#include "debug.hpp"
+#define log(...) LOG(__VA_ARGS__)
+#endif
+
 #endif
